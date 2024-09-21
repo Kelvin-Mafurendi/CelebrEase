@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371704635186",
+    "project_id": "dream-events-82cfc",
+    "storage_bucket": "dream-events-82cfc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371704635186:android:403a00abcc0f39f52bc12b",
+        "android_client_info": {
+          "package_name": "com.example.maroro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYHAWGm3xWiBVQM5aKQ2K4xlGQO9S1nXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
