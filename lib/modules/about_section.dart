@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AboutSection extends StatefulWidget {
   const AboutSection({super.key});
@@ -51,10 +52,10 @@ class _AboutSectionState extends State<AboutSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'About',
-              textScaler: TextScaler.linear(1.2),
-              style: TextStyle(fontWeight: FontWeight.w400),
+              textScaler: const TextScaler.linear(1.2),
+              style: GoogleFonts.merienda(),
             ),
             Container(
               decoration:

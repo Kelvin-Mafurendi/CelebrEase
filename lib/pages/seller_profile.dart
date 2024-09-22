@@ -4,7 +4,9 @@ import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/modules/about_section.dart';
 import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
@@ -34,27 +36,13 @@ class _ProfileState extends State<Profile> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
       scrollDirection: Axis.vertical,
       children: [
-        const Text(
+        Text(
           'Hi,',
-          textScaler: TextScaler.linear(2),
+          textScaler: const TextScaler.linear(2),
           textAlign: TextAlign.start,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
+          style: GoogleFonts.merienda(),
         ),
 
-        Text(
-          Provider.of<ChangeManager>(context).profileData['brandName'] != ''
-              ? Provider.of<ChangeManager>(context)
-                  .profileData['brandName']
-                  .toString()
-                  .split(' ')[0]
-              : 'User', // Display first name
-          textScaler: const TextScaler.linear(1.5),
-          textAlign: TextAlign.start,
-          style: const TextStyle(fontStyle: FontStyle.italic),
-        ),
-        const SizedBox(height: 10),
         StreamBuilder<DocumentSnapshot>(
             stream:
                 _firestore.collection('User Profiles').doc(userId).snapshots(),
@@ -95,12 +83,44 @@ class _ProfileState extends State<Profile> {
               //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
               return Column(
                 children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) {
+                          return LinearGradient(
+                            colors: [
+                              Theme.of(context)
+                                  .colorScheme
+                                  .primary, // Primary Color
+                              accentColor, // Accent Color
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          );
+                        },
+                        child: Text(
+                          brandName != ''
+                              ? brandName.toString().split(' ')[0]
+                              : 'User', // Display first name
+                          textScaler: const TextScaler.linear(1.5),
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.merienda(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   Container(
                     width: MediaQuery.of(context).size.width,
                     height: 125,
                     padding: const EdgeInsets.only(left: 5),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: profileCardColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -128,9 +148,7 @@ class _ProfileState extends State<Profile> {
                               Text(
                                 brandName,
                                 textScaler: const TextScaler.linear(1.2),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: GoogleFonts.merienda(),
                               ),
                               Text(
                                 userType,
@@ -242,7 +260,13 @@ class _ProfileState extends State<Profile> {
                             splashColor: Colors.green,
                             onTap: () {
                               //provider
-                              Navigator.pushNamed(context, '/editProfile');
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => EditProfile(
+                                            isFirstSetup: brandName.isEmpty,
+                                            initialData: const {}, // Use this condition to determine if it's the first setup
+                                          )));
                             },
                             child: Text(
                               brandName != '' ? 'Edit Profile' : 'Set Profile',
@@ -304,15 +328,15 @@ class _ProfileState extends State<Profile> {
         const SizedBox(
           height: 5,
         ),
-        const Row(
+        Row(
           children: [
             Text(
               'Highlights',
-              textScaler: TextScaler.linear(1.2),
-              style: TextStyle(fontWeight: FontWeight.w400),
+              textScaler: const TextScaler.linear(1.2),
+              style: GoogleFonts.merienda(),
             ),
-            Spacer(),
-            Padding(
+            const Spacer(),
+            const Padding(
               padding: EdgeInsets.only(right: 10),
               child: InkWell(
                 child: Text(
@@ -353,8 +377,9 @@ class _ProfileState extends State<Profile> {
               //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
               return ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height *
-                      0.55, // Constrain height to screen
+                  maxHeight: highlights.isNotEmpty
+                      ? MediaQuery.of(context).size.height * 0.55
+                      : 10, // Constrain height to screen
                 ),
                 child: ListView.builder(
                     shrinkWrap: true,
@@ -385,15 +410,15 @@ class _ProfileState extends State<Profile> {
             color: Color.fromARGB(255, 224, 210, 210),
           ),
         ),
-        const Row(
+        Row(
           children: [
             Text(
               'Packages',
-              textScaler: TextScaler.linear(1.2),
-              style: TextStyle(fontWeight: FontWeight.w400),
+              textScaler: const TextScaler.linear(1.2),
+              style: GoogleFonts.merienda(),
             ),
-            Spacer(),
-            Padding(
+            const Spacer(),
+            const Padding(
               padding: EdgeInsets.only(right: 10),
               child: InkWell(
                 child: Text(
@@ -407,25 +432,56 @@ class _ProfileState extends State<Profile> {
             )
           ],
         ),
-        StreamBuilder<Object>(
-            stream: null,
-            builder: (context, snapshot) {
-              return const SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    //ProductCard(),
-                    // ProductCard(),
-                    //ProductCard(),
-                    // ProductCard(),
-                  ],
+        StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('Packages')
+                .where('userId', isEqualTo: userId)
+                .snapshots(),
+            builder: (context, snapshot3) {
+              if (snapshot3.hasError) {
+                return const Text('Something went wrong');
+              }
+
+              if (snapshot3.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                );
+              }
+              if (!snapshot3.hasData || snapshot3.data == null) {
+                //print('No data available');
+                return const Text('No data available');
+              }
+              // Access the documents
+              List<QueryDocumentSnapshot> packages = snapshot3.data!.docs;
+
+              //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: packages.isNotEmpty
+                      ? MediaQuery.of(context).size.height * 0.55
+                      : 10, // Constrain height to screen
                 ),
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: packages.length,
+                    itemBuilder: (context, index) {
+                      Map<String, dynamic> packageData =
+                          packages[index].data() as Map<String, dynamic>;
+                      return ProductCard(
+                        data: packageData,
+                      );
+                    }),
               );
             }),
         Row(
           children: [
             FilledButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/addPackage');
+                },
                 style: const ButtonStyle(),
                 child: const Text('Add New Package')),
           ],
@@ -438,30 +494,35 @@ class _ProfileState extends State<Profile> {
             InkWell(
               onTap: () {},
               child: const Icon(
+                color: primaryColor,
                 Icons.facebook_outlined,
               ),
             ),
             InkWell(
               onTap: () {},
               child: const FaIcon(
+                color: primaryColor,
                 FontAwesomeIcons.xTwitter,
               ),
             ),
             InkWell(
               onTap: () {},
               child: const FaIcon(
+                color: primaryColor,
                 FontAwesomeIcons.instagram,
               ),
             ),
             InkWell(
               onTap: () {},
               child: const FaIcon(
+                color: primaryColor,
                 FontAwesomeIcons.tiktok,
               ),
             ),
             InkWell(
               onTap: () {},
               child: const FaIcon(
+                color: primaryColor,
                 FontAwesomeIcons.linkedin,
               ),
             ),

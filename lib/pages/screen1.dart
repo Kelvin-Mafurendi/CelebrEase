@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/pages/bundles.dart';
 import 'package:maroro/pages/chats.dart';
 import 'package:maroro/pages/event.dart';
@@ -74,15 +75,15 @@ class _Screen1State extends State<Screen1> {
         appBar:selectedIndex == 0? const EventAppBar(title: ''):null,
         bottomNavigationBar: BottomNavigationBar(
           //backgroundColor: const Color(0xFFF1E1D5),
-          //selectedItemColor: const Color.fromARGB(255, 165, 131, 108),
-          //unselectedItemColor: const Color.fromARGB(255, 85, 75, 69),
+          selectedItemColor: accentColor,
+          unselectedItemColor: primaryColor,
           selectedFontSize: 10,
           currentIndex: selectedIndex,
           onTap: changeIndex,
           items: const [
             BottomNavigationBarItem(icon: Icon(CupertinoIcons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(CupertinoIcons.speaker_zzz), label: 'Trending'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.gift), label: 'Bundles'),
+            BottomNavigationBarItem(icon: Icon(CupertinoIcons.gift), label: 'CeleBundles'),
             BottomNavigationBarItem(icon: Icon(CupertinoIcons.chat_bubble_text), label: 'Chats'),
             BottomNavigationBarItem(icon: Icon(CupertinoIcons.person), label: 'Profile'),
           ],

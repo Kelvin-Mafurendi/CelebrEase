@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,31 +9,71 @@ import 'package:maroro/Auth/login.dart';
 import 'package:maroro/Auth/signup.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/firebase_options.dart';
+import 'package:maroro/pages/add_package.dart';
 import 'package:maroro/pages/bundles.dart';
-import 'package:maroro/pages/cake.dart';
 import 'package:maroro/pages/chats.dart';
-import 'package:maroro/pages/dress.dart';
 import 'package:maroro/pages/add_highlight.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
 import 'package:maroro/pages/event.dart';
-import 'package:maroro/pages/food.dart';
 import 'package:maroro/pages/landing_page.dart';
 import 'package:maroro/pages/mainscreen.dart';
-import 'package:maroro/pages/make_up.dart';
-import 'package:maroro/pages/mc.dart';
 import 'package:maroro/pages/membership.dart';
-import 'package:maroro/pages/music.dart';
 import 'package:maroro/pages/my_events.dart';
 import 'package:maroro/pages/notifications.dart';
-import 'package:maroro/pages/photo.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/screen1.dart';
 import 'package:maroro/pages/settings.dart';
 import 'package:maroro/pages/trends.dart';
-import 'package:maroro/pages/vendor.dart';
-import 'package:maroro/pages/venue.dart';
 import 'package:provider/provider.dart';
 
+
+
+
+
+/*const textColor = Color(0xFF090609);
+const backgroundColor = Color(0xFFf4fcee);
+const primaryColor = Color(0xFFa265a2);
+const primaryFgColor = Color(0xFF090609);
+const secondaryColor = Color(0xFFa0c6a7);
+const secondaryFgColor = Color(0xFF090609);
+const accentColor = Color(0xFF8cb1ba);
+const accentFgColor = Color(0xFF090609);*///colour schem2
+  
+/*const textColor = Color(0xFF080a07);
+const backgroundColor = Color(0xFFf4fcee);
+const primaryColor = Color(0xFF7d986f);
+const primaryFgColor = Color(0xFF080a07);
+const secondaryColor = Color(0xFFb1c7b4);
+const secondaryFgColor = Color(0xFF080a07);
+const accentColor = Color(0xFF8faf9b);
+const accentFgColor = Color(0xFF080a07);*/
+  
+const textColor = Color(0xFF0d0506);
+const backgroundColor = Color(0xFFfcf8f8);
+const primaryColor = Color(0xFFbb5355);
+const primaryFgColor = Color(0xFFfdf9f9);
+const secondaryColor = Color(0xFFcbd594);
+const secondaryFgColor = Color(0xFF0d0506);
+const accentColor = Color(0xFF95c771);
+const accentFgColor = Color(0xFF0d0506);
+const stickerColor = Color(0xFFF3F1E4);
+const profileCardColor = Color(0xFFEFD7D7);
+  
+const colorScheme = ColorScheme(
+  brightness: Brightness.light,
+  background: backgroundColor,
+  onBackground: textColor,
+  primary: primaryColor,
+  onPrimary: primaryFgColor,
+  secondary: secondaryColor,
+  onSecondary: secondaryFgColor,
+  tertiary: accentColor,
+  onTertiary: accentFgColor,
+  surface: backgroundColor,
+  onSurface: textColor,
+  error: Brightness.light == Brightness.light ? Color(0xffB3261E) : Color(0xffF2B8B5),
+  onError: Brightness.light == Brightness.light ? Color(0xffFFFFFF) : Color(0xff601410),
+);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -57,82 +99,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        primaryColor: const Color(0xFF1D2E4C), // Orange
-        scaffoldBackgroundColor: const Color(0xFFAEBFAC), // Sage
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF1D2E4C), // Orange
-          secondary: Color(0xFF858585), // Bright Red
-          surface: Color(0xFFE6E9DE), // Dark Red
-          onPrimary: Color(0xFFF7F9F6),
-          onSecondary: Colors.white,
-          onSurface: Color(0xFF1D2E4C),
-        ),
-        drawerTheme: const DrawerThemeData(
-          shadowColor: Color(0xFF1D2E4C),
-          elevation: 20,
-        ),
-        appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFFAEBFAC), // sage
-            foregroundColor: Colors.white,
-            elevation: 0,
-            iconTheme: IconThemeData(
-              color: Color(0xFF1D2E4C),
-            ),
-            actionsIconTheme: IconThemeData(
-              color: Color(0xFF1D2E4C),
-            )),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color.fromRGBO(130, 3, 0, 1), // Dark Red
-          selectedItemColor: Color.fromARGB(255, 31, 80, 153),
-          unselectedItemColor: Color(0xFF1D2E4C),
-        ),
-        iconTheme: const IconThemeData(
-          color: Color(0xFF1D2E4C),
-        ),
-        dividerColor: const Color(0xFF1D2E4C),
-
-        cardTheme: CardTheme(
-          color: const Color.fromRGBO(130, 3, 0, 1), // Dark Red
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 4,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          fillColor: const Color(0xFFAEBFAC),
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          //hintStyle: TextStyle(),
-        ),
-        buttonTheme: const ButtonThemeData(
-          buttonColor: Color(0xFFCFC0BB),
-          textTheme: ButtonTextTheme.primary,
-        ),
-        filledButtonTheme: const FilledButtonThemeData(
-          style: ButtonStyle(
-            backgroundColor: WidgetStatePropertyAll(
-              Color(0xFF1D2E4C),
-            ),
-          ),
-        ),
+        //primaryColor: const Color(0xFF1D2E4C), // Orange
+        scaffoldBackgroundColor: backgroundColor, // Sage
+        //navigationDrawerTheme: const NavigationDrawerThemeData(indicatorColor: primaryColor,iconTheme: WidgetStatePropertyAll(IconThemeData(color: primaryColor))),
+        colorScheme: colorScheme,
       ),
       home: const AuthGate(),
       builder: EasyLoading.init(),
       routes: {
         '/main': (context) => const Mainscreen(),
         '/first': (context) => const Screen1(),
-        '/Dressing': (context) => const Dressing(),
-        '/Venues': (context) => const Venues(),
-        '/Cakes': (context) => const Cakes(),
-        '/Vendors': (context) => const Vendors(),
-        '/Music': (context) => const Music(),
-        '/Make-Up': (context) => const Make(),
-        '/Food': (context) => const Food(),
-        '/Photos': (context) => const Photos(),
-        '/Mc': (context) => const Mc(),
         '/Events': (context) => const Events(),
         '/Chats': (context) => const Chats(),
         '/Trending': (context) => const Trending(),
@@ -144,11 +120,18 @@ class MyApp extends StatelessWidget {
         '/SignUp': (context) => const SignUp(),
         '/Membership': (context) => const Membership(),
         '/notifications': (context) => const Notifications(),
+        '/addPackage': (context) => const AddPackage(
+              initialData: {},
+            ),
         '/addhighlight': (context) => const AddHighlight(
               initialData: {},
             ),
-        '/editProfile': (context) => const EditProfile(
-              initialData: {},
+        '/editProfile': (context) => EditProfile(
+              isFirstSetup: Provider.of<ChangeManager>(context, listen: false)
+                      .profileData['brandName']
+                      ?.isEmpty ??
+                  true,
+              initialData: const {},
             ),
       },
     );

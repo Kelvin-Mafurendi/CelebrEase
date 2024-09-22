@@ -1,5 +1,6 @@
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:maroro/main.dart';
 
 class FeaturedCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -14,7 +15,7 @@ class FeaturedCard extends StatelessWidget {
         child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: profileCardColor,
                 borderRadius: BorderRadius.circular(10)),
             width: MediaQuery.of(context).size.width * 0.8,
             //height: MediaQuery.of(context).size.width,
@@ -23,11 +24,14 @@ class FeaturedCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image(
-                  image: NetworkImage(data['mainPicPath']!),
-                  fit: BoxFit.fitWidth,
-                  height: 200,
-                  
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image(
+                    image: NetworkImage(data['mainPicPath']!),
+                    fit: BoxFit.fitWidth,
+                    height: 200,
+                    
+                  ),
                 ),
                 Text(
                   data['packageName']!,

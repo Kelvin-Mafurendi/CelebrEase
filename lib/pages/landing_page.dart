@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_service.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
 
-//import 'package:maroro/pages/landing.dart';
 class Home extends StatelessWidget {
   const Home({super.key});
 
@@ -10,46 +11,64 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        /* leading: Image.asset(
-          'assets/img/logo.png',
-          colorBlendMode: BlendMode.color,
-        ),*/
-        //title: const Text('Dream Event'),
-        //backgroundColor: const Color.fromRGBO(95, 134, 112, 1),
         centerTitle: true,
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            alignment: Alignment.center,
-            child: const CircleAvatar(
-              backgroundImage: AssetImage('assets/img/logo.png'),
-              radius: 150,
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Center(
+                child: ShaderMask(
+                  shaderCallback: (bounds) {
+                    return  LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary, // Primary Color
+                        accentColor, // Accent Color
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(
+                      Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                    );
+                  },
+                  child: Text(
+                    'CelebrEase',
+                    textScaler: const TextScaler.linear(1.02),
+                    style: GoogleFonts.merienda(
+                      fontSize: 53,
+                      color: Colors.white, // Use white or any contrasting color
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-          Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.all(10),
-            child: const Text(
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
               'Are You Planning an Event?',
-              style: TextStyle(
-                fontSize: 40,
-                //color: Color.fromRGBO(255, 152, 0, 1),
-                //fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.lateef(
+                fontSize: 50,
+                color: textColor
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
-              'Look No Further!\nWe have all your event needs and more.',
-              style: TextStyle(
-                fontSize: 16,
-                //color: Color.fromRGBO(255, 152, 0, 1),
-                fontStyle: FontStyle.italic,
+              'CelebrEase Got You!',
+              style: GoogleFonts.lateef(
+                fontSize: 30,
               ),
               textAlign: TextAlign.center,
             ),
@@ -62,28 +81,19 @@ class Home extends StatelessWidget {
                 Navigator.of(context).pushNamed('/log_in');
               },
               style: ElevatedButton.styleFrom(
-                //backgroundColor: const Color.fromRGBO(130, 3, 0, 1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'Explore',
-                    style: TextStyle(
-                      //color:  Color.fromRGBO(255, 152, 0, 1),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.lateef(
+                      fontSize: 25,
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    //color: Color.fromRGBO(255, 152, 0, 1),
                   ),
                 ],
               ),

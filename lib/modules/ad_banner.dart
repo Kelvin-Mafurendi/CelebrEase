@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -11,56 +12,87 @@ class MyAdBanner extends StatefulWidget {
 
 class _MyAdBannerState extends State<MyAdBanner> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final List<String> bannerImages = [];
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _timer;
 
-  final List bannerImages = [];
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentPage);
 
-  getBannerImages() async{
+    // Fetch images and start auto-sliding when the data is ready
+    getBannerImages().then((_) {
+      _startAutoSliding();
+    });
+  }
+
+  Future<void> getBannerImages() async {
     EasyLoading.show();
-    return await _firestore
-        .collection('banners')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      // ignore: avoid_function_literals_in_foreach_calls
-      querySnapshot.docs.forEach((doc) {
-        setState(
-          () {
-            bannerImages.add(
-              doc['image'],
-            );
-          },
-        );
+    try {
+      QuerySnapshot querySnapshot = await _firestore.collection('banners').get();
+      setState(() {
+        bannerImages.addAll(querySnapshot.docs.map((doc) => doc['image'] as String));
       });
-    }).whenComplete((){
+    } catch (e) {
+      print('Error fetching banner images: $e');
+    } finally {
       EasyLoading.dismiss();
+    }
+  }
+
+  void _startAutoSliding() {
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      if (bannerImages.isNotEmpty && mounted) {
+        setState(() {
+          _currentPage++;
+          if (_currentPage == bannerImages.length) {
+            _currentPage = 0;  // Loop back to the first page
+          }
+          _pageController.animateToPage(
+            _currentPage,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.decelerate,
+          );
+        });
+      }
     });
   }
 
   @override
-  void initState() {
-    getBannerImages();
-    super.initState();
+  void dispose() {
+    _timer?.cancel();  // Cancel the timer when the widget is disposed
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: 190,
-      // padding: const EdgeInsets.all(5),
+      height: MediaQuery.of(context).size.width * 0.5,
       decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(10)),
-      child: PageView.builder(
-        itemCount: bannerImages.length,
-        itemBuilder: (context, index) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-            bannerImages[index],
-            fit: BoxFit.fitWidth,
-          ));
-        },
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
       ),
+      child: bannerImages.isNotEmpty
+          ? PageView.builder(
+              controller: _pageController,
+              itemCount: bannerImages.length,
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    bannerImages[index],
+                    fit: BoxFit.fitWidth,
+                  ),
+                );
+              },
+            )
+          : const Center(
+              child: CircularProgressIndicator(),
+            ),
     );
   }
 }

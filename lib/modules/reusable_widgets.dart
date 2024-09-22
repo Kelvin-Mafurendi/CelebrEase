@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_service.dart';
+import 'package:maroro/main.dart';
+import 'package:maroro/pages/package_browser.dart';
 
 ///App bar template
 class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -15,17 +18,19 @@ class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: GestureDetector(onTap: (){
             Navigator.pushNamed(context, '/');//retrun to the Landing Page if logog is rtapped.
           }, child: const CircleAvatar(backgroundImage: AssetImage('assets\\img\\logo.png'),)),),*/
-      actions: [
+      /*actions: [
         IconButton.outlined(
+          color: primaryColor,
           onPressed: () {
             Navigator.pushNamed(context, '/notifications');
           },
           icon: const Icon(
+            color: primaryColor,
             Icons.notifications,
-           // color: Colors.white,
+            // color: Colors.white,
           ),
         )
-      ],
+      ],*/
     );
   }
 
@@ -37,55 +42,52 @@ class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 ///Service sticker template
 class Sticker extends StatelessWidget {
-  const Sticker({super.key, required this.service, required this.icon});
+  const Sticker({super.key, required this.service, required this.imagepath});
 
   final String service;
-  final String icon;
-
-  static final Map<String, IconData> iconsMap = {
-    'cake': Icons.cake_outlined,
-    'venue': Icons.house_outlined,
-    'dress': Icons.shop_2_outlined,
-    'music': Icons.music_note_outlined,
-    'food': Icons.food_bank_outlined,
-    'photo': Icons.photo_camera_outlined,
-    'vendor': Icons.storefront_outlined,
-    'make': Icons.brush_outlined,
-    'mic': Icons.mic_outlined,
-    'event': Icons.event_outlined,
-    'decor': Icons.curtains_closed_outlined,
-    'hair': Icons.cut_outlined,
-  };
-
+  final String imagepath;
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/$service');
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        margin: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              iconsMap[icon] ?? Icons.error,
-              size: 30,
-              color: Theme.of(context).colorScheme.primary,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    PackageBrowser(service:service, imagePath: imagepath,), // Replace with your target screen
+              ),
+              
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width *
+                0.5, // Adjust height as needed
+            decoration: BoxDecoration(
+              color: stickerColor,
+              borderRadius: BorderRadius.circular(10),
             ),
-            Text(
-              service,
-              textScaler: const TextScaler.linear(0.5),
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image(
+                image: NetworkImage(imagepath),
+                fit: BoxFit.cover,
+              ),
             ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 8), // Add some space between image and text
+        Text(
+          service,
+          style: GoogleFonts.lateef(
+            fontSize: 20,
+          ),
+          //textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -125,15 +127,36 @@ class MyDrawer extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
-          const DrawerHeader(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            duration: Duration(seconds: 10),
-            curve: Curves.bounceInOut,
-            child: CircleAvatar(
-              radius: 150,
-              backgroundImage: AssetImage('assets\\img\\logo.png'),
+          //const Spacer(),
+          DrawerHeader(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            duration: const Duration(seconds: 10),
+            curve: Curves.decelerate,
+            child: Center(
+              child: ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary, // Primary Color
+                      accentColor, // Accent Color
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                  );
+                },
+                child: Text(
+                  'CelebrEase',
+                  style: GoogleFonts.merienda(
+                    fontSize: 40,
+                    color: Colors.white, // Use white or any contrasting color
+                  ),
+                ),
+              ),
             ),
           ),
+
           //sconst Divider(indent: 20,endIndent: 40,),
           /*DrawerTile(name: 'L O G I N',icon: const Icon(Icons.login_outlined),onTap: () {Navigator.pop(context);
           Navigator.pushNamed(context, '/log_in');} ,),*/
@@ -171,6 +194,17 @@ class MyDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/Membership');
             },
           ),
+          DrawerTile(
+            name: 'N O T I F I C A T I O N S',
+            icon: const Icon(
+              Icons.notifications_outlined,
+              //color: Color.fromRGBO(130, 3, 0, 1),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/Notifications');
+            },
+          ),
           const Spacer(),
           DrawerTile(
             name: 'L O G  O U T',
@@ -200,8 +234,8 @@ class DrawerTile extends StatelessWidget {
       title: Text(
         name,
         style: const TextStyle(
-          //color: Color.fromRGBO(130, 3, 0, 1),
-        ),
+            //color: Color.fromRGBO(130, 3, 0, 1),
+            ),
       ),
       onTap: onTap,
     );

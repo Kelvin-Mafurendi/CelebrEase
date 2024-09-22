@@ -1,8 +1,10 @@
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:maroro/main.dart';
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key});
+  final Map<String, dynamic> data;
+  const ProductCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -12,33 +14,38 @@ class ProductCard extends StatelessWidget {
         child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: profileCardColor,
                 borderRadius: BorderRadius.circular(10)),
-            width: 250,
-            //height: 200,
+            width: MediaQuery.of(context).size.width * 0.8,
+            //height: MediaQuery.of(context).size.width,
 
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Image(
-                  image: AssetImage('assets\\img\\pam.jpg'),
-                  fit: BoxFit.fill,
+                Image(
+                  image: NetworkImage(data['mainPicPath']!),
+                  fit: BoxFit.fitWidth,
+                  height: 200,
                 ),
-                const Text(
-                  'Package Name',
-                  style: TextStyle(fontWeight: FontWeight.w200),
+                Text(
+                  data['packageName']!,
+                  style: const TextStyle(fontWeight: FontWeight.w200),
                 ),
-                const Text(
-                  '(\$5/hour)',
-                  textScaler: TextScaler.linear(0.9),
-                  style: TextStyle(fontWeight: FontWeight.w300),
+                Text(
+                  '(${data['rate']!})',
+                  textScaler: const TextScaler.linear(0.9),
+                  style: const TextStyle(fontWeight: FontWeight.w300),
                 ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: Text(
-                      'Description of product. This the rhdhsdds ygfsdhd sau and so on and so on etc'),
+                    '${data['description']!}',
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
