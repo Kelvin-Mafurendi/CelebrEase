@@ -14,9 +14,9 @@ class ProductCard extends StatelessWidget {
         child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: profileCardColor,
+                color: stickerColor,
                 borderRadius: BorderRadius.circular(10)),
-            width: MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width * 0.7,
             //height: MediaQuery.of(context).size.width,
 
             child: Column(
@@ -51,27 +51,27 @@ class ProductCard extends StatelessWidget {
                   children: [
                     FilledButton(
                       onPressed: () {},
-                      style: ButtonStyle(
+                      style: const ButtonStyle(
                           backgroundColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.secondary)),
+                              primaryColor)),
                       child: const Icon(
                         FluentSystemIcons.ic_fluent_edit_regular,
                       ),
                     ),
                     FilledButton(
                       onPressed: () {},
-                      style: ButtonStyle(
+                      style: const ButtonStyle(
                           backgroundColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.secondary)),
+                              primaryColor)),
                       child: const Icon(
                         FluentSystemIcons.ic_fluent_eye_hide_regular,
                       ),
                     ),
                     FilledButton(
                       onPressed: () {},
-                      style: ButtonStyle(
+                      style: const ButtonStyle(
                           backgroundColor: WidgetStatePropertyAll(
-                              Theme.of(context).colorScheme.secondary)),
+                              primaryColor)),
                       child: const Icon(
                         FluentSystemIcons.ic_fluent_delete_regular,
                       ),

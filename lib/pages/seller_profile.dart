@@ -65,7 +65,27 @@ class _ProfileState extends State<Profile> {
 
               if (!snapshot1.data!.exists) {
                 //print('Document does not exist');
-                return const Text('Profile not found');
+                return ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary, // Primary Color
+                    accentColor, // Accent Color
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                );
+              },
+              child:  Text(
+                'CelebrEaser',
+                style: GoogleFonts.merienda(
+                  fontSize: 40,
+                  color: Colors.white, // Use white or any contrasting color
+                ),
+              ),
+            );
               }
               var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
               // Use null-aware operators and provide default values
@@ -104,7 +124,7 @@ class _ProfileState extends State<Profile> {
                         child: Text(
                           brandName != ''
                               ? brandName.toString().split(' ')[0]
-                              : 'User', // Display first name
+                              : 'CelebrEaser', // Display first name
                           textScaler: const TextScaler.linear(1.5),
                           textAlign: TextAlign.start,
                           style: GoogleFonts.merienda(
@@ -120,7 +140,7 @@ class _ProfileState extends State<Profile> {
                     height: 125,
                     padding: const EdgeInsets.only(left: 5),
                     decoration: BoxDecoration(
-                      color: profileCardColor,
+                      color: stickerColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(

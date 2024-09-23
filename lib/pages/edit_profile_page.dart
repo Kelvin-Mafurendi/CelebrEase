@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/modules/add_image.dart';
 import 'package:maroro/modules/mybutton.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditProfile extends StatefulWidget {
   final bool isFirstSetup;
@@ -22,6 +23,9 @@ class _EditProfileState extends State<EditProfile> {
   late TextEditingController startTimeController;
   late TextEditingController closeTimeController;
 
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<String> serviceCategories = [];
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +36,21 @@ class _EditProfileState extends State<EditProfile> {
     aboutController = TextEditingController(text: profileData['about'] ?? '');
     startTimeController = TextEditingController(text: profileData['startTime'] ?? '');
     closeTimeController = TextEditingController(text: profileData['endTime'] ?? '');
+    
+    getServiceCategories();
   }
+
+  Future<void> getServiceCategories() async {
+    try {
+      QuerySnapshot querySnapshot = await _firestore.collection('Services').get();
+      setState(() {
+        serviceCategories = querySnapshot.docs.map((doc) => doc.id).toList();
+      });
+    } catch (e) {
+      print('Error fetching service categories: $e');
+    }
+  }
+
 
   bool validateFields() {
     if (widget.isFirstSetup) {
@@ -129,26 +147,15 @@ class _EditProfileState extends State<EditProfile> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownMenu<String>(
-        initialSelection: categoryController.text,
+        initialSelection: categoryController.text.isNotEmpty ? categoryController.text : null,
         onSelected: (String? value) {
           setState(() {
             categoryController.text = value ?? '';
           });
         },
-        dropdownMenuEntries: const [
-          DropdownMenuEntry(value: 'Cakes', label: 'Cakes'),
-          DropdownMenuEntry(value: 'Venues', label: 'Venues'),
-          DropdownMenuEntry(value: 'Dressing', label: 'Dressing'),
-          DropdownMenuEntry(value: 'MC', label: 'MC'),
-          DropdownMenuEntry(value: 'Music', label: 'Music'),
-          DropdownMenuEntry(value: 'Food', label: 'Food'),
-          DropdownMenuEntry(value: 'Vendor', label: 'Vendor'),
-          DropdownMenuEntry(value: 'Decor', label: 'Decor'),
-          DropdownMenuEntry(value: 'Event Planning', label: 'Event Planning'),
-          DropdownMenuEntry(value: 'Cosmetics', label: 'Cosmetics'),
-          DropdownMenuEntry(value: 'Hair Dressing', label: 'Hair Dressing'),
-          DropdownMenuEntry(value: 'Photography', label: 'Photography'),
-        ],
+        dropdownMenuEntries: serviceCategories.map((String category) {
+          return DropdownMenuEntry(value: category, label: category);
+        }).toList(),
       ),
     );
   }

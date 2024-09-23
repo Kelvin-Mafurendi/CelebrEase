@@ -53,15 +53,15 @@ class _AddPackageState extends State<AddPackage> {
                 ],
               )),
           buildTextField(packageNameController, 'Package Name',
-              'Enter package name', MaxLengthEnforcement.none),
+              'Enter package name', MaxLengthEnforcement.none,),
           buildTextField(
               rateController,
               'Rate',
               'How much do you charge for this package e.g per hour',
-              MaxLengthEnforcement.none),
+              MaxLengthEnforcement.none,maxLength: 10),
           buildTextField(descriptionController, 'Description',
               'Describe your package or product', MaxLengthEnforcement.enforced,
-              maxLines: 10, maxLength: 100),
+              maxLines: 10, maxLength: 500),
           const Spacer(),
           Consumer<ChangeManager>(
             builder: (context, changeManager, child) {

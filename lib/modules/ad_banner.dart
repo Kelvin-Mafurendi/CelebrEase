@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:maroro/main.dart';
 
 class MyAdBanner extends StatefulWidget {
   const MyAdBanner({super.key});
@@ -43,7 +44,7 @@ class _MyAdBannerState extends State<MyAdBanner> {
   }
 
   void _startAutoSliding() {
-    _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
       if (bannerImages.isNotEmpty && mounted) {
         setState(() {
           _currentPage++;
@@ -81,11 +82,14 @@ class _MyAdBannerState extends State<MyAdBanner> {
               controller: _pageController,
               itemCount: bannerImages.length,
               itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    bannerImages[index],
-                    fit: BoxFit.fitWidth,
+                return Container(
+                  decoration: BoxDecoration(color: stickerColor,borderRadius: BorderRadius.circular(10)),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      bannerImages[index],
+                      fit: BoxFit.fitWidth,
+                    ),
                   ),
                 );
               },

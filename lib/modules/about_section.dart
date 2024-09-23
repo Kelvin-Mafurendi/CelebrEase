@@ -44,7 +44,19 @@ class _AboutSectionState extends State<AboutSection> {
 
         if (!snapshot1.data!.exists) {
           //print('Document does not exist');
-          return const Text('Profile not found');
+          return Row(
+            children: [
+              const Text('Profile not found'),
+              const Spacer(),
+              InkWell(onTap: () {
+                Navigator.pushNamed(context, '/editProfile');
+              },child: const Text('Setup Profile',style: TextStyle(
+                                fontWeight: FontWeight.w200,
+                                decoration: TextDecoration.underline,
+                              ),),)
+              
+            ],
+          );
         }
         var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
         // Use null-aware operators and provide default values

@@ -1,0 +1,182 @@
+import 'package:fluentui_icons/fluentui_icons.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:maroro/main.dart';
+import 'package:maroro/pages/seller_profile_view.dart';
+
+class PackageView extends StatefulWidget {
+  final String packageName;
+  final String rate;
+  final String description;
+  final String userId;
+  final String imagePath;
+
+  const PackageView(
+      {super.key,
+      required this.packageName,
+      required this.rate,
+      required this.description,
+      required this.userId,
+      required this.imagePath});
+
+  @override
+  State<PackageView> createState() => _PackageViewState();
+}
+
+class _PackageViewState extends State<PackageView> {
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      scrollDirection: Axis.vertical,
+      shrinkWrap: true,
+      slivers: [
+        SliverAppBar(
+          iconTheme: const IconThemeData(color: accentColor),
+          floating: true,
+          pinned: true,
+          stretch: true,
+          expandedHeight: 350, // Adjust this value as needed
+          flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              decoration: const BoxDecoration(color: secondaryColor),
+              child: Image.network(
+                widget.imagePath,
+                fit: BoxFit.cover,
+              ),
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.packageName,
+                    style: GoogleFonts.merienda(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w300,
+                        color: accentColor),
+                  ),
+                ),
+              ],
+            ),
+            centerTitle: true,
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(
+            height: 10,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              widget.description,
+              style: GoogleFonts.kalam(fontSize: 18),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(
+            height: 10,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              FilledButton(
+                  onPressed: () {},
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Book Now'),
+                  )),
+              FilledButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SellerProfileView(
+                          userId: widget.userId,
+                        ),
+                      ),
+                    );
+                  },
+                  style: const ButtonStyle(
+                      backgroundColor:
+                          WidgetStatePropertyAll(Colors.transparent)),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Browse Vendor',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Icon(
+                          CupertinoIcons.arrow_right,
+                          color: Colors.black,
+                        )
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.only(top: 8, left: 8, right: 8),
+            child: Divider(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Stack(
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    child: Card(
+                      color: const Color.fromARGB(255, 211, 208, 186),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Container(
+                        height: 100,
+                        //width: 150,
+                        padding: const EdgeInsets.all(20.0),
+                        child: Center(
+                          child: Text(
+                            widget.rate,
+                            textScaler: const TextScaler.linear(0.4),
+                            style: GoogleFonts.merienda(
+                              fontSize: 50,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Positioned(
+                      left: 37,
+                      bottom: 73,
+                      child: CircleAvatar(
+                        backgroundColor: backgroundColor,
+                        radius: 12,
+                      ))
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

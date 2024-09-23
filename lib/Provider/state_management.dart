@@ -262,7 +262,25 @@ class ChangeManager extends ChangeNotifier {
 
       _package['userId'] = _auth.currentUser!.uid.toString();
       _package['timeStamp'] = DateTime.now().toString();
+      
+    // Fetch user profile data
+    DocumentSnapshot userProfileDoc = await _fireStore
+        .collection('User Profiles')
+        .doc(_auth.currentUser?.uid)
+        .get();
 
+    if (userProfileDoc.exists) {
+      var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
+      String? category = userProfile?['category'] as String?;
+      if (category != null) {
+        _package['category'] = category;
+        print('Category set from user profile: $category');
+      } else {
+        print('Category not found in user profile');
+      }
+    } else {
+      print('User profile document does not exist');
+    }
       _package.removeWhere((key, value) => value == null || value == '');
 
       print('Prepared package data for upload: $_package');

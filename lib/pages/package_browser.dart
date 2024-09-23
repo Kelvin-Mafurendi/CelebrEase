@@ -1,10 +1,14 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print
 
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/ad_banner.dart';
+import 'package:maroro/pages/package_view.dart';
 
 class PackageBrowser extends StatefulWidget {
   final String service;
@@ -29,8 +33,10 @@ class _PackageBrowserState extends State<PackageBrowser> {
   Future<void> getPackages() async {
     EasyLoading.show(status: 'Loading packages...');
     try {
-      QuerySnapshot querySnapshot =
-          await _firestore.collection('Packages').get();
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('Packages')
+          .where('category', isEqualTo: widget.service)
+          .get();
       setState(() {
         packageList = querySnapshot.docs.map((doc) {
           return {
@@ -38,6 +44,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
             'description': doc['description'] as String,
             'rate': doc['rate'] as String,
             'imagePath': doc['mainPicPath'] as String,
+            'userId':doc['userId'] as String,
             // Add more fields as needed
           };
         }).toList();
@@ -101,43 +108,68 @@ class _PackageBrowserState extends State<PackageBrowser> {
               return Padding(
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                child: Card(
-                  color: secondaryColor,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: ListTile(
-                      titleAlignment: ListTileTitleAlignment.bottom,
-                      minTileHeight: 200,
-                      minVerticalPadding: 15,
-                      contentPadding: const EdgeInsets.all(8),
-                      //tileColor: accentColor,
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          '${packageList[index]['imagePath']}',
-                          width: 50,
-                          height: 150,
-                          fit: BoxFit.cover,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PackageView(
+                          packageName: packageList[index]['name'].toString(),
+                          imagePath: packageList[index]['imagePath'].toString(),
+                          rate:packageList[index]['rate'].toString(),
+                          userId:packageList[index]['userId'].toString(),
+                          description:packageList[index]['description'].toString(),
+
                         ),
                       ),
-                      title: Text(
-                        '${packageList[index]['name']}',
-                        style: GoogleFonts.lateef(
-                            fontWeight: FontWeight.bold, fontSize: 20),
-                      ),
-                      trailing: Text(
-                        '${packageList[index]['rate']}',
-                        style: GoogleFonts.lateef(fontSize: 15),
-                      ),
-                      subtitle: Text(
-                        '${packageList[index]['description']},',
-                        maxLines: 2,
-                        overflow: TextOverflow
-                            .ellipsis, //style: GoogleFonts.lateef(fontWeight: FontWeight.w300,fontSize: 18,),softWrap: true,
+                    );
+                  },
+                  child: Card(
+                    color: stickerColor,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: ListTile(
+                        titleAlignment: ListTileTitleAlignment.bottom,
+                        minTileHeight: 200,
+                        minVerticalPadding: 15,
+                        contentPadding: const EdgeInsets.all(8),
+                        //tileColor: accentColor,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            '${packageList[index]['imagePath']}',
+                            width: 50,
+                            height: 150,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          '${packageList[index]['name']}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lateef(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                        trailing: Text(
+                          '${packageList[index]['rate']}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lateef(fontSize: 15),
+                        ),
+                        subtitle: Text(
+                          '${packageList[index]['description']},',
+                          maxLines: 2,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w300,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textScaler: const TextScaler.linear(
+                              0.9), //style: GoogleFonts.lateef(fontWeight: FontWeight.w300,fontSize: 18,),softWrap: true,
+                        ),
                       ),
                     ),
                   ),
@@ -189,7 +221,16 @@ class _PackageBrowserState extends State<PackageBrowser> {
               ),
             ],
           ),
-        )
+        ),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+            child: MyAdBanner(),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: Spacer(),
+        ),
       ],
     );
   }

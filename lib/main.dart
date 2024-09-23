@@ -49,7 +49,7 @@ const accentColor = Color(0xFF8faf9b);
 const accentFgColor = Color(0xFF080a07);*/
   
 const textColor = Color(0xFF0d0506);
-const backgroundColor = Color(0xFFfcf8f8);
+const backgroundColor = Color(0xFFf4fcee);
 const primaryColor = Color(0xFFbb5355);
 const primaryFgColor = Color(0xFFfdf9f9);
 const secondaryColor = Color(0xFFcbd594);
