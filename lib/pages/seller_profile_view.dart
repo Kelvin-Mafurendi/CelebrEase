@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -6,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/featured_card.dart';
+import 'package:maroro/modules/product_card.dart';
 
 class SellerProfileView extends StatefulWidget {
   final String userId;
@@ -90,8 +92,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 stretch: true,
                 expandedHeight: 350, // Adjust this value as needed
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Image.network(
-                    imagePath!,
+                  background: CachedNetworkImage(
+                    imageUrl:imagePath!,
                     fit: BoxFit.cover,
                   ),
                   title: Row(
@@ -185,7 +187,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   child: Divider(
-                    color: profileCardColor,
+                    color: Colors.black12,
                   ),
                 ),
               ),
@@ -254,7 +256,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   child: Divider(
-                    color: profileCardColor,
+                    color: Colors.black12,
                   ),
                 ),
               ),
@@ -312,7 +314,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                               Map<String, dynamic> highlightData =
                                   highlights[index].data()
                                       as Map<String, dynamic>;
-                              return FeaturedCard(
+                              return ProductCard(
                                 data: highlightData,
                               );
                             }),
@@ -323,7 +325,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   child: Divider(
-                    color: profileCardColor,
+                    color: Colors.black12,
                   ),
                 ),
               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MyButton extends StatelessWidget {
-  final String todo;
+  final dynamic todo;
   final VoidCallback onTap;
 
   const MyButton({super.key, required this.onTap, required this.todo});
@@ -15,7 +15,7 @@ class MyButton extends StatelessWidget {
             minimumSize: WidgetStatePropertyAll(Size(300, 60)),
           ),
           onPressed: onTap,
-          child:  Text(todo)),
+          child:  Text(todo,style: const TextStyle(letterSpacing: 5),)),
     );
   }
 }

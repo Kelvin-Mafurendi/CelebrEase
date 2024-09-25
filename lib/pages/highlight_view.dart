@@ -6,38 +6,42 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/seller_profile_view.dart';
 
-class PackageView extends StatefulWidget {
+class HighlightView extends StatefulWidget {
   final String packageName;
   final String rate;
   final String description;
   final String userId;
   final String imagePath;
 
-  const PackageView(
+  const HighlightView(
       {super.key,
       required this.packageName,
       required this.rate,
       required this.description,
       required this.userId,
       required this.imagePath});
+  
 
   @override
-  State<PackageView> createState() => _PackageViewState();
+  State<HighlightView> createState() => _HighlightViewState();
+  
 }
 
-class _PackageViewState extends State<PackageView> {
-  bool isSelected = false;
-
-  updatePin() {
+class _HighlightViewState extends State<HighlightView> {
+  late int likes = 0;
+  late bool isSelected = false;
+  updateLikes(){
     setState(() {
-      if (isSelected == false) {
-        isSelected = true;
-      } else {
-        isSelected = false;
+      if(isSelected == false){
+         likes++;
+         isSelected =true;
+      }else{
+        likes --;
+        isSelected =false;
       }
     });
-  }
 
+  }
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -77,35 +81,39 @@ class _PackageViewState extends State<PackageView> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+            padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Positioned(
               top: 50,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Spacer(),
                   IconButton(
                       onPressed: () {
-                        updatePin();
+                        updateLikes();
                       },
                       isSelected: isSelected,
-                      selectedIcon: const Icon(
-                        FluentSystemIcons.ic_fluent_pin_filled,
-                        color: primaryColor,
+                      selectedIcon:  const Icon(
+                        FluentSystemIcons.ic_fluent_heart_filled,
                         size: 40,
+                        color: primaryColor,
+                        
                       ),
                       icon: const Icon(
-                        FluentSystemIcons.ic_fluent_pin_regular,
-                        color: primaryColor,
+                        FluentSystemIcons.ic_fluent_heart_regular,
                         size: 40,
-                      )),
-                  //SizedBox(width: 20,),
+                        color: primaryColor,
+                        
+                      ),),
+                  //const SizedBox(width: 5,),
+                   Text('$likes',style: GoogleFonts.lateef(fontSize: 15),)
                   //Icon(FluentSystemIcons.ic_fluent_heart_regular,size: 40,),
                 ],
               ),
             ),
           ),
         ),
+        
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -169,9 +177,7 @@ class _PackageViewState extends State<PackageView> {
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.only(top: 8, left: 8, right: 8),
-            child: Divider(
-              color: Colors.black12,
-            ),
+            child: Divider(color: Colors.black12,),
           ),
         ),
         SliverToBoxAdapter(

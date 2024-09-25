@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -77,8 +78,8 @@ class _PackageBrowserState extends State<PackageBrowser> {
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               decoration: const BoxDecoration(color: secondaryColor),
-              child: Image.network(
-                widget.imagePath,
+              child: CachedNetworkImage(
+                imageUrl:widget.imagePath,
                 fit: BoxFit.cover,
               ),
             ),
@@ -140,8 +141,8 @@ class _PackageBrowserState extends State<PackageBrowser> {
                         //tileColor: accentColor,
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            '${packageList[index]['imagePath']}',
+                          child: CachedNetworkImage(
+                            imageUrl:'${packageList[index]['imagePath']}',
                             width: 50,
                             height: 150,
                             fit: BoxFit.cover,

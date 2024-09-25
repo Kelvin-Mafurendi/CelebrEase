@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -86,10 +87,10 @@ class _MyAdBannerState extends State<MyAdBanner> {
                   decoration: BoxDecoration(color: stickerColor,borderRadius: BorderRadius.circular(10)),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      bannerImages[index],
-                      fit: BoxFit.fitWidth,
-                    ),
+                    child: CachedNetworkImage(imageUrl: bannerImages[index],
+                      fit: BoxFit.fitWidth,)
+                      
+                    
                   ),
                 );
               },

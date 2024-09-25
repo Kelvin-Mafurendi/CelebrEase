@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,6 +49,7 @@ class _MainscreenState extends State<Mainscreen> {
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
+       
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -115,12 +117,14 @@ class _MainscreenState extends State<Mainscreen> {
           ),
         ),
         Text(
-          serviceList.isNotEmpty?'Categories':'',
+          serviceList.isNotEmpty ? 'Categories' : '',
           textScaler: const TextScaler.linear(2),
           textAlign: TextAlign.center,
           style: GoogleFonts.merienda(),
         ),
-        const SizedBox(height: 10,),
+        const SizedBox(
+          height: 10,
+        ),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

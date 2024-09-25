@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/pages/highlight_view.dart';
 
 class FeaturedCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -9,8 +11,19 @@ class FeaturedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
-        
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HighlightView(
+              packageName: data['packageName'],
+              rate: data['rate'],
+              description: data['description'],
+              userId: data['userId'],
+              imagePath: data['mainPicPath'],
+            ),
+          ),
+        );
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -30,13 +43,13 @@ class FeaturedCard extends StatelessWidget {
                       topLeft: Radius.circular(4),
                       bottomLeft: Radius.circular(4),
                     ),
-                    child: Image.network(
-                      data['mainPicPath'] ?? '',
+                    child: CachedNetworkImage
+                    (
+                      imageUrl:data['mainPicPath'] ?? '',
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.error, size: 120),
+                      
                     ),
                   ),
                 ),
@@ -72,7 +85,9 @@ class FeaturedCard extends StatelessWidget {
                           data['description'] ?? 'N/A',
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontWeight: FontWeight.w400,),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
                     ],

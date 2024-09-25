@@ -185,10 +185,15 @@ class _ProfileState extends State<Profile> {
                                     size: 20,
                                   ),
                                   const SizedBox(width: 2),
-                                  Text(
-                                    location,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w400),
+                                  Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Expanded(
+                                      child: Text(
+                                        location,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w400),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -398,7 +403,7 @@ class _ProfileState extends State<Profile> {
               return ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: highlights.isNotEmpty
-                      ? MediaQuery.of(context).size.height * 0.55
+                      ? 145
                       : 10, // Constrain height to screen
                 ),
                 child: ListView.builder(
@@ -480,7 +485,7 @@ class _ProfileState extends State<Profile> {
               return ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: packages.isNotEmpty
-                      ? MediaQuery.of(context).size.height * 0.55
+                      ? 145
                       : 10, // Constrain height to screen
                 ),
                 child: ListView.builder(

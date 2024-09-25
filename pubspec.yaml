@@ -51,6 +51,10 @@ dependencies:
   video_player: ^2.5.1
   google_fonts: ^6.2.1
   cached_network_image: ^3.2.3
+  intl_phone_field: ^3.2.0
+  country_state_city_picker: ^1.2.8
+
+  
 
 dev_dependencies:
   flutter_test:

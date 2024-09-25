@@ -11,6 +11,7 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/firebase_options.dart';
 import 'package:maroro/pages/add_package.dart';
 import 'package:maroro/pages/bundles.dart';
+import 'package:maroro/pages/cart.dart';
 import 'package:maroro/pages/chats.dart';
 import 'package:maroro/pages/add_highlight.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
@@ -120,6 +121,7 @@ class MyApp extends StatelessWidget {
         '/SignUp': (context) => const SignUp(),
         '/Membership': (context) => const Membership(),
         '/notifications': (context) => const Notifications(),
+        '/cart': (context) => const Cart(),
         '/addPackage': (context) => const AddPackage(
               initialData: {},
             ),
