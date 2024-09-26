@@ -1,21 +1,73 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
-
-import 'dart:developer';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/ad_banner.dart';
 import 'package:maroro/pages/package_view.dart';
 
+class ServicePackageBrowser extends StatefulWidget {
+  final List<Map<String, String>> services;
+  final int initialIndex;
+
+  const ServicePackageBrowser({
+    Key? key,
+    required this.services,
+    required this.initialIndex,
+  }) : super(key: key);
+
+  @override
+  State<ServicePackageBrowser> createState() => _ServicePackageBrowserState();
+}
+
+class _ServicePackageBrowserState extends State<ServicePackageBrowser> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.services.length,
+        itemBuilder: (context, index) {
+          return PackageBrowser(
+            service: widget.services[index]['service']!,
+            imagePath: widget.services[index]['imagePath']!,
+          );
+        },
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+    );
+  }
+}
+
 class PackageBrowser extends StatefulWidget {
   final String service;
   final String imagePath;
-  const PackageBrowser(
-      {super.key, required this.service, required this.imagePath});
+
+  const PackageBrowser({
+    Key? key,
+    required this.service,
+    required this.imagePath,
+  }) : super(key: key);
 
   @override
   State<PackageBrowser> createState() => _PackageBrowserState();
@@ -32,7 +84,6 @@ class _PackageBrowserState extends State<PackageBrowser> {
   }
 
   Future<void> getPackages() async {
-    EasyLoading.show(status: 'Loading packages...');
     try {
       QuerySnapshot querySnapshot = await _firestore
           .collection('Packages')
@@ -45,21 +96,17 @@ class _PackageBrowserState extends State<PackageBrowser> {
             'description': doc['description'] as String,
             'rate': doc['rate'] as String,
             'imagePath': doc['mainPicPath'] as String,
-            'userId':doc['userId'] as String,
-            // Add more fields as needed
+            'userId': doc['userId'] as String,
           };
         }).toList();
       });
     } catch (e) {
       print('Error fetching packages: $e');
-      // Consider showing an error message to the user
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to load packages. Please try again.'),
         ),
       );
-    } finally {
-      EasyLoading.dismiss();
     }
   }
 
@@ -74,59 +121,54 @@ class _PackageBrowserState extends State<PackageBrowser> {
           floating: true,
           pinned: true,
           stretch: true,
-          expandedHeight: 350, // Adjust this value as needed
+          expandedHeight: 350,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
-              decoration: const BoxDecoration(color: secondaryColor),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.light
+                    ? secondaryColor
+                    : darkTheme.secondaryHeaderColor,
+              ),
               child: CachedNetworkImage(
-                imageUrl:widget.imagePath,
+                imageUrl: widget.imagePath,
                 fit: BoxFit.cover,
               ),
             ),
-            title: Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    widget.service,
-                    style: GoogleFonts.merienda(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w300,
-                        color: accentColor),
-                  ),
-                ],
+            title: Text(
+              widget.service,
+              style: GoogleFonts.merienda(
+                fontSize: 30,
+                fontWeight: FontWeight.w300,
+                color: accentColor,
               ),
             ),
             centerTitle: true,
           ),
         ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 10),
-        ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               return Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PackageView(
-                          packageName: packageList[index]['name'].toString(),
-                          imagePath: packageList[index]['imagePath'].toString(),
-                          rate:packageList[index]['rate'].toString(),
-                          userId:packageList[index]['userId'].toString(),
-                          description:packageList[index]['description'].toString(),
-
+                          packageName: packageList[index]['name']!,
+                          imagePath: packageList[index]['imagePath']!,
+                          rate: packageList[index]['rate']!,
+                          userId: packageList[index]['userId']!,
+                          description: packageList[index]['description']!,
                         ),
                       ),
                     );
                   },
                   child: Card(
-                    color: stickerColor,
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? stickerColor
+                        : stickerColorDark,
                     elevation: 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -138,38 +180,38 @@ class _PackageBrowserState extends State<PackageBrowser> {
                         minTileHeight: 200,
                         minVerticalPadding: 15,
                         contentPadding: const EdgeInsets.all(8),
-                        //tileColor: accentColor,
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: CachedNetworkImage(
-                            imageUrl:'${packageList[index]['imagePath']}',
+                            imageUrl: packageList[index]['imagePath']!,
                             width: 50,
                             height: 150,
                             fit: BoxFit.cover,
                           ),
                         ),
                         title: Text(
-                          '${packageList[index]['name']}',
+                          packageList[index]['name']!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.lateef(
-                              fontWeight: FontWeight.bold, fontSize: 20),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
                         trailing: Text(
-                          '${packageList[index]['rate']}',
+                          packageList[index]['rate']!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.lateef(fontSize: 15),
                         ),
                         subtitle: Text(
-                          '${packageList[index]['description']},',
+                          packageList[index]['description']!,
                           maxLines: 2,
                           style: const TextStyle(
                             fontWeight: FontWeight.w300,
                           ),
                           overflow: TextOverflow.ellipsis,
-                          textScaler: const TextScaler.linear(
-                              0.9), //style: GoogleFonts.lateef(fontWeight: FontWeight.w300,fontSize: 18,),softWrap: true,
+                          textScaler: const TextScaler.linear(0.9),
                         ),
                       ),
                     ),
@@ -180,57 +222,11 @@ class _PackageBrowserState extends State<PackageBrowser> {
             childCount: packageList.length,
           ),
         ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Can't find what you are looking for? Try,",
-                  textScaler: const TextScaler.linear(1.2),
-                  style: GoogleFonts.lateef(),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary, // Primary Color
-                      accentColor, // Accent Color
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(
-                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                  );
-                },
-                child: Text(
-                  'CeleBundles',
-                  style: GoogleFonts.merienda(
-                    fontSize: 40,
-                    color: Colors.white, // Use white or any contrasting color
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 15),
             child: MyAdBanner(),
           ),
-        ),
-        const SliverToBoxAdapter(
-          child: Spacer(),
         ),
       ],
     );

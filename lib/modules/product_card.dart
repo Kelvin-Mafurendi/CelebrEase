@@ -31,7 +31,7 @@ class ProductCard extends StatelessWidget {
           height: 120,
           child: Card(
             elevation: 4,
-            color: stickerColor,
+            color:Theme.of(context).brightness == Brightness.light? stickerColor:stickerColorDark,
             child: Stack(
               children: [
                 Positioned(

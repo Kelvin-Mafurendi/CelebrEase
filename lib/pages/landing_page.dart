@@ -23,7 +23,7 @@ class Home extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.black),
+                border: Border.all(color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Center(
@@ -57,7 +57,7 @@ class Home extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               'Are You Planning an Event?',
-              style: GoogleFonts.lateef(fontSize: 50, color: textColor),
+              style: GoogleFonts.lateef(fontSize: 50, ),
               textAlign: TextAlign.center,
             ),
           ),

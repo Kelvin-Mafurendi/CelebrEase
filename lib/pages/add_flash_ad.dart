@@ -1,62 +1,134 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:fluentui_icons/fluentui_icons.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
+import 'package:maroro/modules/add_flashAd_image.dart';
+import 'package:maroro/modules/add_highlight_images.dart';
+import 'package:maroro/modules/add_package_image.dart';
+import 'package:maroro/modules/flash_ad.dart';
+import 'package:maroro/modules/mybutton.dart';
+import 'package:provider/provider.dart';
 
-// ignore: must_be_immutable
-class AddFlashAd extends StatelessWidget {
-  AddFlashAd({super.key});
+class AddFlashAd extends StatefulWidget {
+  const AddFlashAd({super.key});
 
-  dynamic image;
+  @override
+  State<AddFlashAd> createState() => _AddFlashAdState();
+}
 
-  getImage(context) async {
-    FilePickerResult? result = await FilePicker.platform
-        .pickFiles(type: FileType.image, allowMultiple: false);
+class _AddFlashAdState extends State<AddFlashAd> {
+  late TextEditingController descriptionController;
+  late TextEditingController titleController;
 
-    if (result != null) {
-      image = result.files.first.bytes;
-      String imagePath = result.files.first.path!;
-      Provider.of<ChangeManager>(context, listen: false)
-          .setProfileImage(File(imagePath));
-    }
+  @override
+  void initState() {
+    super.initState();
+    final flashAd = Provider.of<ChangeManager>(context, listen: false).flashAd;
+
+    // Initialize controllers with null checks
+    descriptionController = TextEditingController(text: '');
+    titleController = TextEditingController(text: '');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ChangeManager>(
-      builder: (context, changeManager, child) {
-        File? image = changeManager.getProfileImage();
-        return Stack(
-          children: [
-            CircleAvatar(
-              backgroundImage: image != null ? FileImage(image) : null,
-              backgroundColor: Colors.grey[200],
-              minRadius: 100,
-              //child: const Text('data',textScaler: TextScaler.linear(5),style: TextStyle(color: Colors.white),),
-            ),
-            Positioned(
-              right: 100,
-              bottom: 5,
-              child: InkWell(
-                onTap: () => getImage(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    FluentSystemIcons.ic_fluent_camera_add_regular,
-                    color: Color.fromRGBO(255, 255, 255, 0.7),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    return Scaffold(
+      body: ListView(
+        scrollDirection: Axis.vertical,
+        children: [
+          Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 15),
+              child: Column(
+                children: [
+                  AddFlashadImage(),
+                  const SizedBox(height: 10),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Upload Flash Image'),
+                    ],
+                  )
+                ],
+              )),
+          buildTextField(
+            titleController,
+            'Title',
+            'Ad title..',
+            MaxLengthEnforcement.enforced,
+          ),
+          const Spacer(),
+          buildTextField(
+              descriptionController,
+              'Advert',
+              'Type your Ad Here...\nNote that FlashAds a CelebrEase exclusive advertisements which last for 24 hours on CelebrEase.',
+              MaxLengthEnforcement.enforced,
+              maxLines: 10,
+              maxLength: 500),
+          const Spacer(),
+          Consumer<ChangeManager>(
+            builder: (context, changeManager, child) {
+              return MyButton(
+                onTap: () async {
+                  try {
+                    Map<String, dynamic> updatedData = {};
+
+                    if (descriptionController.text.isNotEmpty) {
+                      updatedData['description'] = descriptionController.text;
+                    }
+                    if (titleController.text.isNotEmpty) {
+                      updatedData['title'] = titleController.text;
+                    }
+
+                    if (changeManager.getFlashImage() != null) {
+                      updatedData['mainPicPath'] =
+                          changeManager.getFlashImage()!.path;
+                    }
+
+                    changeManager.updateFlashAd(updatedData);
+                    Navigator.pop(context);
+                  } catch (e) {
+                    // ignore: avoid_print
+                    print('Error in AdFlashAd: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error updating FlashAd: $e')),
+                    );
+                  }
+                },
+                todo: 'Post',
+              );
+            },
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget buildTextField(TextEditingController controller, String label,
+      String hintText, MaxLengthEnforcement maxLengthEnforcement,
+      {int maxLines = 1, int? maxLength}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        maxLength: maxLength,
+        maxLengthEnforcement: maxLengthEnforcement,
+        decoration: InputDecoration(
+          hintText: hintText,
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        style: GoogleFonts.lateef(
+          fontSize: 22,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    descriptionController.dispose();
+    titleController.dispose();
+    super.dispose();
   }
 }

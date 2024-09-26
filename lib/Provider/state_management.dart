@@ -18,16 +18,40 @@ class ChangeManager extends ChangeNotifier {
   Map<String, dynamic> get profileData => _profileData;
   Map<String, dynamic> get highlightData => _highlight;
   Map<String, dynamic> get packageData => _package;
-  loadProfileData(Map<String, dynamic> newData) async {
-    newData.forEach((key, value) {
-      if (value != null) {
-        _profileData[key] = value;
+  Map<String, dynamic> get flashAd => _flashAd;
+  Future<void> loadProfiledata(Map<String, dynamic> newData, String userType) async {
+    EasyLoading.show();
+
+    try {
+      // Handle profile image update
+      if (newData['imagePath'] != null && newData['imagePath'] is File) {
+        String downloadUrl = await uploadProfileImageToStorage(newData['imagePath']);
+        newData['imagePath'] = downloadUrl;
       }
+
+      // Update only the fields that have changed
+      newData.forEach((key, value) {
+        if (value != null && value.toString().isNotEmpty) {
+          _profileData[key] = value;
+        }
+      });
+
+      _profileData['timeStamp'] = DateTime.now().toString();
+
+      // Upload the modified _profileData to the database
+      await updateProfileDataInDatabase(_profileData, userType);
+
       notifyListeners();
-    });
+    } catch (e) {
+      print('Error updating profile: $e');
+      // Handle error (e.g., show error message to user)
+    } finally {
+      EasyLoading.dismiss();
+    }
   }
 
-  void changeProfiledata(Map<String, dynamic> newData,String userType) async {
+
+  void changeProfiledata(Map<String, dynamic> newData, String userType) async {
     EasyLoading.show();
 
     // Check if there's an image to upload
@@ -48,7 +72,7 @@ class ChangeManager extends ChangeNotifier {
     _profileData['userType'] = userType;
 
     // Upload the modified _profileData to the database
-    await uploadProfileDataToDatabase(_profileData,userType).whenComplete(() {
+    await uploadProfileDataToDatabase(_profileData, userType).whenComplete(() {
       EasyLoading.dismiss();
     });
 
@@ -81,11 +105,18 @@ class ChangeManager extends ChangeNotifier {
     return downloadLink;
   }
 
-  uploadProfileDataToDatabase(Map<String, dynamic> data,String userType) async {
+  Future<void> updateProfileDataInDatabase(
+      Map<String, dynamic> data, String userType) async {
     await _fireStore
         .collection(userType)
-        .doc(_profileData['userId'])
-        .set(data); //use a userid instead of email adress, more ethical
+        .doc(_auth.currentUser!.uid)
+        .update(data);
+  }
+
+  // This method remains unchanged for new user signups
+  Future<void> uploadProfileDataToDatabase(
+      Map<String, dynamic> data, String userType) async {
+    await _fireStore.collection(userType).doc(_auth.currentUser!.uid).set(data);
   }
 
   ///Working with featured products
@@ -254,25 +285,25 @@ class ChangeManager extends ChangeNotifier {
 
       _package['userId'] = _auth.currentUser!.uid.toString();
       _package['timeStamp'] = DateTime.now().toString();
-      
-    // Fetch user profile data
-    DocumentSnapshot userProfileDoc = await _fireStore
-        .collection('Vendors')
-        .doc(_auth.currentUser?.uid)
-        .get();
 
-    if (userProfileDoc.exists) {
-      var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
-      String? category = userProfile?['category'] as String?;
-      if (category != null) {
-        _package['category'] = category;
-        print('Category set from user profile: $category');
+      // Fetch user profile data
+      DocumentSnapshot userProfileDoc = await _fireStore
+          .collection('Vendors')
+          .doc(_auth.currentUser?.uid)
+          .get();
+
+      if (userProfileDoc.exists) {
+        var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
+        String? category = userProfile?['category'] as String?;
+        if (category != null) {
+          _package['category'] = category;
+          print('Category set from user profile: $category');
+        } else {
+          print('Category not found in user profile');
+        }
       } else {
-        print('Category not found in user profile');
+        print('User profile document does not exist');
       }
-    } else {
-      print('User profile document does not exist');
-    }
       _package.removeWhere((key, value) => value == null || value == '');
 
       print('Prepared package data for upload: $_package');
@@ -324,6 +355,108 @@ class ChangeManager extends ChangeNotifier {
   File? getPackageImage() {
     return _package['mainPicPath'] != null
         ? File(_package['mainPicPath'])
+        : null;
+  }
+
+
+
+
+  //Package handling
+  final Map<String, dynamic> _flashAd = {
+  };
+
+  //updating featured products
+  void updateFlashAd(Map<String, dynamic> newData) async {
+    EasyLoading.show();
+    try {
+      print('Starting package update with data: $newData');
+
+      if (newData['mainPicPath'] != null) {
+        print('Uploading package image');
+        newData['mainPicPath'] =
+            await uploadFlashImageToStorage(File(newData['mainPicPath']));
+        print('Image uploaded successfully: ${newData['mainPicPath']}');
+      }
+
+      newData.forEach((key, value) {
+        if (value != null) {
+          _flashAd[key] = value;
+        }
+      });
+
+      _flashAd['userId'] = _auth.currentUser!.uid.toString();
+      _flashAd['timeStamp'] = DateTime.now().toString();
+
+      // Fetch user profile data
+      DocumentSnapshot userProfileDoc = await _fireStore
+          .collection('Vendors')
+          .doc(_auth.currentUser?.uid)
+          .get();
+
+      if (userProfileDoc.exists) {
+        var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
+        String? category = userProfile?['category'] as String?;
+        
+        if (category != null) {
+          _flashAd['category'] = category;
+          print('Category set from user profile: $category');
+        } else {
+          print('Category not found in user profile');
+        }
+      } else {
+        print('User profile document does not exist');
+      }
+      _flashAd.removeWhere((key, value) => value == null || value == '');
+
+      print('Prepared package data for upload: $_flashAd');
+
+      // Upload to database
+      await uploadFlashDataToDatabase(_flashAd);
+      print('Package data uploaded successfully');
+
+      notifyListeners();
+      print('Notified listeners of changes');
+    } catch (e, stackTrace) {
+      print('Error updating package: $e');
+      print('Stack trace: $stackTrace');
+      // Rethrow the error so it can be caught in the UI
+      rethrow;
+    } finally {
+      EasyLoading.dismiss();
+    }
+  }
+
+  uploadFlashImageToStorage(File image) async {
+    Reference ref = _firebaseStorage
+        .ref()
+        .child('FlashAdImages')
+        .child(path.basename(image.path));
+    UploadTask uploadTask = ref.putData(image.readAsBytesSync());
+    TaskSnapshot taskSnapshot = await uploadTask;
+    String downloadLink = await taskSnapshot.ref.getDownloadURL();
+    return downloadLink;
+  }
+
+  Future<void> uploadFlashDataToDatabase(Map<String, dynamic> data) async {
+    try {
+      print('Attempting to upload package data: $data');
+      await _fireStore.collection('FlashAds').doc().set(data);
+      print('Package data uploaded successfully');
+    } catch (e, stackTrace) {
+      print('Error in uploadPackageDataToDatabase: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  void setFlashImage(File image) async {
+    _flashAd['mainPicPath'] = image.path;
+    notifyListeners();
+  }
+
+  File? getFlashImage() {
+    return _flashAd['mainPicPath'] != null
+        ? File(_flashAd['mainPicPath'])
         : null;
   }
 }

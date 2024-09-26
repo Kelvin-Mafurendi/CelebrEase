@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:maroro/main.dart';
 import 'package:maroro/modules/ad_banner.dart';
 import 'package:maroro/modules/flash_ad.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
+import 'package:maroro/pages/flash_ad_view.dart';
+import 'package:maroro/pages/package_browser.dart';
 
 class Mainscreen extends StatefulWidget {
   const Mainscreen({super.key});
@@ -17,7 +20,7 @@ class Mainscreen extends StatefulWidget {
 
 class _MainscreenState extends State<Mainscreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final Map<String, String> serviceList = {}; // Changed to Map<String, String>
+  List<Map<String, String>> services = [];
 
   @override
   void initState() {
@@ -26,21 +29,15 @@ class _MainscreenState extends State<Mainscreen> {
   }
 
   Future<void> getServices() async {
-    EasyLoading.show();
-    try {
-      QuerySnapshot querySnapshot =
-          await _firestore.collection('Services').get();
-      setState(() {
-        serviceList.clear(); // Clear existing data before adding new
-        for (var doc in querySnapshot.docs) {
-          serviceList[doc.id] = doc['imagePath'] as String;
-        }
-      });
-    } catch (e) {
-      print('Error fetching services: $e');
-    } finally {
-      EasyLoading.dismiss();
-    }
+    QuerySnapshot querySnapshot = await _firestore.collection('Services').get();
+    setState(() {
+      services = querySnapshot.docs.map((doc) {
+        return {
+          'service': doc.id,
+          'imagePath': doc['imagePath'] as String,
+        };
+      }).toList();
+    });
   }
 
   TextEditingController locationController = TextEditingController();
@@ -49,7 +46,6 @@ class _MainscreenState extends State<Mainscreen> {
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
-       
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -117,7 +113,7 @@ class _MainscreenState extends State<Mainscreen> {
           ),
         ),
         Text(
-          serviceList.isNotEmpty ? 'Categories' : '',
+          services.isNotEmpty ? 'Categories' : '',
           textScaler: const TextScaler.linear(2),
           textAlign: TextAlign.center,
           style: GoogleFonts.merienda(),
@@ -128,7 +124,7 @@ class _MainscreenState extends State<Mainscreen> {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: serviceList.length,
+          itemCount: services.length,
           padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -137,16 +133,29 @@ class _MainscreenState extends State<Mainscreen> {
             childAspectRatio: 0.7,
           ),
           itemBuilder: (context, index) {
-            String serviceName = serviceList.keys.elementAt(index);
-            String imagePath = serviceList[serviceName]!;
-            return Sticker(
-              service: serviceName,
-              imagepath: imagePath,
+            String serviceName = services[index]['service']!;
+            String imagePath = services[index]['imagePath']!;
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ServicePackageBrowser(
+                      services: services,
+                      initialIndex: index,
+                    ),
+                  ),
+                );
+              },
+              child: Sticker(
+                service: serviceName,
+                imagepath: imagePath,
+              ),
             );
           },
         ),
         Text(
-          'FlashAds',
+          'FlashAds\u2122',
           textScaler: const TextScaler.linear(2),
           textAlign: TextAlign.center,
           style: GoogleFonts.merienda(),
@@ -154,25 +163,85 @@ class _MainscreenState extends State<Mainscreen> {
         const SizedBox(
           height: 10,
         ),
-        const SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-              FlashAd(),
-            ],
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('FlashAds').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text('Something went wrong');
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Text('No FlashAds available');
+              }
+
+              final now = DateTime.now();
+              final activeAds = snapshot.data!.docs.where((doc) {
+                final adData = doc.data() as Map<String, dynamic>;
+                final timestamp = adData['timeStamp'] as String;
+                final adDateTime = DateTime.parse(timestamp);
+                return now.difference(adDateTime).inHours < 24;
+              }).toList();
+
+              if (activeAds.isEmpty) {
+                return const Text('No active FlashAds at the moment');
+              }
+
+              return SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: activeAds.length,
+                  itemBuilder: (context, index) {
+                    var adData =
+                        activeAds[index].data() as Map<String, dynamic>;
+                    return Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FlashAdView(
+                                ads: activeAds,
+                                initialIndex: index,
+                              ),
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          minRadius: 100,
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? stickerColor
+                                  : stickerColorDark,
+                          backgroundImage:
+                              CachedNetworkImageProvider(adData['mainPicPath']),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 }
+
+/*ListTile(
+                      title: Text(adData['title'] ?? 'No Title'),
+                      subtitle: Text(adData['description'] ?? 'No Description'),
+                      leading: const Icon(Icons.ad_units),
+                    ), */

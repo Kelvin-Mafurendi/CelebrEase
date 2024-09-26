@@ -152,21 +152,21 @@ class _HighlightViewState extends State<HighlightView> {
                   style: const ButtonStyle(
                       backgroundColor:
                           WidgetStatePropertyAll(Colors.transparent)),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
+                  child:  Padding(
+                    padding: const EdgeInsets.all(8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Visit Vendor',
-                          style: TextStyle(color: Colors.black),
+                          style: TextStyle(color:Theme.of(context).brightness==Brightness.light? Colors.black:Colors.white),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           width: 10,
                         ),
                         Icon(
                           CupertinoIcons.arrow_right,
-                          color: Colors.black,
+                          color:Theme.of(context).brightness == Brightness.light? Colors.black:Colors.white,
                         )
                       ],
                     ),
@@ -190,7 +190,7 @@ class _HighlightViewState extends State<HighlightView> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     child: Card(
-                      color: const Color.fromARGB(255, 211, 208, 186),
+                      color: Theme.of(context).brightness ==Brightness.light? const Color.fromARGB(255, 211, 208, 186):stickerColorDark,
                       elevation: 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -211,11 +211,11 @@ class _HighlightViewState extends State<HighlightView> {
                       ),
                     ),
                   ),
-                  const Positioned(
+                   Positioned(
                       left: 37,
                       bottom: 73,
                       child: CircleAvatar(
-                        backgroundColor: backgroundColor,
+                        backgroundColor:Theme.of(context).brightness == Brightness.light? backgroundColor:Colors.black,
                         radius: 12,
                       ))
                 ],

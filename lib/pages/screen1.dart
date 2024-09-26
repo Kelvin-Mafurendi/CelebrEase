@@ -74,7 +74,7 @@ class _Screen1State extends State<Screen1> {
         ) ?? false;
       },
       child: Scaffold(
-        floatingActionButton:widget.userType == 'Customers' ?Positioned(bottom: 10,right: 10,child: FloatingActionButton(onPressed: (){Navigator.pushNamed(context, '/cart');},child: const Icon(Icons.shopping_cart_outlined),)):null,
+        floatingActionButton:widget.userType == 'Customers' ?Positioned(top: 10,right: 10,child: FloatingActionButton(onPressed: (){Navigator.pushNamed(context, '/cart');},child: const Icon(Icons.shopping_cart_outlined),)):null,
         drawer: selectedIndex == 0? const MyDrawer():null,
         appBar:selectedIndex == 0? const EventAppBar(title: ''):null,
         bottomNavigationBar: BottomNavigationBar(

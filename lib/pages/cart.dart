@@ -14,7 +14,7 @@ class _CartState extends State<Cart> {
     return ListView(
       scrollDirection: Axis.vertical,
       children:  [
-        const Spacer(),
+        const SizedBox(height: 500,),
         Center(child: Text('Your Shopping cart is empty.',style: GoogleFonts.lateef(fontSize: 20),),),
         Padding(
           padding:  EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.2),

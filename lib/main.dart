@@ -27,10 +27,6 @@ import 'package:maroro/pages/settings.dart';
 import 'package:maroro/pages/trends.dart';
 import 'package:provider/provider.dart';
 
-
-
-
-
 /*const textColor = Color(0xFF090609);
 const backgroundColor = Color(0xFFf4fcee);
 const primaryColor = Color(0xFFa265a2);
@@ -38,7 +34,7 @@ const primaryFgColor = Color(0xFF090609);
 const secondaryColor = Color(0xFFa0c6a7);
 const secondaryFgColor = Color(0xFF090609);
 const accentColor = Color(0xFF8cb1ba);
-const accentFgColor = Color(0xFF090609);*///colour schem2
+const accentFgColor = Color(0xFF090609);*/ // colour schem2
   
 /*const textColor = Color(0xFF080a07);
 const backgroundColor = Color(0xFFf4fcee);
@@ -48,7 +44,7 @@ const secondaryColor = Color(0xFFb1c7b4);
 const secondaryFgColor = Color(0xFF080a07);
 const accentColor = Color(0xFF8faf9b);
 const accentFgColor = Color(0xFF080a07);*/
-  
+
 const textColor = Color(0xFF0d0506);
 const backgroundColor = Color(0xFFf4fcee);
 const primaryColor = Color(0xFFbb5355);
@@ -59,7 +55,10 @@ const accentColor = Color(0xFF95c771);
 const accentFgColor = Color(0xFF0d0506);
 const stickerColor = Color(0xFFF3F1E4);
 const profileCardColor = Color(0xFFEFD7D7);
-  
+const stickerColorDark= Color(0xFF4A4743); // A dark taupe shade that complements the background
+const profileCardColorDark = Color(0xFF5D4B4B); // A deep muted red that keeps a subtle link to the original light pink
+
+
 const colorScheme = ColorScheme(
   brightness: Brightness.light,
   background: backgroundColor,
@@ -75,6 +74,32 @@ const colorScheme = ColorScheme(
   error: Brightness.light == Brightness.light ? Color(0xffB3261E) : Color(0xffF2B8B5),
   onError: Brightness.light == Brightness.light ? Color(0xffFFFFFF) : Color(0xff601410),
 );
+
+// Define the dark theme here
+ThemeData darkTheme = ThemeData(
+  brightness: Brightness.dark,
+  colorScheme: const ColorScheme(
+    brightness: Brightness.dark,
+    background: Color(0xFF070303),
+    onBackground: Color(0xFFf9f0f1),
+    primary: Color(0xFFab4446),
+    onPrimary: Color(0xFFf9f0f1),
+    secondary: Color(0xFF636a29),
+    onSecondary: Color(0xFFf9f0f1),
+    tertiary: Color(0xFF5c8e39),
+    onTertiary: Color(0xFF070303),
+    surface: Color(0xFF070303),
+    onSurface: Color(0xFFf9f0f1),
+    error: Color(0xffF2B8B5),
+    onError: Color(0xff601410),
+  ),
+  scaffoldBackgroundColor: const Color(0xFF070303),
+ 
+  cardColor: const Color(0xFFEFD7D7),  // For profile card color
+  //accentColor: const Color(0xFF5c8e39),
+  //errorColor: const Color(0xffF2B8B5),
+);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -100,41 +125,36 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        //primaryColor: const Color(0xFF1D2E4C), // Orange
-        scaffoldBackgroundColor: backgroundColor, // Sage
-        //navigationDrawerTheme: const NavigationDrawerThemeData(indicatorColor: primaryColor,iconTheme: WidgetStatePropertyAll(IconThemeData(color: primaryColor))),
+        scaffoldBackgroundColor: backgroundColor,
         colorScheme: colorScheme,
       ),
-      home: AuthGate(userType: '',),
+      darkTheme: darkTheme,  // Assign the dark theme here
+      themeMode: ThemeMode.system,  // Switch between light/dark based on system settings
+      home: AuthGate(userType: ''),
       builder: EasyLoading.init(),
       routes: {
         '/main': (context) => const Mainscreen(),
-        '/first': (context) => const Screen1(userType: '',),
+        '/first': (context) => const Screen1(userType: ''),
         '/Events': (context) => const Events(),
         '/Chats': (context) => const Chats(),
         '/Trending': (context) => const Trending(),
-        '/Profile': (context) => const Profile(userType: '',),
+        '/Profile': (context) => const Profile(userType: ''),
         '/Settings': (context) => const Settings(),
         '/Bundles': (context) => const Bundles(),
         '/my_events': (context) => const MyEvents(),
         '/log_in': (context) => const LogIn(),
-        '/SignUp': (context) =>const SignUp(),
+        '/SignUp': (context) => const SignUp(),
         '/Membership': (context) => const Membership(),
         '/notifications': (context) => const Notifications(),
         '/cart': (context) => const Cart(),
-        '/addPackage': (context) => const AddPackage(
-              initialData: {},
-            ),
-        '/addhighlight': (context) => const AddHighlight(
-              initialData: {},
-            ),
+        '/addPackage': (context) => const AddPackage(initialData: {}),
+        '/addhighlight': (context) => const AddHighlight(initialData: {}),
         '/editProfile': (context) => EditProfile(
-              isFirstSetup: Provider.of<ChangeManager>(context, listen: false)
-                      .profileData['brandName']
-                      ?.isEmpty ??
-                  true,
-              initialData: const {},
-            ),
+          isFirstSetup: Provider.of<ChangeManager>(context, listen: false)
+              .profileData['brandName']
+              ?.isEmpty ?? true,
+          initialData: const {}, userType: '',
+        ),
       },
     );
   }

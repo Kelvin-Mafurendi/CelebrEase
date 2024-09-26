@@ -122,7 +122,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Card(
-                    color: stickerColor,
+                    color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Column(
@@ -364,14 +364,14 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                             children: [
                               Text(
                                 'Chat Now',
-                                style: TextStyle(color: Colors.black),
+                               
                               ),
                               SizedBox(
                                 width: 10,
                               ),
                               Icon(
                                 CupertinoIcons.arrow_right,
-                                color: Colors.black,
+                              
                               )
                             ],
                           ),

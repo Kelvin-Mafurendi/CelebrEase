@@ -75,7 +75,7 @@ class _MyAdBannerState extends State<MyAdBanner> {
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.width * 0.5,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
         borderRadius: BorderRadius.circular(10),
       ),
       child: bannerImages.isNotEmpty
@@ -84,7 +84,7 @@ class _MyAdBannerState extends State<MyAdBanner> {
               itemCount: bannerImages.length,
               itemBuilder: (context, index) {
                 return Container(
-                  decoration: BoxDecoration(color: stickerColor,borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,borderRadius: BorderRadius.circular(10)),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: CachedNetworkImage(imageUrl: bannerImages[index],

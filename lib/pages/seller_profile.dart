@@ -10,6 +10,7 @@ import 'package:maroro/main.dart';
 import 'package:maroro/modules/about_section.dart';
 import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
+import 'package:maroro/pages/add_flash_ad.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
 import 'package:provider/provider.dart';
 
@@ -142,7 +143,7 @@ class _ProfileState extends State<Profile> {
                     width: MediaQuery.of(context).size.width,
                     padding: const EdgeInsets.only(left: 5),
                     decoration: BoxDecoration(
-                      color: stickerColor,
+                      color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -297,7 +298,7 @@ class _ProfileState extends State<Profile> {
                                   MaterialPageRoute(
                                       builder: (context) => EditProfile(
                                             isFirstSetup: brandName.isEmpty,
-                                            initialData: const {}, // Use this condition to determine if it's the first setup
+                                            initialData: const {}, userType: userType, // Use this condition to determine if it's the first setup
                                           )));
                             },
                             child: Text(
@@ -338,10 +339,10 @@ class _ProfileState extends State<Profile> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               FilledButton(
-                onPressed: () {},
+                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>const AddFlashAd()));},
                 style: const ButtonStyle(),
                 child: const Text(
-                  'Post a FlashAd',
+                  'Post a FlashAd\u2122',
                   style: TextStyle(),
                 ),
               ),

@@ -52,31 +52,19 @@ class Sticker extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    PackageBrowser(service:service, imagePath: imagepath,), // Replace with your target screen
-              ),
-              
-            );
-          },
-          child: Container(
-            width: double.infinity,
-            height: MediaQuery.of(context).size.width *
-                0.5, // Adjust height as needed
-            decoration: BoxDecoration(
-              color: stickerColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                fit: BoxFit.cover, imageUrl: imagepath,)
-              
-            ),
+        Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.width *
+              0.5, // Adjust height as needed
+          decoration: BoxDecoration(
+            color:Theme.of(context).brightness == Brightness.light? stickerColor:stickerColorDark,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: CachedNetworkImage(
+              fit: BoxFit.cover, imageUrl: imagepath,)
+            
           ),
         ),
         const SizedBox(height: 8), // Add some space between image and text
