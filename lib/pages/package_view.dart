@@ -54,14 +54,14 @@ class _PackageViewState extends State<PackageView> {
             background: Container(
               decoration: const BoxDecoration(color: secondaryColor),
               child: CachedNetworkImage(
-                imageUrl:widget.imagePath,
+                imageUrl: widget.imagePath,
                 fit: BoxFit.cover,
               ),
             ),
             title: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                Flexible(
                   child: Text(
                     widget.packageName,
                     style: GoogleFonts.merienda(

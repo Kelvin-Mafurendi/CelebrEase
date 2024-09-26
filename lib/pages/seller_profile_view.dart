@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -25,7 +26,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
     //final String userId = _auth.currentUser!.uid;
     return StreamBuilder<DocumentSnapshot>(
         stream: _firestore
-            .collection('User Profiles')
+            .collection('Vendors')
             .doc(widget.userId)
             .snapshots(),
         builder: (context, snapshot1) {
@@ -73,13 +74,13 @@ class _SellerProfileViewState extends State<SellerProfileView> {
           // Use null-aware operators and provide default values
           String? imagePath = userProfile?['imagePath'] as String?;
           String brandName =
-              userProfile?['brandName'] as String? ?? 'Brand Name';
+              userProfile?['business name'] as String? ?? 'Brand Name';
           String location = userProfile?['location'] as String? ?? 'Location';
           String category = userProfile?['category'] as String? ?? 'Category';
           String startTime =
               userProfile?['startTime'] as String? ?? 'Start Time';
           String endTime = userProfile?['endTime'] as String? ?? 'End Time';
-          String about = userProfile?['about'] as String? ?? 'About';
+          String about = userProfile?['business description'] as String? ?? 'About';
           //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
           return CustomScrollView(
             scrollDirection: Axis.vertical,
@@ -93,18 +94,20 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 expandedHeight: 350, // Adjust this value as needed
                 flexibleSpace: FlexibleSpaceBar(
                   background: CachedNetworkImage(
-                    imageUrl:imagePath!,
+                    imageUrl: imagePath!,
                     fit: BoxFit.cover,
                   ),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        brandName,
-                        style: GoogleFonts.merienda(
-                            color: accentColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30),
+                      Flexible(
+                        child: Text(
+                          brandName,
+                          style: GoogleFonts.merienda(
+                              color: accentColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 30),
+                        ),
                       ),
                     ],
                   ),
@@ -120,39 +123,47 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                   padding: const EdgeInsets.all(8.0),
                   child: Card(
                     color: stickerColor,
-                    child: Container(
+                    child: Padding(
                       padding: const EdgeInsets.all(8),
-                      height: 100,
                       child: Column(
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Location:',
-                                style: GoogleFonts.lateef(
-                                    fontSize: 25, fontWeight: FontWeight.w100),
-                              ),
-                              Text(
-                                location,
-                                style: GoogleFonts.lateef(
-                                  fontSize: 25,
+                              const Icon(
+                                  FluentSystemIcons.ic_fluent_location_regular),
+                              Flexible(
+                                child: Text(
+                                  location,
+                                  style: GoogleFonts.lateef(
+                                    fontSize: 25,
+                                  ),
+                                  //overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
+                          const SizedBox(
+                              height: 10), // Add some spacing between rows
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Business Hours:',
-                                style: GoogleFonts.lateef(
-                                    fontSize: 25, fontWeight: FontWeight.w100),
+                              Flexible(
+                                child: Text(
+                                  'Business Hours:',
+                                  style: GoogleFonts.lateef(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.w100),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              Text(
-                                '$startTime - $endTime',
-                                style: GoogleFonts.lateef(
-                                  fontSize: 25,
+                              Flexible(
+                                child: Text(
+                                  '$startTime - $endTime',
+                                  style: GoogleFonts.lateef(
+                                    fontSize: 25,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

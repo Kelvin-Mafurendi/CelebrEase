@@ -1,8 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:country_state_city_picker/country_state_city_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
@@ -12,6 +11,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:maroro/Auth/auth_service.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/add_image.dart';
 import 'package:maroro/modules/mybutton.dart';
 import 'package:provider/provider.dart';
 
@@ -33,6 +33,31 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController surnameController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
+  final TextEditingController businessNameController = TextEditingController();
+  final TextEditingController businessDescriptionController =
+      TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController aboutController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
+  String? selectedStartTime;
+  String? selectedCloseTime;
+  String? countryValue;
+  String? stateValue;
+  String? cityValue;
+  String userType = 'Customers';
+  List<String> serviceCategories = [];
+  Future<void> getServiceCategories() async {
+    try {
+      QuerySnapshot querySnapshot =
+          await _firestore.collection('Services').get();
+      setState(() {
+        serviceCategories = querySnapshot.docs.map((doc) => doc.id).toList();
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error fetching service categories: $e');
+    }
+  }
 
   Future<void> register(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
@@ -43,14 +68,33 @@ class _SignUpState extends State<SignUp> {
             await isFieldUnique('phone number', phoneNumberController.text)) {
           UserCredential cred = await authService.signUpwithEmailPassword(
               emailController.text, passwordController.text);
-          await _firestore.collection('buyers').doc(cred.user!.uid).set({
+
+          // Create a new document in the 'Vendors' or 'Customers' collection
+          Map<String, dynamic> userData = {
             'name': nameController.text,
             'surname': surnameController.text,
             'phone number': phoneNumberController.text,
             'username': usernameController.text,
+            'location': '$cityValue, $stateValue, $countryValue',
             'email': emailController.text,
-            'buyer id': cred.user!.uid,
-          }).whenComplete(() {
+            'userId': cred.user!.uid,
+          };
+
+          // Add additional fields for vendors
+          if (userType == 'Vendors') {
+            userData.addAll({
+              'business name': businessNameController.text,
+              'business description':aboutController.text,
+              'location': '$cityValue, $stateValue, $countryValue',
+              'category': categoryController.text,
+              'startTime': selectedStartTime,
+              'endTime': selectedCloseTime,
+              'address':addressController.text,
+             
+            });
+          }
+
+          Provider.of<ChangeManager>(context,listen: false).changeProfiledata(userData,userType); 
             setState(() {
               _formKey.currentState!.reset();
               emailController.clear();
@@ -60,49 +104,63 @@ class _SignUpState extends State<SignUp> {
               surnameController.clear();
               usernameController.clear();
               phoneNumberController.clear();
+              businessNameController.clear();
+              //businessDescriptionController.clear();
+              addressController.clear();
+              aboutController.clear();
+              categoryController.clear();
+              selectedStartTime = null;
+              selectedCloseTime = null;
+              countryValue = null;
+              stateValue = null;
+              cityValue = null;
             });
-          });
+          
 
           showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                    backgroundColor: backgroundColor,
-                    icon: const Icon(
-                      FluentSystemIcons.ic_fluent_checkmark_circle_regular,
-                      size: 100,
-                    ),
-                    title: Text(
-                      'Congratualations!\n You can now sign in.',
-                      style: GoogleFonts.lateef(),
-                    ),
-                    actions: [
-                      TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/log_in');
-                          },
-                          child: const Text('Sign In'))
-                    ],
-                  ));
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: backgroundColor,
+              icon: const Icon(
+                FluentSystemIcons.ic_fluent_checkmark_circle_regular,
+                size: 100,
+              ),
+              title: Text(
+                'Congratulations!\n You can now sign in.',
+                style: GoogleFonts.lateef(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/log_in');
+                  },
+                  child: const Text('Sign In'),
+                ),
+              ],
+            ),
+          );
         } else {
           showDialog(
-              context: context,
-              builder: (context) => const AlertDialog(
-                    title: Text('Username or phone number already in use'),
-                  ));
+            context: context,
+            builder: (context) => const AlertDialog(
+              title: Text('Username or phone number already in use'),
+            ),
+          );
         }
       } catch (e) {
         showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  title: Text(e.toString()),
-                ));
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(e.toString()),
+          ),
+        );
       }
     }
   }
 
   Future<bool> isFieldUnique(String field, String value) async {
     final QuerySnapshot result = await _firestore
-        .collection('buyers')
+        .collection(userType)
         .where(field, isEqualTo: value)
         .limit(1)
         .get();
@@ -119,33 +177,105 @@ class _SignUpState extends State<SignUp> {
       setState(() {
         image = result.files.first.bytes;
       });
-      //String imagePath = result.files.first.path!;
     }
   }
 
   @override
+  void initState() {
+    getServiceCategories();
+
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
+    return CustomScrollView(
+      scrollDirection: Axis.vertical,
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          stretch: true,
+          floating: true,
+          expandedHeight: 300,
+          flexibleSpace: FlexibleSpaceBar(
+            centerTitle: true,
+            background: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor,
+                    secondaryColor,
+                    accentColor,
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all()),
+                    child: Text(
+                      'CelebrEase',
+                      style: GoogleFonts.merienda(fontSize: 40),
+                    )),
+              ),
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      userType = 'Customers';
+                    });
+                  },
+                  child: Text(
+                    'Customer',
+                    style: GoogleFonts.lateef(
+                      color: userType == 'Customers'
+                          ? const Color.fromARGB(255, 214, 214, 214)
+                          : Colors.black,
+                      fontSize: userType == 'Customers' ? 25 : 20,
+                    ),
+                  ),
+                ),
+                const Text('| '),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      userType = 'Vendors';
+                    });
+                  },
+                  child: Text(
+                    'Vendor',
+                    style: GoogleFonts.lateef(
+                      color: userType == 'Vendors'
+                          ? const Color.fromARGB(255, 214, 214, 214)
+                          : Colors.black,
+                      fontSize: userType == 'Vendors' ? 25 : 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 80),
-                const Text('Create an Account', style: TextStyle(fontSize: 25)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                Text('Create a $userType Account',
+                    style: const TextStyle(fontSize: 25)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 15),
                   child: Stack(children: [
-                    CircleAvatar(
-                      radius: 100,
-                      backgroundImage: image != null
-                          ? MemoryImage(image)
-                          : const NetworkImage(
-                              'https://commons.wikimedia.org/wiki/File:Profile_avatar_placeholder_large.png'),
-                    ),
-                     Positioned(right: 0,bottom: 0,child: IconButton(onPressed:()=>getImage(context) ,icon:const Icon(FluentSystemIcons.ic_fluent_camera_add_regular),),)
+                    AddProfileImage(),
+                    
                   ]),
                 ),
                 Padding(
@@ -214,6 +344,11 @@ class _SignUpState extends State<SignUp> {
                     },
                   ),
                 ),
+                buildLocationPicker(),
+                if (userType == 'Vendors')
+                  buildTextField(addressController, 'Enter Physical Address...',
+                      maxLines: 5),
+                const SizedBox(height: 20),
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -302,29 +437,187 @@ class _SignUpState extends State<SignUp> {
                     },
                   ),
                 ),
-                MyButton(
-                  todo: 'Sign Up ',
-                  onTap: () => register(context),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already Have an Account?'),
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushNamed(context, '/log_in');
+                if (userType == 'Vendors')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: TextFormField(
+                      controller: businessNameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Business Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your business name';
+                        }
+                        return null;
                       },
-                      child: const Text('Sign In'),
                     ),
-                  ],
+                  ),
+                  if (userType == 'Vendors')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 20),
+                    child: DropdownMenu<String>(
+                      hintText: 'Select Business category',
+                      width: 400,
+                      menuHeight: 100,
+                      initialSelection: categoryController.text.isNotEmpty
+                          ? categoryController.text
+                          : null,
+                      onSelected: (String? value) {
+                        setState(() {
+                          categoryController.text = value ?? '';
+                        });
+                      },
+                      dropdownMenuEntries:
+                          serviceCategories.map((String category) {
+                        return DropdownMenuEntry(
+                            value: category, label: category);
+                      }).toList(),
+                    ),
+                  ),
+                
+                
+                if (userType == 'Vendors')
+                  buildTextField(aboutController, 'Describe your Business',
+                      maxLines: 5),
+                const SizedBox(height: 20),
+                
+                
+                if (userType == 'Vendors')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: TextFormField(
+                      decoration: const InputDecoration(
+                        hintText: 'Start Time',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                      ),
+                      readOnly: true, // To prevent manual input
+                      controller:
+                          TextEditingController(text: selectedStartTime),
+                      onTap: () async {
+                        TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (pickedTime != null) {
+                          // Ensure leading zeros for hour and minute
+                          String formattedTime =
+                              '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
+
+                          setState(() {
+                            selectedStartTime = formattedTime;
+                          });
+                        }
+                      },
+                      validator: (value) {
+                        if (selectedStartTime == null ||
+                            selectedStartTime!.isEmpty) {
+                          return 'Please select a start time';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                if (userType == 'Vendors')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: TextFormField(
+                      decoration: const InputDecoration(
+                        hintText: 'Close Time',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15)),
+                        ),
+                      ),
+                      readOnly: true, // Prevent manual input
+                      controller:
+                          TextEditingController(text: selectedCloseTime),
+                      onTap: () async {
+                        TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (pickedTime != null) {
+                          // Format hour and minute to always show two digits
+                          String formattedTime =
+                              '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
+
+                          setState(() {
+                            selectedCloseTime = formattedTime;
+                          });
+                        }
+                      },
+                      validator: (value) {
+                        if (selectedCloseTime == null ||
+                            selectedCloseTime!.isEmpty) {
+                          return 'Please select a closing time';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: MyButton(
+                    todo: 'Register',
+                    onTap: () => register(context),
+                  ),
                 ),
-                const SizedBox(height: 80),
               ],
             ),
           ),
         ),
+        const SliverToBoxAdapter(
+          child: SizedBox(
+            height: 150,
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget buildTextField(TextEditingController controller, String label,
+      {int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget buildLocationPicker() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20),
+      child: SelectState(
+        onCountryChanged: (value) {
+          setState(() {
+            countryValue = value;
+          });
+        },
+        onStateChanged: (value) {
+          setState(() {
+            stateValue = value;
+          });
+        },
+        onCityChanged: (value) {
+          setState(() {
+            cityValue = value;
+          });
+        },
       ),
     );
   }

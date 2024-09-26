@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AboutSection extends StatefulWidget {
-  const AboutSection({super.key});
+  final String userType;
+  const AboutSection({super.key, required this.userType});
 
   @override
   State<AboutSection> createState() => _AboutSectionState();
@@ -14,6 +15,7 @@ class _AboutSectionState extends State<AboutSection> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isexpanded = false;
+
   void toggleTextExpansion() {
     setState(() {
       isexpanded = !isexpanded;
@@ -24,7 +26,7 @@ class _AboutSectionState extends State<AboutSection> {
   Widget build(BuildContext context) {
     final String userId = _auth.currentUser!.uid;
     return StreamBuilder<DocumentSnapshot>(
-      stream: _firestore.collection('User Profiles').doc(userId).snapshots(),
+      stream: _firestore.collection(widget.userType).doc(userId).snapshots(),
       builder: (context, snapshot1) {
         if (snapshot1.hasError) {
           return const Text('Something went wrong');
@@ -37,64 +39,73 @@ class _AboutSectionState extends State<AboutSection> {
             ),
           );
         }
+
         if (!snapshot1.hasData || snapshot1.data == null) {
-          //print('No data available');
           return const Text('No data available');
         }
 
         if (!snapshot1.data!.exists) {
-          //print('Document does not exist');
           return Row(
             children: [
               const Text('Profile not found'),
               const Spacer(),
-              InkWell(onTap: () {
-                Navigator.pushNamed(context, '/editProfile');
-              },child: const Text('Setup Profile',style: TextStyle(
-                                fontWeight: FontWeight.w200,
-                                decoration: TextDecoration.underline,
-                              ),),)
-              
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/editProfile');
+                },
+                child: const Text(
+                  'Setup Profile',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w200,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ],
           );
         }
+
         var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
+
         // Use null-aware operators and provide default values
-        String about = userProfile?['about'] as String? ?? 'About';
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'About',
-              textScaler: const TextScaler.linear(1.2),
-              style: GoogleFonts.merienda(),
-            ),
-            Container(
-              decoration:
-                  BoxDecoration(borderRadius: BorderRadius.circular(10)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+        String about = userProfile?['business description'] as String? ?? 'About';
+
+        if (userProfile?['userType'] == 'Vendors') {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'About',
+                textScaleFactor: 1.2, // Corrected to `textScaleFactor`
+                style: GoogleFonts.merienda(),
+              ),
+              Container(
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                  child: Text(
+                    about,
+                    maxLines: isexpanded ? null : 3,
+                    overflow: isexpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w300),
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: toggleTextExpansion,
                 child: Text(
-                  about,
-                  maxLines: (isexpanded == false) ? 3 : null,
-                  overflow: (isexpanded == false)
-                      ? TextOverflow.ellipsis
-                      : TextOverflow.visible,
-                  style: const TextStyle(fontWeight: FontWeight.w300),
+                  isexpanded ? 'less' : 'more',
+                  style: const TextStyle(
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
-            ),
-            InkWell(
-              onTap: toggleTextExpansion,
-              child: Text(
-                (isexpanded == false) ? 'more' : 'less',
-                style: const TextStyle(
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        );
+            ],
+          );
+        } else {
+          // Handle other user types or return an empty container
+          return const SizedBox(height: 10,); // Or any other placeholder widget
+        }
       },
     );
   }

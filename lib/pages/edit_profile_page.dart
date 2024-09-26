@@ -10,7 +10,8 @@ import 'package:country_state_city_picker/country_state_city_picker.dart';
 class EditProfile extends StatefulWidget {
   final bool isFirstSetup;
 
-  const EditProfile({super.key, required this.isFirstSetup, required Map initialData});
+  const EditProfile(
+      {super.key, required this.isFirstSetup, required Map initialData});
 
   @override
   State<EditProfile> createState() => _EditProfileState();
@@ -33,22 +34,34 @@ class _EditProfileState extends State<EditProfile> {
   @override
   void initState() {
     super.initState();
-    final profileData = Provider.of<ChangeManager>(context, listen: false).profileData;
-    brandController = TextEditingController(text: profileData['brandName'] ?? '');
+    final profileData =
+        Provider.of<ChangeManager>(context, listen: false).profileData;
+    brandController =
+        TextEditingController(text: profileData['brandName'] ?? '');
     aboutController = TextEditingController(text: profileData['about'] ?? '');
     selectedStartTime = profileData['startTime'] ?? '';
     selectedCloseTime = profileData['endTime'] ?? '';
-    categoryController = TextEditingController(text: profileData['category'] ?? '');
+    categoryController =
+        TextEditingController(text: profileData['category'] ?? '');
 
     timeOptions = generateTimeOptions(); // Generate time options
     getServiceCategories();
+
+    // Ensure selected times are valid
+    if (!timeOptions.contains(selectedStartTime)) {
+      selectedStartTime = null;
+    }
+    if (!timeOptions.contains(selectedCloseTime)) {
+      selectedCloseTime = null;
+    }
   }
 
   List<String> generateTimeOptions() {
     List<String> options = [];
     for (int hour = 0; hour < 24; hour++) {
       for (int minute = 0; minute < 60; minute += 30) {
-        String time = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+        String time =
+            '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
         options.add(time);
       }
     }
@@ -57,11 +70,13 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> getServiceCategories() async {
     try {
-      QuerySnapshot querySnapshot = await _firestore.collection('Services').get();
+      QuerySnapshot querySnapshot =
+          await _firestore.collection('Services').get();
       setState(() {
         serviceCategories = querySnapshot.docs.map((doc) => doc.id).toList();
       });
     } catch (e) {
+      // ignore: avoid_print
       print('Error fetching service categories: $e');
     }
   }
@@ -104,7 +119,8 @@ class _EditProfileState extends State<EditProfile> {
                   selectedCloseTime = value;
                 });
               }),
-              buildTextField(aboutController, 'Describe your Business', maxLines: 5),
+              buildTextField(aboutController, 'Describe your Business',
+                  maxLines: 5),
               const SizedBox(height: 20),
               MyButton(
                 onTap: () {
@@ -116,13 +132,18 @@ class _EditProfileState extends State<EditProfile> {
                   }
 
                   Map<String, dynamic> updatedData = {};
-                  final profileData = Provider.of<ChangeManager>(context, listen: false).profileData;
+                  final profileData =
+                      Provider.of<ChangeManager>(context, listen: false)
+                          .profileData;
 
                   if (brandController.text != profileData['brandName']) {
                     updatedData['brandName'] = brandController.text;
                   }
-                  if (countryValue != null && stateValue != null && cityValue != null) {
-                    updatedData['location'] = '$cityValue, $stateValue, $countryValue';
+                  if (countryValue != null &&
+                      stateValue != null &&
+                      cityValue != null) {
+                    updatedData['location'] =
+                        '$cityValue, $stateValue, $countryValue';
                   }
                   if (aboutController.text != profileData['about']) {
                     updatedData['about'] = aboutController.text;
@@ -133,9 +154,13 @@ class _EditProfileState extends State<EditProfile> {
                   if (selectedCloseTime != profileData['endTime']) {
                     updatedData['endTime'] = selectedCloseTime;
                   }
+                  if (categoryController.text != profileData['category']) {
+                    updatedData['category'] = categoryController.text;
+                  }
 
                   if (updatedData.isNotEmpty || widget.isFirstSetup) {
-                    Provider.of<ChangeManager>(context, listen: false).changeProfiledata(updatedData);
+                    Provider.of<ChangeManager>(context, listen: false)
+                        .changeProfiledata(updatedData,'userType');
                   }
 
                   Navigator.pop(context);
@@ -149,7 +174,8 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  Widget buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
+  Widget buildTextField(TextEditingController controller, String label,
+      {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
@@ -190,10 +216,11 @@ class _EditProfileState extends State<EditProfile> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownMenu<String>(
-        width: 200,
-        menuHeight:100,
-        
-        initialSelection: categoryController.text.isNotEmpty ? categoryController.text : null,
+        hintText: 'Select Business category',
+        width: 400,
+        menuHeight: 100,
+        initialSelection:
+            categoryController.text.isNotEmpty ? categoryController.text : null,
         onSelected: (String? value) {
           setState(() {
             categoryController.text = value ?? '';
@@ -206,10 +233,12 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  Widget buildTimeDropdown(String label, String? selectedTime, ValueChanged<String?> onChanged) {
+  Widget buildTimeDropdown(
+      String label, String? selectedTime, ValueChanged<String?> onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButton<String>(
+      child: DropdownButtonFormField<String>(
+        menuMaxHeight: 100,
         value: selectedTime,
         hint: Text(label),
         isExpanded: true,
@@ -220,6 +249,9 @@ class _EditProfileState extends State<EditProfile> {
           );
         }).toList(),
         onChanged: onChanged,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+        ),
       ),
     );
   }

@@ -13,17 +13,7 @@ class ChangeManager extends ChangeNotifier {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final Map<String, dynamic> _profileData = {
-    'brandName': '',
-    'userType': 'Service Provider',
-    'location': '',
-    'category': '',
-    'about': '',
-    'startTime': '',
-    'endTime': '',
-    'imagePath': null,
-    'imageName': ''
-  };
+  final Map<String, dynamic> _profileData = {};
 
   Map<String, dynamic> get profileData => _profileData;
   Map<String, dynamic> get highlightData => _highlight;
@@ -37,7 +27,7 @@ class ChangeManager extends ChangeNotifier {
     });
   }
 
-  void changeProfiledata(Map<String, dynamic> newData) async {
+  void changeProfiledata(Map<String, dynamic> newData,String userType) async {
     EasyLoading.show();
 
     // Check if there's an image to upload
@@ -54,9 +44,11 @@ class ChangeManager extends ChangeNotifier {
       }
       // Otherwise, keep the existing _profileData[key] unchanged
     });
+    _profileData['timeStamp'] = DateTime.now().toString();
+    _profileData['userType'] = userType;
 
     // Upload the modified _profileData to the database
-    await uploadProfileDataToDatabase(_profileData).whenComplete(() {
+    await uploadProfileDataToDatabase(_profileData,userType).whenComplete(() {
       EasyLoading.dismiss();
     });
 
@@ -89,10 +81,10 @@ class ChangeManager extends ChangeNotifier {
     return downloadLink;
   }
 
-  uploadProfileDataToDatabase(Map<String, dynamic> data) async {
+  uploadProfileDataToDatabase(Map<String, dynamic> data,String userType) async {
     await _fireStore
-        .collection('User Profiles')
-        .doc(_auth.currentUser!.uid)
+        .collection(userType)
+        .doc(_profileData['userId'])
         .set(data); //use a userid instead of email adress, more ethical
   }
 
@@ -265,7 +257,7 @@ class ChangeManager extends ChangeNotifier {
       
     // Fetch user profile data
     DocumentSnapshot userProfileDoc = await _fireStore
-        .collection('User Profiles')
+        .collection('Vendors')
         .doc(_auth.currentUser?.uid)
         .get();
 

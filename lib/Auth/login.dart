@@ -1,6 +1,13 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_gate.dart';
 import 'package:maroro/Auth/auth_service.dart';
+import 'package:maroro/Auth/login.dart';
+import 'package:maroro/Auth/signup.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/modules/mybutton.dart';
 
 class LogIn extends StatefulWidget {
@@ -14,6 +21,26 @@ class _LogInState extends State<LogIn> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<String> getUserType(String userId) async {
+    // Check if the user exists in the 'Customers' collection
+    var customerDocument =
+        await _firestore.collection('Customers').doc(userId).get();
+    if (customerDocument.exists) {
+      return 'Customers';
+    }
+
+    // If not found in 'Customers', check the 'Vendors' collection
+    var vendorDocument =
+        await _firestore.collection('Vendors').doc(userId).get();
+    if (vendorDocument.exists) {
+      return 'Vendors';
+    }
+
+    // Return some default value if not found in either collection
+    return 'User not found';
+  }
 
   Future<void> login(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
@@ -29,7 +56,7 @@ class _LogInState extends State<LogIn> {
 
       try {
         // Try to sign in
-        await authService.signInwithEmailPassword(
+        UserCredential cred = await authService.signInwithEmailPassword(
           emailController.text.trim(),
           passwordController.text.trim(),
         );
@@ -38,9 +65,11 @@ class _LogInState extends State<LogIn> {
         if (context.mounted) Navigator.of(context).pop();
 
         // Navigate to first page, replacing the login page
-        if (context.mounted) {
+        if (context.mounted){
+          String userId = cred.user!.uid.toString();
+          String userType = await getUserType(userId);
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const AuthGate()),
+            MaterialPageRoute(builder: (context) => AuthGate( userType:userType)),
             (route) => false,
           );
         }
@@ -70,9 +99,33 @@ class _LogInState extends State<LogIn> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
+    return CustomScrollView(
+      scrollDirection: Axis.vertical,
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          stretch: true,
+          floating: true,
+          expandedHeight: 300,
+          flexibleSpace: FlexibleSpaceBar(
+            centerTitle: true,
+            background: Container(
+              decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [primaryColor, secondaryColor, accentColor])),
+            ),
+            title: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all()),
+                child: Text(
+                  'CelebrEase',
+                  style: GoogleFonts.merienda(fontSize: 30),
+                )),
+          ),
+        ),
+        SliverToBoxAdapter(
           child: Form(
             key: _formKey,
             child: Column(
@@ -82,10 +135,15 @@ class _LogInState extends State<LogIn> {
                 const Text('Sign In', style: TextStyle(fontSize: 25)),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 15),
-                  child: CircleAvatar(radius: 100),
+                  child: CircleAvatar(
+                    radius: 100,
+                    backgroundImage: CachedNetworkImageProvider(
+                        'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: TextFormField(
                     controller: emailController,
                     decoration: const InputDecoration(
@@ -98,7 +156,8 @@ class _LogInState extends State<LogIn> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
                       return null;
@@ -106,7 +165,8 @@ class _LogInState extends State<LogIn> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: TextFormField(
                     controller: passwordController,
                     obscureText: true,
@@ -163,7 +223,12 @@ class _LogInState extends State<LogIn> {
             ),
           ),
         ),
-      ),
+        const SliverToBoxAdapter(
+          child: SizedBox(
+            height: 100,
+          ),
+        ),
+      ],
     );
   }
 }

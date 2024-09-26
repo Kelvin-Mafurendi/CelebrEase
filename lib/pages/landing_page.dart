@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_service.dart';
+import 'package:maroro/Auth/login.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
 
@@ -28,7 +29,7 @@ class Home extends StatelessWidget {
               child: Center(
                 child: ShaderMask(
                   shaderCallback: (bounds) {
-                    return  LinearGradient(
+                    return LinearGradient(
                       colors: [
                         Theme.of(context).colorScheme.primary, // Primary Color
                         accentColor, // Accent Color
@@ -56,10 +57,7 @@ class Home extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               'Are You Planning an Event?',
-              style: GoogleFonts.lateef(
-                fontSize: 50,
-                color: textColor
-              ),
+              style: GoogleFonts.lateef(fontSize: 50, color: textColor),
               textAlign: TextAlign.center,
             ),
           ),
@@ -78,13 +76,21 @@ class Home extends StatelessWidget {
             padding: const EdgeInsets.all(30.0),
             child: FilledButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/log_in');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LogIn(
+                    
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

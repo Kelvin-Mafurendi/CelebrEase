@@ -12,7 +12,8 @@ import 'package:maroro/modules/reusable_widgets.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/trends.dart';
 class Screen1 extends StatefulWidget {
-  const Screen1({super.key});
+  final String userType;
+  const Screen1({super.key, required this.userType});
 
   @override
   State<Screen1> createState() => _Screen1State();
@@ -21,6 +22,7 @@ class Screen1 extends StatefulWidget {
 class _Screen1State extends State<Screen1> {
   int selectedIndex = 0;
   Widget page = const Mainscreen();
+
 
   void changeIndex(int index) {
     setState(() {
@@ -39,7 +41,7 @@ class _Screen1State extends State<Screen1> {
           page = const Chats();
           break;
         case 4:
-          page = const Profile();
+          page = Profile(userType: widget.userType,);
           break;
         default:
           page = const Mainscreen();
@@ -49,6 +51,7 @@ class _Screen1State extends State<Screen1> {
 
   @override
   Widget build(BuildContext context) {
+    print('the value of userType:${widget.userType}');
     // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
@@ -71,7 +74,7 @@ class _Screen1State extends State<Screen1> {
         ) ?? false;
       },
       child: Scaffold(
-        floatingActionButton: Positioned(bottom: 10,right: 10,child: FloatingActionButton(onPressed: (){Navigator.pushNamed(context, '/cart');},child: const Icon(Icons.shopping_cart_outlined),)),
+        floatingActionButton:widget.userType == 'Customers' ?Positioned(bottom: 10,right: 10,child: FloatingActionButton(onPressed: (){Navigator.pushNamed(context, '/cart');},child: const Icon(Icons.shopping_cart_outlined),)):null,
         drawer: selectedIndex == 0? const MyDrawer():null,
         appBar:selectedIndex == 0? const EventAppBar(title: ''):null,
         bottomNavigationBar: BottomNavigationBar(
