@@ -53,6 +53,10 @@ dependencies:
   cached_network_image: ^3.2.3
   intl_phone_field: ^3.2.0
   country_state_city_picker: ^1.2.8
+  dash_chat_2: ^0.0.21
+  firebase_analytics: ^11.3.3
+  delightful_toast: ^1.1.0
+  get_it: ^8.0.0
 
   
 

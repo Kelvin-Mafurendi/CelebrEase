@@ -10,10 +10,10 @@ class FlashAdView extends StatefulWidget {
   final int initialIndex;
 
   const FlashAdView({
-    Key? key,
+    super.key,
     required this.ads,
     required this.initialIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<FlashAdView> createState() => _FlashAdViewState();

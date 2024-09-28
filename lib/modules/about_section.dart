@@ -76,7 +76,7 @@ class _AboutSectionState extends State<AboutSection> {
             children: [
               Text(
                 'About',
-                textScaleFactor: 1.2, // Corrected to `textScaleFactor`
+                textScaler:const TextScaler.linear(1.2), // Corrected to `textScaleFactor`
                 style: GoogleFonts.merienda(),
               ),
               Container(

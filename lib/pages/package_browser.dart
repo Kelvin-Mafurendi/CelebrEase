@@ -11,10 +11,10 @@ class ServicePackageBrowser extends StatefulWidget {
   final int initialIndex;
 
   const ServicePackageBrowser({
-    Key? key,
+    super.key,
     required this.services,
     required this.initialIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<ServicePackageBrowser> createState() => _ServicePackageBrowserState();
@@ -64,10 +64,10 @@ class PackageBrowser extends StatefulWidget {
   final String imagePath;
 
   const PackageBrowser({
-    Key? key,
+    super.key,
     required this.service,
     required this.imagePath,
-  }) : super(key: key);
+  });
 
   @override
   State<PackageBrowser> createState() => _PackageBrowserState();
