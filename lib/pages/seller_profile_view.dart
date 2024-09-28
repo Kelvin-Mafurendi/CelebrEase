@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
+import 'package:maroro/pages/chart_screen.dart';
 
 class SellerProfileView extends StatefulWidget {
   final String userId;
@@ -21,14 +22,43 @@ class SellerProfileView extends StatefulWidget {
 class _SellerProfileViewState extends State<SellerProfileView> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _startChat(
+      BuildContext context, String vendorId, String vendorName) async {
+    final currentUserId = _auth.currentUser!.uid;
+    final chatId = currentUserId.compareTo(vendorId) < 0
+        ? '${currentUserId}_$vendorId'
+        : '${vendorId}_$currentUserId';
+
+    final chatDoc = await _firestore.collection('chats').doc(chatId).get();
+
+    if (!chatDoc.exists) {
+      // Create a new chat document if it doesn't exist
+      await _firestore.collection('chats').doc(chatId).set({
+        'participants': [currentUserId, vendorId],
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Navigate to the ChatScreen
+    Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => ChatScreen(
+      chatId: chatId,
+      vendorId: vendorId,
+      vendorName: vendorName,
+    ),
+  ),
+);
+  }
+
   @override
   Widget build(BuildContext context) {
     //final String userId = _auth.currentUser!.uid;
     return StreamBuilder<DocumentSnapshot>(
-        stream: _firestore
-            .collection('Vendors')
-            .doc(widget.userId)
-            .snapshots(),
+        stream: _firestore.collection('Vendors').doc(widget.userId).snapshots(),
         builder: (context, snapshot1) {
           if (snapshot1.hasError) {
             return const Text('Something went wrong');
@@ -80,7 +110,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
           String startTime =
               userProfile?['startTime'] as String? ?? 'Start Time';
           String endTime = userProfile?['endTime'] as String? ?? 'End Time';
-          String about = userProfile?['business description'] as String? ?? 'About';
+          String about =
+              userProfile?['business description'] as String? ?? 'About';
           //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
           return CustomScrollView(
             scrollDirection: Axis.vertical,
@@ -122,7 +153,9 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Card(
-                    color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? stickerColor
+                        : stickerColorDark,
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Column(
@@ -345,37 +378,31 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     FilledButton(
-                        onPressed: () {},
-                        child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text('Book Now'),
-                        )),
+                      onPressed: () {},
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Book Now'),
+                      ),
+                    ),
                     FilledButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/Chats');
-                        },
-                        style: const ButtonStyle(
-                            backgroundColor:
-                                WidgetStatePropertyAll(Colors.transparent)),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Chat Now',
-                               
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Icon(
-                                CupertinoIcons.arrow_right,
-                              
-                              )
-                            ],
-                          ),
-                        )),
+                      onPressed: () =>
+                          _startChat(context, widget.userId, brandName),
+                      style: const ButtonStyle(
+                        backgroundColor:
+                            WidgetStatePropertyAll(Colors.transparent),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Chat Now'),
+                            SizedBox(width: 10),
+                            Icon(CupertinoIcons.arrow_right),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

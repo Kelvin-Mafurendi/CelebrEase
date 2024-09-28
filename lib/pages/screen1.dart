@@ -38,7 +38,7 @@ class _Screen1State extends State<Screen1> {
           page = const Bundles();
           break;
         case 3:
-          page = const Chats();
+          page = Chats(userType: widget.userType,);
           break;
         case 4:
           page = Profile(userType: widget.userType,);
