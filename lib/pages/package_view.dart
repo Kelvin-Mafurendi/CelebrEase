@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/seller_profile_view.dart';
 
 class PackageView extends StatefulWidget {
@@ -90,12 +91,12 @@ class _PackageViewState extends State<PackageView> {
                       },
                       isSelected: isSelected,
                       selectedIcon: const Icon(
-                        FluentSystemIcons.ic_fluent_pin_filled,
+                        FluentSystemIcons.ic_fluent_bookmark_filled,
                         color: primaryColor,
                         size: 40,
                       ),
                       icon: const Icon(
-                        FluentSystemIcons.ic_fluent_pin_regular,
+                        FluentSystemIcons.ic_fluent_bookmark_regular,
                         color: primaryColor,
                         size: 40,
                       )),
@@ -125,7 +126,9 @@ class _PackageViewState extends State<PackageView> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               FilledButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>BookingForm()));
+                  },
                   child: const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: Text('Book Now'),

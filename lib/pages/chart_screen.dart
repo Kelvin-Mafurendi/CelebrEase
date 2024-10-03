@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +11,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:video_compress/video_compress.dart';
-// Ensure this import is correct
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -18,11 +19,11 @@ class ChatScreen extends StatefulWidget {
   final String vendorName;
 
   const ChatScreen({
-    super.key,
+    Key? key,
     required this.chatId,
     required this.vendorId,
     required this.vendorName,
-  });
+  }) : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -34,11 +35,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   late ChatUser _currentUser;
   late ChatUser _vendor;
+  late Stream<QuerySnapshot> _messagesStream;
 
   @override
   void initState() {
     super.initState();
     _setupUsers();
+    _setupMessageStream();
   }
 
   void _setupUsers() {
@@ -54,34 +57,66 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _sendMessage(ChatMessage message) async {
-    final messageData = {
-      'text': message.text,
-      'senderId': _currentUser.id,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-
-    if (message.medias != null && message.medias!.isNotEmpty) {
-      final media = message.medias!.first;
-      final String? mediaUrl = await _uploadMedia(media);
-      if (mediaUrl != null) {
-        messageData['mediaUrl'] = mediaUrl;
-        messageData['mediaType'] = media.type.toString();
-      }
-    }
-
-    await _firestore
+  void _setupMessageStream() {
+    _messagesStream = _firestore
         .collection('chats')
         .doc(widget.chatId)
         .collection('messages')
-        .add(messageData);
-
-    await _firestore.collection('chats').doc(widget.chatId).update({
-      'lastMessage': message.text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-    });
+        .orderBy('timestamp', descending: true)
+        .snapshots();
   }
 
+  Future<void> _sendMessage(ChatMessage message) async {
+    try {
+      final messageData = {
+        'text': message.text,
+        'senderId': _currentUser.id,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      if (message.medias != null && message.medias!.isNotEmpty) {
+        final media = message.medias!.first;
+        final String? mediaUrl = await _uploadMedia(media);
+        if (mediaUrl != null) {
+          messageData['mediaUrl'] = mediaUrl;
+          messageData['mediaType'] = media.type.toString();
+        }
+      }
+
+      await _firestore
+          .collection('chats')
+          .doc(widget.chatId)
+          .collection('messages')
+          .add(messageData);
+
+      await _firestore.collection('chats').doc(widget.chatId).update({
+        'lastMessage': message.text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+      });
+
+      Fluttertoast.showToast(
+        msg: "Message sent",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0
+      );
+    } catch (e) {
+      print('Error sending message: $e');
+      Fluttertoast.showToast(
+        msg: "Failed to send message",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+      );
+    }
+  }
+  
   Future<String?> _uploadMedia(ChatMedia media) async {
     try {
       final path =
@@ -183,6 +218,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  // ... (rest of the methods remain the same)
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -190,12 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.vendorName)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('chats')
-            .doc(widget.chatId)
-            .collection('messages')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
+        stream: _messagesStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -214,10 +246,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 : null;
             return ChatMessage(
               text: data['text'] ?? '',
-              user:
-                  data['senderId'] == _currentUser.id ? _currentUser : _vendor,
-              createdAt:
-                  (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              user: data['senderId'] == _currentUser.id ? _currentUser : _vendor,
+              createdAt: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
               medias: medias,
             );
           }).toList();

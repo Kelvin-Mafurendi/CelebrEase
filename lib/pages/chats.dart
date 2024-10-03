@@ -1,3 +1,6 @@
+
+// Updated Chats class in chats.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +9,7 @@ import 'package:maroro/pages/chart_screen.dart';
 
 class Chats extends StatelessWidget {
   final String userType;
-  const Chats({super.key, required this.userType});
+  const Chats({Key? key, required this.userType}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +57,18 @@ class Chats extends StatelessWidget {
               return FutureBuilder<DocumentSnapshot>(
                 future: future,
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData || snapshot.data == null || snapshot.data!.data() == null) {
-                    return const ListTile(title: Text('No data available'));
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const ListTile(title: Text('Loading...'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data == null || !snapshot.data!.exists) {
+                    return const ListTile(title: Text('User not found'));
                   }
 
                   final otherUserData = snapshot.data!.data() as Map<String, dynamic>;
-                  final otherUserName =userType == 'Customers'? otherUserData['business name'] ?? 'Unknown':otherUserData['username'] ?? 'Unknown';
+                  final otherUserName = userType == 'Customers'
+                      ? otherUserData['business name'] ?? 'Unknown'
+                      : otherUserData['username'] ?? 'Unknown';
 
                   return ListTile(
                     title: Text(otherUserName),

@@ -391,14 +391,14 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                         backgroundColor:
                             WidgetStatePropertyAll(Colors.transparent),
                       ),
-                      child: const Padding(
+                      child:  Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Chat Now'),
+                            Text('Chat Now',style: TextStyle(color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white),),
                             SizedBox(width: 10),
-                            Icon(CupertinoIcons.arrow_right),
+                            Icon(CupertinoIcons.arrow_right,color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white,),
                           ],
                         ),
                       ),
