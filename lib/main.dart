@@ -8,6 +8,7 @@ import 'package:maroro/Auth/auth_gate.dart';
 import 'package:maroro/Auth/login.dart';
 import 'package:maroro/Auth/signup.dart';
 import 'package:maroro/Provider/state_management.dart';
+import 'package:maroro/Provider/theme_notifier.dart';
 import 'package:maroro/firebase_options.dart';
 import 'package:maroro/pages/add_package.dart';
 import 'package:maroro/pages/bundles.dart';
@@ -28,26 +29,8 @@ import 'package:maroro/pages/settings.dart';
 import 'package:maroro/pages/trends.dart';
 import 'package:provider/provider.dart';
 
-/*const textColor = Color(0xFF090609);
-const backgroundColor = Color(0xFFf4fcee);
-const primaryColor = Color(0xFFa265a2);
-const primaryFgColor = Color(0xFF090609);
-const secondaryColor = Color(0xFFa0c6a7);
-const secondaryFgColor = Color(0xFF090609);
-const accentColor = Color(0xFF8cb1ba);
-const accentFgColor = Color(0xFF090609);*/ // colour schem2
-
-/*const textColor = Color(0xFF080a07);
-const backgroundColor = Color(0xFFf4fcee);
-const primaryColor = Color(0xFF7d986f);
-const primaryFgColor = Color(0xFF080a07);
-const secondaryColor = Color(0xFFb1c7b4);
-const secondaryFgColor = Color(0xFF080a07);
-const accentColor = Color(0xFF8faf9b);
-const accentFgColor = Color(0xFF080a07);*/
-
 const textColor = Color(0xFF0d0506);
-const backgroundColor = Color(0xFFf4fcee);
+const backgroundColor = Color.fromARGB(255, 242, 255, 231);
 const primaryColor = Color(0xFFbb5355);
 const primaryFgColor = Color(0xFFfdf9f9);
 const secondaryColor = Color(0xFFcbd594);
@@ -56,10 +39,8 @@ const accentColor = Color(0xFF95c771);
 const accentFgColor = Color(0xFF0d0506);
 const stickerColor = Color(0xFFF3F1E4);
 const profileCardColor = Color(0xFFEFD7D7);
-const stickerColorDark =
-    Color(0xFF4A4743); // A dark taupe shade that complements the background
-const profileCardColorDark = Color(
-    0xFF5D4B4B); // A deep muted red that keeps a subtle link to the original light pink
+const stickerColorDark = Color(0xFF4A4743);
+const profileCardColorDark = Color(0xFF5D4B4B);
 
 const colorScheme = ColorScheme(
   brightness: Brightness.light,
@@ -73,15 +54,10 @@ const colorScheme = ColorScheme(
   onTertiary: accentFgColor,
   surface: backgroundColor,
   onSurface: textColor,
-  error: Brightness.light == Brightness.light
-      ? Color(0xffB3261E)
-      : Color(0xffF2B8B5),
-  onError: Brightness.light == Brightness.light
-      ? Color(0xffFFFFFF)
-      : Color(0xff601410),
+  error: Color(0xffB3261E),
+  onError: Color(0xffFFFFFF),
 );
 
-// Define the dark theme here
 ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   colorScheme: const ColorScheme(
@@ -100,22 +76,26 @@ ThemeData darkTheme = ThemeData(
     onError: Color(0xff601410),
   ),
   scaffoldBackgroundColor: const Color(0xFF070303),
-
-  cardColor: const Color(0xFFEFD7D7), // For profile card color
-  //accentColor: const Color(0xFF5c8e39),
-  //errorColor: const Color(0xffF2B8B5),
+  cardColor: const Color(0xFF5D4B4B),
 );
+
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ChangeManager(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ChangeManager()),
+        ChangeNotifierProvider(create: (context) => ThemeNotifier()),
+      ],
       child: const MyApp(),
     ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -127,48 +107,59 @@ class MyApp extends StatelessWidget {
         statusBarColor: Colors.transparent,
       ),
     );
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: backgroundColor,
-        colorScheme: colorScheme,
-      ),
-      darkTheme: darkTheme, // Assign the dark theme here
-      themeMode: ThemeMode
-          .system, // Switch between light/dark based on system settings
-      home: AuthGate(userType: ''),
-      builder: EasyLoading.init(),
-      routes: {
-        '/main': (context) => const Mainscreen(),
-        '/first': (context) => const Screen1(userType: ''),
-        '/Events': (context) => const Events(),
-        '/Chats': (context) => const Chats(userType: '',),
-        '/ChatScreen': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
-          return ChatScreen(chatId: args['chatId'], vendorId: args['vendorId'], vendorName: '',);
-        },
-        '/Trending': (context) => const Trending(),
-        '/Profile': (context) => const Profile(userType: ''),
-        '/Settings': (context) => const Settings(),
-        '/Bundles': (context) => const Bundles(),
-        '/my_events': (context) => const MyEvents(),
-        '/log_in': (context) => const LogIn(),
-        '/SignUp': (context) => const SignUp(),
-        '/Membership': (context) => const Membership(),
-        '/notifications': (context) => const Notifications(),
-        '/cart': (context) => const Cart(),
-        '/addPackage': (context) => const AddPackage(initialData: {}),
-        '/addhighlight': (context) => const AddHighlight(initialData: {}),
-        '/editProfile': (context) => EditProfile(
-              isFirstSetup: Provider.of<ChangeManager>(context, listen: false)
-                      .profileData['brandName']
-                      ?.isEmpty ??
-                  true,
-              initialData: const {},
-              userType: '',
-            ),
+
+    return Consumer<ThemeNotifier>(
+      builder: (context, themeNotifier, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            scaffoldBackgroundColor: backgroundColor,
+            colorScheme: colorScheme,
+          ),
+          darkTheme: darkTheme,
+          themeMode: themeNotifier.themeMode,
+          home: AuthGate(userType: ''),
+          builder: EasyLoading.init(),
+          routes: {
+            '/main': (context) => const Mainscreen(),
+            '/first': (context) => const Screen1(userType: ''),
+            '/Events': (context) => const Events(),
+            '/Chats': (context) => const Chats(
+                  userType: '',
+                ),
+            '/ChatScreen': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>;
+              return ChatScreen(
+                chatId: args['chatId'],
+                vendorId: args['vendorId'],
+                vendorName: '',
+              );
+            },
+            '/Trending': (context) => const Trending(),
+            '/Profile': (context) => const Profile(userType: ''),
+            '/Settings': (context) => const Settings(userType: '',),
+            '/Bundles': (context) => const Bundles(),
+            '/my_events': (context) => const MyEvents(),
+            '/log_in': (context) => const LogIn(),
+            '/SignUp': (context) => const SignUp(),
+            '/Membership': (context) => const Membership(),
+            '/notifications': (context) => const Notifications(),
+            '/cart': (context) => const Cart(),
+            '/addPackage': (context) => const AddPackage(initialData: {}),
+            '/addhighlight': (context) => const AddHighlight(initialData: {}),
+            '/editProfile': (context) => EditProfile(
+                  isFirstSetup:
+                      Provider.of<ChangeManager>(context, listen: false)
+                              .profileData['brandName']
+                              ?.isEmpty ??
+                          true,
+                  initialData: const {},
+                  userType: '',
+                ),
+          },
+        );
       },
     );
   }

@@ -81,7 +81,8 @@ class Sticker extends StatelessWidget {
 }
 
 class MyDrawer extends StatelessWidget {
-  const MyDrawer({super.key});
+  final String userType;
+  const MyDrawer({super.key, required this.userType});
 
   Future<void> logOut(BuildContext context) async {
     final authService = AuthService();
@@ -168,7 +169,7 @@ class MyDrawer extends StatelessWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/Settings');
+              Navigator.pushNamed(context, '/Settings',arguments:{userType : userType});
             },
           ),
           DrawerTile(

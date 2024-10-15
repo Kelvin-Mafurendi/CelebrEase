@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
+import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/chart_screen.dart';
 
 class SellerProfileView extends StatefulWidget {
@@ -378,7 +379,9 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     FilledButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) =>BookingForm(),),);
+                      },
                       child: const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text('Book Now'),

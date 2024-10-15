@@ -46,16 +46,7 @@ class _MainscreenState extends State<Mainscreen> {
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Welcome to,',
-              style: GoogleFonts.merienda(
-                  fontSize: 40, fontWeight: FontWeight.w300),
-            ),
-          ],
-        ),
+        
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

@@ -75,7 +75,7 @@ class _Screen1State extends State<Screen1> {
       },
       child: Scaffold(
         floatingActionButton:widget.userType == 'Customers' ?Positioned(top: 10,right: 10,child: FloatingActionButton(onPressed: (){Navigator.pushNamed(context, '/cart');},child: const Icon(Icons.shopping_cart_outlined),)):null,
-        drawer: selectedIndex == 0? const MyDrawer():null,
+        drawer: selectedIndex == 0? MyDrawer(userType: widget.userType,):null,
         appBar:selectedIndex == 0? const EventAppBar(title: ''):null,
         bottomNavigationBar: BottomNavigationBar(
           //backgroundColor: const Color(0xFFF1E1D5),

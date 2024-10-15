@@ -9,7 +9,7 @@ import 'package:maroro/pages/chart_screen.dart';
 
 class Chats extends StatelessWidget {
   final String userType;
-  const Chats({Key? key, required this.userType}) : super(key: key);
+  const Chats({super.key, required this.userType});
 
   @override
   Widget build(BuildContext context) {
