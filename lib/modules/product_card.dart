@@ -20,6 +20,7 @@ class ProductCard extends StatelessWidget {
               description: data['description'],
               userId: data['userId'],
               imagePath: data['mainPicPath'],
+              package_id: '',
             ),
           ),
         );

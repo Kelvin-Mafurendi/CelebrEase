@@ -172,7 +172,7 @@ class _MainscreenState extends State<Mainscreen> {
               }
 
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Text('No FlashAds available');
+                return const Text('No FlashAds\u2122 available');
               }
 
               final now = DateTime.now();
@@ -184,7 +184,7 @@ class _MainscreenState extends State<Mainscreen> {
               }).toList();
 
               if (activeAds.isEmpty) {
-                return const Text('No active FlashAds at the moment');
+                return const Text('No active FlashAds\u2122 at the moment');
               }
 
               return SizedBox(

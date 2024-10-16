@@ -14,18 +14,25 @@ class ChangeManager extends ChangeNotifier {
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Map<String, dynamic> _profileData = {};
+  final Map<String, dynamic> _bookingForm = {};
+  final List<Map<String, dynamic>> _bookings = [];
 
   Map<String, dynamic> get profileData => _profileData;
   Map<String, dynamic> get highlightData => _highlight;
   Map<String, dynamic> get packageData => _package;
   Map<String, dynamic> get flashAd => _flashAd;
-  Future<void> loadProfiledata(Map<String, dynamic> newData, String userType) async {
+  Map<String, dynamic> get bookingForm => _bookingForm;
+  List<Map<String, dynamic>> get bookings => _bookings;
+
+  Future<void> loadProfiledata(
+      Map<String, dynamic> newData, String userType) async {
     EasyLoading.show();
 
     try {
       // Handle profile image update
       if (newData['imagePath'] != null && newData['imagePath'] is File) {
-        String downloadUrl = await uploadProfileImageToStorage(newData['imagePath']);
+        String downloadUrl =
+            await uploadProfileImageToStorage(newData['imagePath']);
         newData['imagePath'] = downloadUrl;
       }
 
@@ -49,7 +56,6 @@ class ChangeManager extends ChangeNotifier {
       EasyLoading.dismiss();
     }
   }
-
 
   void changeProfiledata(Map<String, dynamic> newData, String userType) async {
     EasyLoading.show();
@@ -358,12 +364,8 @@ class ChangeManager extends ChangeNotifier {
         : null;
   }
 
-
-
-
   //Package handling
-  final Map<String, dynamic> _flashAd = {
-  };
+  final Map<String, dynamic> _flashAd = {};
 
   //updating featured products
   void updateFlashAd(Map<String, dynamic> newData) async {
@@ -396,7 +398,7 @@ class ChangeManager extends ChangeNotifier {
       if (userProfileDoc.exists) {
         var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
         String? category = userProfile?['category'] as String?;
-        
+
         if (category != null) {
           _flashAd['category'] = category;
           print('Category set from user profile: $category');
@@ -458,5 +460,46 @@ class ChangeManager extends ChangeNotifier {
     return _flashAd['mainPicPath'] != null
         ? File(_flashAd['mainPicPath'])
         : null;
+  }
+
+  Future<bool> updateForm(Map<String, dynamic> newData) async {
+    print("updateForm called with data: $newData"); // Debug print
+    try {
+      newData.forEach((key, value) {
+        if (value != null) {
+          _bookingForm[key] = value;
+        }
+      });
+
+      _bookingForm['userId'] = _auth.currentUser!.uid.toString();
+      _bookingForm['timeStamp'] = DateTime.now().toString();
+
+      _bookingForm.removeWhere((key, value) => value == null || value == '');
+
+      bookings.add(Map<String, dynamic>.from(_bookingForm));
+
+
+      print("Prepared _bookingForm: $_bookingForm"); // Debug print
+
+      // Upload the updated _bookingForm to the database
+      //await uploadFormDataToDatabase(_bookingForm);
+
+      print("Form data uploaded successfully"); // Debug print
+      notifyListeners();
+      return true; // Indicate success
+    } catch (e) {
+      print('Error updating Form: $e');
+      return false; // Indicate failure
+    }
+  }
+
+  Future<void> uploadFormDataToDatabase(Map<String, dynamic> data) async {
+    print("Uploading form data to database"); // Debug print
+    await _fireStore.collection('Bookings').doc().set(data);
+    print("Upload complete"); // Debug print
+  }
+
+  List<Map<String,dynamic>> getFormData(String key) {
+    return bookings;
   }
 }

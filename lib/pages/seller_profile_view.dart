@@ -14,7 +14,8 @@ import 'package:maroro/pages/chart_screen.dart';
 
 class SellerProfileView extends StatefulWidget {
   final String userId;
-  const SellerProfileView({super.key, required this.userId});
+  //final String package_id;
+  const SellerProfileView({super.key, required this.userId,});
 
   @override
   State<SellerProfileView> createState() => _SellerProfileViewState();
@@ -380,7 +381,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                   children: [
                     FilledButton(
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) =>BookingForm(),),);
+                        Navigator.push(context, MaterialPageRoute(builder: (context) =>BookingForm(package_id: ''),),);
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(8.0),

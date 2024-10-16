@@ -44,6 +44,7 @@ const profileCardColorDark = Color(0xFF5D4B4B);
 
 const colorScheme = ColorScheme(
   brightness: Brightness.light,
+  
   background: backgroundColor,
   onBackground: textColor,
   primary: primaryColor,

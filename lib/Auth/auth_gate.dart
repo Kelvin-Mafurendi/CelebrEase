@@ -7,7 +7,7 @@ import 'package:maroro/pages/screen1.dart';
 
 class AuthGate extends StatefulWidget {
   final String userType;
-  AuthGate({Key? key, required this.userType}) : super(key: key);
+  const AuthGate({super.key, required this.userType});
 
   @override
   _AuthGateState createState() => _AuthGateState();
@@ -92,8 +92,7 @@ class _AuthGateState extends State<AuthGate> {
 
 class AnimatedSplashText extends StatefulWidget {
   final VoidCallback onAnimationComplete;
-  const AnimatedSplashText({Key? key, required this.onAnimationComplete})
-      : super(key: key);
+  const AnimatedSplashText({super.key, required this.onAnimationComplete});
 
   @override
   _AnimatedSplashTextState createState() => _AnimatedSplashTextState();

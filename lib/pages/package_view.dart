@@ -13,6 +13,7 @@ class PackageView extends StatefulWidget {
   final String description;
   final String userId;
   final String imagePath;
+  final String package_id;
 
   const PackageView(
       {super.key,
@@ -20,7 +21,8 @@ class PackageView extends StatefulWidget {
       required this.rate,
       required this.description,
       required this.userId,
-      required this.imagePath});
+      required this.imagePath,
+      required this.package_id});
 
   @override
   State<PackageView> createState() => _PackageViewState();
@@ -127,7 +129,12 @@ class _PackageViewState extends State<PackageView> {
             children: [
               FilledButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>BookingForm()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => BookingForm(
+                                  package_id: widget.package_id,
+                                )));
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(8.0),
@@ -147,21 +154,28 @@ class _PackageViewState extends State<PackageView> {
                   style: const ButtonStyle(
                       backgroundColor:
                           WidgetStatePropertyAll(Colors.transparent)),
-                  child:  Padding(
+                  child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Visit Vendor',
-                          style: TextStyle(color:Theme.of(context).brightness==Brightness.light? Colors.black:Colors.white),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.light
+                                  ? Colors.black
+                                  : Colors.white),
                         ),
                         const SizedBox(
                           width: 10,
                         ),
                         Icon(
                           CupertinoIcons.arrow_right,
-                          color: Theme.of(context).brightness==Brightness.light? Colors.black:Colors.white,
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Colors.black
+                                  : Colors.white,
                         )
                       ],
                     ),
@@ -187,8 +201,9 @@ class _PackageViewState extends State<PackageView> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     child: Card(
-                      color:Theme.of(context).brightness == Brightness.light?const Color.fromARGB(255, 211, 208, 186):stickerColorDark,
-                       
+                      color: Theme.of(context).brightness == Brightness.light
+                          ? const Color.fromARGB(255, 211, 208, 186)
+                          : stickerColorDark,
                       elevation: 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -209,11 +224,14 @@ class _PackageViewState extends State<PackageView> {
                       ),
                     ),
                   ),
-                   Positioned(
+                  Positioned(
                       left: 37,
                       bottom: 73,
                       child: CircleAvatar(
-                        backgroundColor:Theme.of(context).brightness == Brightness.light? backgroundColor:Colors.black,
+                        backgroundColor:
+                            Theme.of(context).brightness == Brightness.light
+                                ? backgroundColor
+                                : Colors.black,
                         radius: 12,
                       ))
                 ],

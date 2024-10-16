@@ -97,6 +97,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
             'rate': doc['rate'] as String,
             'imagePath': doc['mainPicPath'] as String,
             'userId': doc['userId'] as String,
+            'package_id':doc.id.toString()
           };
         }).toList();
       });
@@ -161,6 +162,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
                           rate: packageList[index]['rate']!,
                           userId: packageList[index]['userId']!,
                           description: packageList[index]['description']!,
+                          package_id: packageList[index]['package_id']!,
                         ),
                       ),
                     );

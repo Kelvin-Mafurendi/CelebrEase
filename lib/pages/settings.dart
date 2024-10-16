@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/Provider/theme_notifier.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
@@ -15,6 +16,8 @@ class Settings extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeNotifier =
         Provider.of<ThemeNotifier>(context); // Access the theme notifier
+    final profileData =
+        Provider.of<ChangeManager>(context, listen: false).profileData;
 
     return Scaffold(
       appBar: AppBar(
@@ -75,10 +78,9 @@ class Settings extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditProfile(
-                    isFirstSetup: true,
+                    isFirstSetup: false,
+                    userType: userType,
                     initialData: const {},
-                    userType:
-                        userType, 
                   ),
                 ),
               );
