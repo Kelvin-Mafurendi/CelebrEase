@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_gate.dart';
 import 'package:maroro/Auth/login.dart';
 import 'package:maroro/Auth/signup.dart';
@@ -44,7 +45,6 @@ const profileCardColorDark = Color(0xFF5D4B4B);
 
 const colorScheme = ColorScheme(
   brightness: Brightness.light,
-  
   background: backgroundColor,
   onBackground: textColor,
   primary: primaryColor,
@@ -80,12 +80,13 @@ ThemeData darkTheme = ThemeData(
   cardColor: const Color(0xFF5D4B4B),
 );
 
-
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Preload the Lateef font
+  await GoogleFonts.pendingFonts([
+    GoogleFonts.lateef(),
+  ]);
   runApp(
     MultiProvider(
       providers: [
@@ -96,7 +97,6 @@ void main() async {
     ),
   );
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -140,7 +140,9 @@ class MyApp extends StatelessWidget {
             },
             '/Trending': (context) => const Trending(),
             '/Profile': (context) => const Profile(userType: ''),
-            '/Settings': (context) => const Settings(userType: '',),
+            '/Settings': (context) => const Settings(
+                  userType: '',
+                ),
             '/Bundles': (context) => const Bundles(),
             '/my_events': (context) => const MyEvents(),
             '/log_in': (context) => const LogIn(),

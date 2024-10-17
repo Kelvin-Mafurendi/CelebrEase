@@ -1,13 +1,17 @@
 // ignore_for_file: avoid_print
 
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:maroro/pages/cart.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:uuid/uuid.dart';
 
 class ChangeManager extends ChangeNotifier {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
@@ -15,14 +19,15 @@ class ChangeManager extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Map<String, dynamic> _profileData = {};
   final Map<String, dynamic> _bookingForm = {};
-  final List<Map<String, dynamic>> _bookings = [];
+  
+  var uuid = Uuid();
 
   Map<String, dynamic> get profileData => _profileData;
   Map<String, dynamic> get highlightData => _highlight;
   Map<String, dynamic> get packageData => _package;
   Map<String, dynamic> get flashAd => _flashAd;
   Map<String, dynamic> get bookingForm => _bookingForm;
-  List<Map<String, dynamic>> get bookings => _bookings;
+
 
   Future<void> loadProfiledata(
       Map<String, dynamic> newData, String userType) async {
@@ -462,44 +467,113 @@ class ChangeManager extends ChangeNotifier {
         : null;
   }
 
+   final List<Map<String, dynamic>> _bookings = [];
+  List<Map<String, dynamic>> get bookings => _bookings;
+
+  // Update the addToCart functionality
   Future<bool> updateForm(Map<String, dynamic> newData) async {
-    print("updateForm called with data: $newData"); // Debug print
     try {
+      // Create a new map to store the booking data
+      final Map<String, dynamic> bookingData = {};
+      
+      // Copy all the non-null values from newData
       newData.forEach((key, value) {
         if (value != null) {
-          _bookingForm[key] = value;
+          bookingData[key] = value;
         }
       });
 
-      _bookingForm['userId'] = _auth.currentUser!.uid.toString();
-      _bookingForm['timeStamp'] = DateTime.now().toString();
+      // Add required fields
+      bookingData['userId'] = _auth.currentUser!.uid.toString();
+      bookingData['timeStamp'] = DateTime.now().toString();
+      bookingData['orderId'] = uuid.v4(); // Generate unique ID for the cart item
 
-      _bookingForm.removeWhere((key, value) => value == null || value == '');
+      // Remove any null or empty values
+      bookingData.removeWhere((key, value) => value == null || value == '');
 
-      bookings.add(Map<String, dynamic>.from(_bookingForm));
+      // Add to bookings list
+      _bookings.add(bookingData);
 
-
-      print("Prepared _bookingForm: $_bookingForm"); // Debug print
-
-      // Upload the updated _bookingForm to the database
-      //await uploadFormDataToDatabase(_bookingForm);
-
-      print("Form data uploaded successfully"); // Debug print
+      // Notify listeners that the cart has changed
       notifyListeners();
-      return true; // Indicate success
+      
+      return true;
     } catch (e) {
       print('Error updating Form: $e');
-      return false; // Indicate failure
+      return false;
     }
   }
 
-  Future<void> uploadFormDataToDatabase(Map<String, dynamic> data) async {
-    print("Uploading form data to database"); // Debug print
-    await _fireStore.collection('Bookings').doc().set(data);
-    print("Upload complete"); // Debug print
+  // Improve the removeFromCart functionality
+  void removeFromCart(String orderId) {
+    print('Removing item with orderId: $orderId'); // Debug print
+    
+    // Find the index of the item to remove
+    final int index = _bookings.indexWhere((item) => item['orderId'] == orderId);
+    
+    if (index != -1) {
+      // Remove the item if found
+      _bookings.removeAt(index);
+      print('Item removed successfully'); // Debug print
+      
+      notifyListeners(); // Notify listeners that the cart has changed
+    } else {
+      print('Item not found in cart'); // Debug print
+    }
   }
 
-  List<Map<String,dynamic>> getFormData(String key) {
-    return bookings;
+  // Helper method to extract numeric rate value
+  double extractNumericRate(String rateStr) {
+    // Remove currency symbols and everything after '/'
+    String cleanedRate = rateStr.split('/').first; // Get everything before '/'
+    
+    // Remove all non-numeric characters except decimal point
+    cleanedRate = cleanedRate.replaceAll(RegExp(r'[^\d.]'), '');
+    
+    // Convert to double, default to 0 if parsing fails
+    return double.tryParse(cleanedRate) ?? 0.0;
   }
+
+  // Updated method to calculate cart total
+  Future<double> calculateCartTotal() async {
+  double total = 0.0;
+
+  // Reference to the Firestore collection
+  final packagesCollection = FirebaseFirestore.instance.collection('Packages');
+
+  for (var item in _bookings) {
+    // Get the package_id from the item
+    String packageId = item['package_id'];
+
+    // Fetch the package document from Firestore
+    DocumentSnapshot packageDoc = await packagesCollection.doc(packageId).get();
+    
+    if (packageDoc.exists) {
+      // Safely access the data
+      var packageData = packageDoc.data() as Map<String, dynamic>?;
+
+      // Check if packageData is not null and has a 'rate' field
+      if (packageData != null && packageData.containsKey('rate')) {
+        // Get the rate string
+        String rateStr = packageData['rate']?.toString() ?? '0';
+
+        // Use your existing method to extract the numeric value
+        double rate = extractNumericRate(rateStr);
+
+        // Multiply by quantity if it exists, otherwise use 1
+        int quantity = item['quantity'] ?? 1;
+        total += rate * quantity;
+      } else {
+        // Handle the case where the rate field doesn't exist
+        print('Rate field does not exist for package with id $packageId.');
+      }
+    } else {
+      // Handle the case where the package doesn't exist
+      print('Package with id $packageId does not exist.');
+    }
+  }
+  
+  return total;
+}
+
 }
