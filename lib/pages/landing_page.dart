@@ -74,7 +74,8 @@ class Home extends StatelessWidget {
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.all(30.0),
-            child: FilledButton(
+            child: ElevatedButton(
+              //style:ButtonStyle(elevation: WidgetStatePropertyAll(2)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -86,6 +87,7 @@ class Home extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
+                elevation: 5,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
                 ),

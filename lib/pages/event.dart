@@ -8,7 +8,7 @@ class Events extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      appBar: EventAppBar(title: 'Events'),
+      //appBar: EventAppBar(title: 'Events'),
      // bottomNavigationBar: DefaultTabController(length: 10,animationDuration: Duration(seconds: 2), child: MyTabBar(),),
     
         

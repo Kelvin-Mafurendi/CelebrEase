@@ -4,6 +4,59 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/pages/cart_view.dart';
 import 'package:provider/provider.dart';
 
+// New StatefulWidget for the total
+class CartTotal extends StatefulWidget {
+  final Map<String, double> itemRates;
+  final Map<String, int> itemQuantities;
+
+  const CartTotal({
+    super.key,
+    required this.itemRates,
+    required this.itemQuantities,
+  });
+
+  @override
+  State<CartTotal> createState() => _CartTotalState();
+}
+
+class _CartTotalState extends State<CartTotal> {
+  double total = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTotal();
+  }
+
+  @override
+  void didUpdateWidget(CartTotal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _calculateTotal();
+  }
+
+  void _calculateTotal() {
+    double newTotal = 0.0;
+    widget.itemRates.forEach((itemId, rate) {
+      int quantity = widget.itemQuantities[itemId] ?? 0;
+      newTotal += rate * quantity;
+    });
+    setState(() {
+      total = newTotal;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        "Total: \$${total.toStringAsFixed(2)}",
+        textScaler: const TextScaler.linear(2),
+        style: GoogleFonts.lateef(),
+      ),
+    );
+  }
+}
+
 class Cart extends StatefulWidget {
   const Cart({super.key});
 
@@ -12,24 +65,13 @@ class Cart extends StatefulWidget {
 }
 
 class _CartState extends State<Cart> {
-  double total = 0.0;
   final Map<String, double> _itemRates = {};
   final Map<String, int> _itemQuantities = {};
-
-  @override
-  void didUpdateWidget(Cart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Recalculate total whenever the widget updates
-    setState(() {
-      total = _calculateTotal();
-    });
-  }
 
   void _updateRate(String itemId, double rate) {
     print('Updating rate for item $itemId: $rate'); // Debug print
     if (mounted) {
       setState(() {
-        // Update quantity and rate
         _itemQuantities[itemId] = (_itemQuantities[itemId] ?? 0) + 1;
         _itemRates[itemId] = rate;
         print('Current rates: $_itemRates'); // Debug print
@@ -38,22 +80,16 @@ class _CartState extends State<Cart> {
     }
   }
 
-  double _calculateTotal() {
-    double total = 0.0;
-    _itemRates.forEach((itemId, rate) {
-      int quantity = _itemQuantities[itemId] ?? 0;
-      total += rate * quantity;
+  void _handleItemDeleted(String itemId) {
+    setState(() {
+      _itemRates.remove(itemId);
+      _itemQuantities.remove(itemId);
     });
-    print('Calculating total: $total'); // Debug print
-    return total;
   }
 
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> data = Provider.of<ChangeManager>(context).bookings;
-
-    // Calculate the total only once and store it
-    total = _calculateTotal();
 
     return ListView(
       scrollDirection: Axis.vertical,
@@ -90,17 +126,15 @@ class _CartState extends State<Cart> {
                   return CartView(
                     key: ValueKey(itemId),
                     data: data[index],
-                    onRateLoaded: _updateRate, onItemDeleted:_calculateTotal,
+                    onRateLoaded: _updateRate,
+                    onItemDeleted: () => _handleItemDeleted(itemId),
                   );
                 },
               ),
         if (data.isNotEmpty)
-          Center(
-            child: Text(
-              "Total: \$${total.toStringAsFixed(2)}",
-              textScaler: const TextScaler.linear(2),
-              style: GoogleFonts.lateef(),
-            ),
+          CartTotal(
+            itemRates: _itemRates,
+            itemQuantities: _itemQuantities,
           ),
         if (data.isNotEmpty)
           Padding(

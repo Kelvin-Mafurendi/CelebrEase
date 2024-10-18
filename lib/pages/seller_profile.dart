@@ -12,6 +12,7 @@ import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
 import 'package:maroro/pages/add_flash_ad.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
+import 'package:maroro/pages/vendor_calender.dart';
 import 'package:provider/provider.dart';
 
 class Profile extends StatefulWidget {
@@ -43,7 +44,6 @@ class _ProfileState extends State<Profile> {
           textAlign: TextAlign.start,
           style: GoogleFonts.merienda(),
         ),
-
         StreamBuilder<DocumentSnapshot>(
             stream:
                 _firestore.collection(widget.userType).doc(userId).snapshots(),
@@ -143,7 +143,9 @@ class _ProfileState extends State<Profile> {
                     width: MediaQuery.of(context).size.width,
                     padding: const EdgeInsets.only(left: 5),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
+                      color: Theme.of(context).brightness == Brightness.light
+                          ? stickerColor
+                          : stickerColorDark,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -298,7 +300,9 @@ class _ProfileState extends State<Profile> {
                                   MaterialPageRoute(
                                       builder: (context) => EditProfile(
                                             isFirstSetup: brandName.isEmpty,
-                                            initialData: const {}, userType: userType, // Use this condition to determine if it's the first setup
+                                            initialData: const {},
+                                            userType:
+                                                userType, // Use this condition to determine if it's the first setup
                                           )));
                             },
                             child: Text(
@@ -327,7 +331,6 @@ class _ProfileState extends State<Profile> {
           AboutSection(
             userType: widget.userType,
           ),
-
         const Padding(
           padding: EdgeInsets.only(top: 5, bottom: 5),
           child: Divider(
@@ -338,19 +341,16 @@ class _ProfileState extends State<Profile> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              FilledButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>const AddFlashAd()));},
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AddFlashAd()));
+                },
                 style: const ButtonStyle(),
                 child: const Text(
                   'Post a FlashAd\u2122',
-                  style: TextStyle(),
-                ),
-              ),
-              FilledButton(
-                onPressed: () {},
-                style: const ButtonStyle(),
-                child: const Text(
-                  'Update Calender',
                   style: TextStyle(),
                 ),
               ),
@@ -436,8 +436,9 @@ class _ProfileState extends State<Profile> {
               }),
         if (widget.userType == 'Vendors')
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              FilledButton(
+              ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/addhighlight');
                   },
@@ -445,135 +446,169 @@ class _ProfileState extends State<Profile> {
                   child: const Text('Add New Highlight ')),
             ],
           ),
-          if(widget.userType == 'Vendors')
-        const Padding(
-          padding: EdgeInsets.only(top: 5, bottom: 5),
-          child: Divider(
-            color: Color.fromARGB(255, 224, 210, 210),
-          ),
-        ),
-        if(widget.userType == 'Vendors')
-        Row(
-          children: [
-            Text(
-              'Packages',
-              textScaler: const TextScaler.linear(1.2),
-              style: GoogleFonts.merienda(),
+        if (widget.userType == 'Vendors')
+          const Padding(
+            padding: EdgeInsets.only(top: 5, bottom: 5),
+            child: Divider(
+              color: Color.fromARGB(255, 224, 210, 210),
             ),
-            const Spacer(),
-            const Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: InkWell(
-                child: Text(
-                  'View All',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w100,
-                    decoration: TextDecoration.underline,
+          ),
+        if (widget.userType == 'Vendors')
+          Row(
+            children: [
+              Text(
+                'Packages',
+                textScaler: const TextScaler.linear(1.2),
+                style: GoogleFonts.merienda(),
+              ),
+              const Spacer(),
+              const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: InkWell(
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w100,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
+                ),
+              )
+            ],
+          ),
+        if (widget.userType == 'Vendors')
+          StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('Packages')
+                  .where('userId', isEqualTo: userId)
+                  .snapshots(),
+              builder: (context, snapshot3) {
+                if (snapshot3.hasError) {
+                  return const Text('Something went wrong');
+                }
+
+                if (snapshot3.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  );
+                }
+                if (!snapshot3.hasData || snapshot3.data == null) {
+                  //print('No data available');
+                  return const Text('No data available');
+                }
+                // Access the documents
+                List<QueryDocumentSnapshot> packages = snapshot3.data!.docs;
+
+                //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: packages.isNotEmpty
+                        ? 145
+                        : 10, // Constrain height to screen
+                  ),
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: packages.length,
+                      itemBuilder: (context, index) {
+                        Map<String, dynamic> packageData =
+                            packages[index].data() as Map<String, dynamic>;
+                        return ProductCard(
+                          data: packageData,
+                        );
+                      }),
+                );
+              }),
+        if (widget.userType == 'Vendors')
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/addPackage');
+                  },
+                  style: const ButtonStyle(),
+                  child: const Text('Add New Package')),
+            ],
+          ),
+        if (widget.userType == 'Vendors')
+          const Padding(
+                padding: EdgeInsets.only(top: 5, bottom: 5),
+                child: Divider(
+                  color: Color.fromARGB(255, 224, 210, 210),
                 ),
               ),
-            )
-          ],
-        ),
-        if(widget.userType == 'Vendors')
-        StreamBuilder<QuerySnapshot>(
-            stream: _firestore
-                .collection('Packages')
-                .where('userId', isEqualTo: userId)
-                .snapshots(),
-            builder: (context, snapshot3) {
-              if (snapshot3.hasError) {
-                return const Text('Something went wrong');
-              }
-
-              if (snapshot3.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                );
-              }
-              if (!snapshot3.hasData || snapshot3.data == null) {
-                //print('No data available');
-                return const Text('No data available');
-              }
-              // Access the documents
-              List<QueryDocumentSnapshot> packages = snapshot3.data!.docs;
-
-              //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
-              return ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: packages.isNotEmpty
-                      ? 145
-                      : 10, // Constrain height to screen
-                ),
-                child: ListView.builder(
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: packages.length,
-                    itemBuilder: (context, index) {
-                      Map<String, dynamic> packageData =
-                          packages[index].data() as Map<String, dynamic>;
-                      return ProductCard(
-                        data: packageData,
-                      );
-                    }),
-              );
-            }),
-            if(widget.userType == 'Vendors')
-        Row(
-          children: [
-            FilledButton(
+        if (widget.userType == 'Vendors')
+          Text(
+                'Bookings',
+                textScaler: const TextScaler.linear(1.2),
+                style: GoogleFonts.merienda(),
+              ),
+        if (widget.userType == 'Vendors')
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              
+              ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/addPackage');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VendorCalendarManager(),
+                    ),
+                  );
                 },
                 style: const ButtonStyle(),
-                child: const Text('Add New Package')),
-          ],
-        ),
+                child: const Text('Update Calendar'),
+              ),
+            ],
+          ),
         const SizedBox(height: 40),
-        if(widget.userType == 'Vendors') // Increased space before social media icons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            InkWell(
-              onTap: () {},
-              child: const Icon(
-                color: primaryColor,
-                Icons.facebook_outlined,
+        if (widget.userType ==
+            'Vendors') // Increased space before social media icons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              InkWell(
+                onTap: () {},
+                child: const Icon(
+                  color: primaryColor,
+                  Icons.facebook_outlined,
+                ),
               ),
-            ),
-            InkWell(
-              onTap: () {},
-              child: const FaIcon(
-                color: primaryColor,
-                FontAwesomeIcons.xTwitter,
+              InkWell(
+                onTap: () {},
+                child: const FaIcon(
+                  color: primaryColor,
+                  FontAwesomeIcons.xTwitter,
+                ),
               ),
-            ),
-            InkWell(
-              onTap: () {},
-              child: const FaIcon(
-                color: primaryColor,
-                FontAwesomeIcons.instagram,
+              InkWell(
+                onTap: () {},
+                child: const FaIcon(
+                  color: primaryColor,
+                  FontAwesomeIcons.instagram,
+                ),
               ),
-            ),
-            InkWell(
-              onTap: () {},
-              child: const FaIcon(
-                color: primaryColor,
-                FontAwesomeIcons.tiktok,
+              InkWell(
+                onTap: () {},
+                child: const FaIcon(
+                  color: primaryColor,
+                  FontAwesomeIcons.tiktok,
+                ),
               ),
-            ),
-            InkWell(
-              onTap: () {},
-              child: const FaIcon(
-                color: primaryColor,
-                FontAwesomeIcons.linkedin,
+              InkWell(
+                onTap: () {},
+                child: const FaIcon(
+                  color: primaryColor,
+                  FontAwesomeIcons.linkedin,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

@@ -11,24 +11,22 @@ import 'package:provider/provider.dart';
 class CartView extends StatefulWidget {
   final Map<String, dynamic> data;
   final Function(String, double) onRateLoaded;
-  final VoidCallback onItemDeleted; 
+  final VoidCallback onItemDeleted;
 
   const CartView({
     super.key,
     required this.data,
-    required this.onRateLoaded, required this.onItemDeleted,
+    required this.onRateLoaded,
+    required this.onItemDeleted,
   });
 
   @override
   State<CartView> createState() => _CartViewState();
-  
 }
 
 class _CartViewState extends State<CartView> {
- //final GlobalKey<_CartState> _cartKey = GlobalKey<_CartState>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _rateLoaded = false;
-  
 
   @override
   void initState() {
@@ -55,25 +53,17 @@ class _CartViewState extends State<CartView> {
       widget.onRateLoaded(widget.data['package id'], rate);
     }
   }
-  // Helper method to format the rate for display
+
   String formatRate(String rateStr) {
-    // Split the rate into value and unit (e.g., "₦5000/hour" -> ["₦5000", "hour"])
     List<String> parts = rateStr.split('/');
     if (parts.isNotEmpty) return parts[0];
-
     String valueWithCurrency = parts[0];
-
-    // Find the currency symbol (first non-digit character)
-    //String currencySymbol = RegExp(r'[^\d.]').firstMatch(valueWithCurrency)?.group(0) ?? '';
-    
-    // Extract numeric value
     String numericValue = valueWithCurrency.replaceAll(RegExp(r'[^\d.]'), '');
-
-    // Format the display string
     return numericValue;
   }
 
-  Future<void> _showDeleteConfirmation(BuildContext context, String orderId) async {
+  Future<void> _showDeleteConfirmation(
+      BuildContext context, String orderId) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -117,8 +107,8 @@ class _CartViewState extends State<CartView> {
               onPressed: () {
                 Provider.of<ChangeManager>(context, listen: false)
                     .removeFromCart(orderId);
-                    widget.onItemDeleted(); 
-                
+                widget
+                    .onItemDeleted(); // This will now trigger the update in the parent
                 Navigator.of(dialogContext).pop();
               },
             ),
@@ -155,6 +145,8 @@ class _CartViewState extends State<CartView> {
 
           return Card(
             elevation: 10,
+            shadowColor: secondaryColor,
+            surfaceTintColor: Theme.of(context).cardColor,
             child: Container(
               height: MediaQuery.of(context).size.width * 0.7,
               padding: const EdgeInsets.all(15),
@@ -194,9 +186,9 @@ class _CartViewState extends State<CartView> {
                         children: [
                           Text(
                             packageData['category'] ?? 'Unknown',
-                            style: GoogleFonts.lateef(fontSize: 18,fontWeight: FontWeight.w600),
+                            style: GoogleFonts.lateef(
+                                fontSize: 18, fontWeight: FontWeight.w600),
                           ),
-                          
                         ],
                       ),
                       const SizedBox(
@@ -230,38 +222,39 @@ class _CartViewState extends State<CartView> {
                                 height: 5,
                               ),
                               StreamBuilder<DocumentSnapshot>(
-                                  stream: _firestore
-                                      .collection('Vendors')
-                                      .doc(packageData['userId'])
-                                      .snapshots(),
-                                  builder: (context, snapshot) {
-                                    if (!snapshot.hasData) {
-                                      return const CircularProgressIndicator();
-                                    }
-                                    return SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.275,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            snapshot.data!.get('business name'),
-                                            style: GoogleFonts.lateef(
-                                                fontWeight: FontWeight.w400),
-                                          ),
-                                          Text(
-                                            widget.data['address'] !=
-                                                    'Vendor Location'
-                                                ? widget.data['address']
-                                                : snapshot.data!.get('address'),
-                                            style: GoogleFonts.lateef(
-                                                fontWeight: FontWeight.w100),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
+                                stream: _firestore
+                                    .collection('Vendors')
+                                    .doc(packageData['userId'])
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) {
+                                    return const CircularProgressIndicator();
+                                  }
+                                  return SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.275,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          snapshot.data!.get('business name'),
+                                          style: GoogleFonts.lateef(
+                                              fontWeight: FontWeight.w400),
+                                        ),
+                                        Text(
+                                          widget.data['address'] !=
+                                                  'Vendor Location'
+                                              ? widget.data['address']
+                                              : snapshot.data!.get('address'),
+                                          style: GoogleFonts.lateef(
+                                              fontWeight: FontWeight.w100),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -340,16 +333,3 @@ class _CartViewState extends State<CartView> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

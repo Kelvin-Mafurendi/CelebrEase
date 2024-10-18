@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_service.dart';
@@ -7,13 +8,15 @@ import 'package:maroro/pages/package_browser.dart';
 
 ///App bar template
 class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const EventAppBar({super.key, required this.title});
+  final String userType;
+  const EventAppBar({super.key, required this.title, required this.userType});
 
   final String title;
   @override
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      
       /*leading: Padding(
           padding: const EdgeInsets.all(5),
           child: GestureDetector(onTap: (){
@@ -57,15 +60,17 @@ class Sticker extends StatelessWidget {
           height: MediaQuery.of(context).size.width *
               0.5, // Adjust height as needed
           decoration: BoxDecoration(
-            color:Theme.of(context).brightness == Brightness.light? stickerColor:stickerColorDark,
+            color: Theme.of(context).brightness == Brightness.light
+                ? stickerColor
+                : stickerColorDark,
             borderRadius: BorderRadius.circular(10),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: CachedNetworkImage(
-              fit: BoxFit.cover, imageUrl: imagepath,)
-            
-          ),
+              borderRadius: BorderRadius.circular(10),
+              child: CachedNetworkImage(
+                fit: BoxFit.cover,
+                imageUrl: imagepath,
+              )),
         ),
         const SizedBox(height: 8), // Add some space between image and text
         Text(
@@ -169,7 +174,8 @@ class MyDrawer extends StatelessWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/Settings',arguments:{userType : userType});
+              Navigator.pushNamed(context, '/Settings',
+                  arguments: {userType: userType});
             },
           ),
           DrawerTile(

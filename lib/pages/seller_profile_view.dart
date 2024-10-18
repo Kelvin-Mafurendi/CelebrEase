@@ -385,7 +385,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text('Book Now'),
+                        child: Text('Bookmark Vendor'),
                       ),
                     ),
                     FilledButton(
@@ -402,7 +402,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                           children: [
                             Text('Chat Now',style: TextStyle(color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white),),
                             SizedBox(width: 10),
-                            Icon(CupertinoIcons.arrow_right,color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white,),
+                            Icon(CupertinoIcons.chat_bubble_2,color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white,),
                           ],
                         ),
                       ),

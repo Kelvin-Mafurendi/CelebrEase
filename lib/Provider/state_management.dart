@@ -505,23 +505,22 @@ class ChangeManager extends ChangeNotifier {
   }
 
   // Improve the removeFromCart functionality
-  void removeFromCart(String orderId) {
-    print('Removing item with orderId: $orderId'); // Debug print
-    
-    // Find the index of the item to remove
-    final int index = _bookings.indexWhere((item) => item['orderId'] == orderId);
-    
-    if (index != -1) {
-      // Remove the item if found
-      _bookings.removeAt(index);
-      print('Item removed successfully'); // Debug print
-      
-      notifyListeners(); // Notify listeners that the cart has changed
-    } else {
-      print('Item not found in cart'); // Debug print
-    }
-  }
+  // In state_management.dart, update the removeFromCart method
 
+void removeFromCart(String orderId) {
+  print('Removing item with orderId: $orderId');
+  
+  final int index = _bookings.indexWhere((item) => item['orderId'] == orderId);
+  
+  if (index != -1) {
+    _bookings.removeAt(index);
+    print('Item removed successfully');
+    
+    notifyListeners();  // This will trigger a rebuild of the Cart widget
+  } else {
+    print('Item not found in cart');
+  }
+}
   // Helper method to extract numeric rate value
   double extractNumericRate(String rateStr) {
     // Remove currency symbols and everything after '/'

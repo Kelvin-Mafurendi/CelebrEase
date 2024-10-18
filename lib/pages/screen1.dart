@@ -103,8 +103,9 @@ class _Screen1State extends State<Screen1> {
                 userType: widget.userType,
               )
             : null,
-        appBar: selectedIndex == 0 ? const EventAppBar(title: '') : null,
+        appBar: selectedIndex == 0 ? EventAppBar(title: '', userType:widget.userType,) : null,
         bottomNavigationBar: BottomNavigationBar(
+          elevation: 10,
           //backgroundColor: const Color(0xFFF1E1D5),
           selectedItemColor: accentColor,
           unselectedItemColor: primaryColor,

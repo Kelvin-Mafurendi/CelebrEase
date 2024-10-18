@@ -78,6 +78,19 @@ ThemeData darkTheme = ThemeData(
   ),
   scaffoldBackgroundColor: const Color(0xFF070303),
   cardColor: const Color(0xFF5D4B4B),
+  // Add these properties
+  cardTheme: const CardTheme(
+    elevation: 10,
+    shadowColor: secondaryColor, // Darker shadow for better contrast
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      elevation: 5,
+      shadowColor: secondaryColor,
+      surfaceTintColor: Color(0xFF5D4B4B), // Adds a subtle tint to elevated surface
+    ),
+  ),
+
 );
 
 void main() async {
