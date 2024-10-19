@@ -19,6 +19,8 @@ class ChangeManager extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Map<String, dynamic> _profileData = {};
   final Map<String, dynamic> _bookingForm = {};
+  List<String> _serviceTypes = []; 
+  bool _isLoadingServices = false;
   
   var uuid = Uuid();
 
@@ -27,6 +29,8 @@ class ChangeManager extends ChangeNotifier {
   Map<String, dynamic> get packageData => _package;
   Map<String, dynamic> get flashAd => _flashAd;
   Map<String, dynamic> get bookingForm => _bookingForm;
+  List<String> get serviceTypes => _serviceTypes; 
+  bool get isLoadingServices => _isLoadingServices;
 
 
   Future<void> loadProfiledata(
@@ -184,6 +188,7 @@ class ChangeManager extends ChangeNotifier {
     }
   }
 
+
   uploadHighlightMainImageToStorage(File image) async {
     Reference ref = _firebaseStorage
         .ref()
@@ -274,77 +279,200 @@ class ChangeManager extends ChangeNotifier {
     'views': '',
     'likes': '',
   };
+  // Add this to your ChangeManager class in state_management.dart
 
-  //updating featured products
-  void updatePackage(Map<String, dynamic> newData) async {
-    EasyLoading.show();
+/*Future<void> loadServiceTypes() async {
+  try {
+    final snapshot = await _fireStore.collection('Services').get();
+    _serviceTypes = snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
+    notifyListeners();
+  } catch (e) {
+    print('Error loading service types: $e');
+  }
+}*/
+
+Future<Map<String, dynamic>?> getServiceFields(String serviceType) async {
+  try {
+    final doc = await _fireStore.collection('Services').doc(serviceType).get();
+    return doc.data();
+  } catch (e) {
+    print('Error loading service fields: $e');
+    return null;
+  }
+}
+ // Initialize service types from Firebase
+  Future<void> initializeServiceTypes() async {
     try {
-      print('Starting package update with data: $newData');
+      _isLoadingServices = true;
+      notifyListeners();
 
-      if (newData['mainPicPath'] != null) {
-        print('Uploading package image');
-        newData['mainPicPath'] =
-            await uploadPackageImageToStorage(File(newData['mainPicPath']));
-        print('Image uploaded successfully: ${newData['mainPicPath']}');
-      }
-
-      newData.forEach((key, value) {
-        if (value != null) {
-          _package[key] = value;
-        }
-      });
-
-      _package['userId'] = _auth.currentUser!.uid.toString();
-      _package['timeStamp'] = DateTime.now().toString();
-
-      // Fetch user profile data
-      DocumentSnapshot userProfileDoc = await _fireStore
-          .collection('Vendors')
-          .doc(_auth.currentUser?.uid)
+      // Get the Services collection
+      final QuerySnapshot servicesSnapshot = await _fireStore
+          .collection('Services')
           .get();
 
-      if (userProfileDoc.exists) {
-        var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
-        String? category = userProfile?['category'] as String?;
-        if (category != null) {
-          _package['category'] = category;
-          print('Category set from user profile: $category');
-        } else {
-          print('Category not found in user profile');
+      // Clear existing service types
+      _serviceTypes.clear();
+
+      // Add each service type from the documents
+      for (var doc in servicesSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final serviceType = data['name'] as String?;
+        if (serviceType != null && serviceType.isNotEmpty) {
+          _serviceTypes.add(serviceType);
         }
-      } else {
-        print('User profile document does not exist');
       }
-      _package.removeWhere((key, value) => value == null || value == '');
 
-      print('Prepared package data for upload: $_package');
+      // Sort alphabetically for consistent display
+      _serviceTypes.sort();
 
-      // Upload to database
-      await uploadPackageDataToDatabase(_package);
-      print('Package data uploaded successfully');
-
-      notifyListeners();
-      print('Notified listeners of changes');
-    } catch (e, stackTrace) {
-      print('Error updating package: $e');
-      print('Stack trace: $stackTrace');
-      // Rethrow the error so it can be caught in the UI
-      rethrow;
+    } catch (e) {
+      print('Error initializing service types: $e');
+      // In case of error, add some default service types
+      _serviceTypes = [
+        'Accommodation',
+        'Event Planning',
+        'Photography',
+        'Catering',
+        // Add a few essential defaults
+      ];
     } finally {
-      EasyLoading.dismiss();
+      _isLoadingServices = false;
+      notifyListeners();
     }
   }
 
-  uploadPackageImageToStorage(File image) async {
-    Reference ref = _firebaseStorage
-        .ref()
-        .child('Package Images')
-        .child(path.basename(image.path));
-    UploadTask uploadTask = ref.putData(image.readAsBytesSync());
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
+  Future<void> loadServiceTypes() async {
+    if (_serviceTypes.isEmpty && !_isLoadingServices) {
+      await initializeServiceTypes();
+    }
   }
+
+  /*Future<Map<String, dynamic>?> getServiceFields(String serviceType) async {
+    try {
+      // Query the specific service type document
+      final DocumentSnapshot serviceDoc = await _fireStore
+          .collection('Services')
+          .doc(serviceType)
+          .get();
+
+      if (serviceDoc.exists) {
+        final data = serviceDoc.data() as Map<String, dynamic>;
+        
+        // Get the fields configuration for this service type
+        final fields = data['fields'] as Map<String, dynamic>?;
+        
+        if (fields != null) {
+          return {
+            'fields': fields,
+            'validations': data['validations'] ?? {},
+            'required': data['required'] ?? [],
+            'defaults': data['defaults'] ?? {},
+          };
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      print('Error loading service fields: $e');
+      return null;
+    }
+  }*/
+
+  // Method to check if a service type exists
+  Future<bool> serviceTypeExists(String serviceType) async {
+    try {
+      final doc = await _fireStore
+          .collection('Services')
+          .doc(serviceType)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      print('Error checking service type: $e');
+      return false;
+    }
+  }
+
+  // Method to get service type display name (in case it's different from the ID)
+  Future<String?> getServiceTypeDisplayName(String serviceType) async {
+    try {
+      final doc = await _fireStore
+          .collection('Services')
+          .doc(serviceType)
+          .get();
+      if (doc.exists) {
+        return (doc.data() as Map<String, dynamic>)['displayName'] as String?;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting service type display name: $e');
+      return null;
+    }
+  }
+// In your ChangeManager class, update these methods:
+
+void updatePackage(Map<String, dynamic> newData) async {
+  EasyLoading.show();
+  try {
+    if (newData['mainPicPath'] != null) {
+      final imagePath = newData['mainPicPath'];
+      if (imagePath is String && File(imagePath).existsSync()) {
+        newData['mainPicPath'] = await uploadPackageImageToStorage(File(imagePath));
+      }
+    }
+
+    // Copy non-null values
+    newData.forEach((key, value) {
+      if (value != null) {
+        _package[key] = value;
+      }
+    });
+
+    _package['userId'] = _auth.currentUser!.uid.toString();
+    _package['timeStamp'] = DateTime.now().toString();
+
+    // Fetch user profile data
+    DocumentSnapshot userProfileDoc = await _fireStore
+        .collection('Vendors')
+        .doc(_auth.currentUser?.uid)
+        .get();
+
+    if (userProfileDoc.exists) {
+      var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
+      if (userProfile?['category'] != null) {
+        _package['category'] = userProfile!['category'];
+      }
+    }
+
+    _package.removeWhere((key, value) => value == null || value == '');
+
+    // Upload to database
+    await uploadPackageDataToDatabase(_package);
+    
+    notifyListeners();
+  } catch (e, stackTrace) {
+    print('Error updating package: $e');
+    print('Stack trace: $stackTrace');
+    rethrow;
+  } finally {
+    EasyLoading.dismiss();
+  }
+}
+
+Future<String> uploadPackageImageToStorage(File image) async {
+  final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
+  Reference ref = _firebaseStorage
+      .ref()
+      .child('Package Images')
+      .child(fileName);
+  
+  UploadTask uploadTask = ref.putFile(image);
+  TaskSnapshot taskSnapshot = await uploadTask;
+  String downloadLink = await taskSnapshot.ref.getDownloadURL();
+  return downloadLink;
+}
+
+  
 
   Future<void> uploadPackageDataToDatabase(Map<String, dynamic> data) async {
     try {
