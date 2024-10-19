@@ -9,9 +9,9 @@ class AddPackage extends StatefulWidget {
   final Map<String, dynamic> initialData;
   
   const AddPackage({
-    Key? key,
+    super.key,
     this.initialData = const {},
-  }) : super(key: key);
+  });
 
   @override
   State<AddPackage> createState() => _AddPackageState();
@@ -89,7 +89,7 @@ class _AddPackageState extends State<AddPackage> {
       ),
       body: SafeArea(
         child: DynamicPackageForm(
-          serviceType: serviceType!,
+          //serviceType: serviceType!,
           initialData: formData,
         ),
       ),

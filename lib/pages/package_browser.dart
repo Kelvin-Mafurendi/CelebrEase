@@ -87,7 +87,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
     try {
       QuerySnapshot querySnapshot = await _firestore
           .collection('Packages')
-          .where('category', isEqualTo: widget.service)
+          .where('serviceType', isEqualTo: widget.service)
           .get();
       setState(() {
         packageList = querySnapshot.docs.map((doc) {

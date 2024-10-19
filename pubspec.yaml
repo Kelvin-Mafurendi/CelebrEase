@@ -37,6 +37,7 @@ dependencies:
   fluttertoast: ^8.2.2
   uuid: ^3.0.7
   table_calendar: ^3.0.9
+  data_table_2: ^2.5.8
 
 dev_dependencies:
   flutter_launcher_icons: ^0.10.0

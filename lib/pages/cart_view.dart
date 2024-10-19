@@ -44,7 +44,7 @@ class _CartViewState extends State<CartView> {
 
     if (doc.exists && !_rateLoaded) {
       final packageData = doc.data() as Map<String, dynamic>;
-      final rateStr = packageData['rate'].toString().split('/')[0];
+      final rateStr = packageData['rate'].toString().split('per')[0];
       final String numericPart = rateStr.replaceAll(RegExp(r'[^\d.]'), '');
       final rate = double.tryParse(numericPart) ?? 0.0;
       print(
@@ -55,7 +55,7 @@ class _CartViewState extends State<CartView> {
   }
 
   String formatRate(String rateStr) {
-    List<String> parts = rateStr.split('/');
+    List<String> parts = rateStr.split('per');
     if (parts.isNotEmpty) return parts[0];
     String valueWithCurrency = parts[0];
     String numericValue = valueWithCurrency.replaceAll(RegExp(r'[^\d.]'), '');
@@ -143,180 +143,197 @@ class _CartViewState extends State<CartView> {
           Map<String, dynamic> packageData =
               snapshot.data!.data() as Map<String, dynamic>;
 
-          return Card(
-            elevation: 10,
-            shadowColor: secondaryColor,
-            surfaceTintColor: Theme.of(context).cardColor,
-            child: Container(
-              height: MediaQuery.of(context).size.width * 0.7,
-              padding: const EdgeInsets.all(15),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: IconButton(
-                      onPressed: () {
-                        String? orderId = widget.data['orderId'];
-                        if (orderId != null) {
-                          _showDeleteConfirmation(context, orderId);
-                        }
-                      },
-                      icon: Icon(
-                        FluentSystemIcons.ic_fluent_delete_regular,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 10,
-                    bottom: 0,
-                    child: Text(
-                      "${packageData['rate'].toString().split('/')[0]}.00",
-                      textScaler: const TextScaler.linear(4),
-                      style: GoogleFonts.lateef(color: Colors.grey[500]),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
+
+          return Stack(
+            children: [Card(
+              elevation: 10,
+              shadowColor: secondaryColor,
+              surfaceTintColor: Theme.of(context).cardColor,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 1.5,
+                padding: const EdgeInsets.all(15),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Stack(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            packageData['category'] ?? 'Unknown',
-                            style: GoogleFonts.lateef(
-                                fontSize: 18, fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                      
+                      Positioned(
+                        //right: 0,
+                        bottom: 0,
+                        left: 0,
+                        child: Text(
+                          "${packageData['rate'].toString().split('per')[0]}",
+                          textScaler: const TextScaler.linear(4),
+                          style: GoogleFonts.lateef(color: Colors.grey[500]),
+                        ),
                       ),
-                      const SizedBox(
-                        width: 5,
+                      Positioned(
+                        top: 0 ,
+                        left: MediaQuery.of(context).size.width *0.3,
+                        //right: 0,
+                        child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  packageData['serviceType'] ?? 'Unknown',
+                                  style: GoogleFonts.lateef(
+                                      fontSize: 20, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
                       ),
-                      Text(
-                        packageData['packageName'] ?? 'No name',
-                        style: GoogleFonts.lateef(fontSize: 18),
-                      ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: CachedNetworkImage(
-                                  imageUrl: packageData['mainPicPath'],
-                                  fit: BoxFit.cover,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.275,
-                                  height:
-                                      MediaQuery.of(context).size.width * 0.275,
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              StreamBuilder<DocumentSnapshot>(
-                                stream: _firestore
-                                    .collection('Vendors')
-                                    .doc(packageData['userId'])
-                                    .snapshots(),
-                                builder: (context, snapshot) {
-                                  if (!snapshot.hasData) {
-                                    return const CircularProgressIndicator();
-                                  }
-                                  return SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.275,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          snapshot.data!.get('business name'),
-                                          style: GoogleFonts.lateef(
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                        Text(
-                                          widget.data['address'] !=
-                                                  'Vendor Location'
-                                              ? widget.data['address']
-                                              : snapshot.data!.get('address'),
-                                          style: GoogleFonts.lateef(
-                                              fontWeight: FontWeight.w100),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                          
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          Text(
+                            packageData['packageName'] ?? 'No name',
+                            style: GoogleFonts.lateef(fontSize: 18),
                           ),
                           const SizedBox(
-                            width: 30,
+                            height: 6,
                           ),
-                          Column(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "Date: ",
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: CachedNetworkImage(
+                                      imageUrl: packageData['mainPicPath'],
+                                      fit: BoxFit.cover,
+                                      width:
+                                          MediaQuery.of(context).size.width * 0.275,
+                                      height:
+                                          MediaQuery.of(context).size.width * 0.275,
+                                    ),
                                   ),
-                                  Text(
-                                    widget.data['event date']
-                                        .toString()
-                                        .split(' ')[0],
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w300),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  StreamBuilder<DocumentSnapshot>(
+                                    stream: _firestore
+                                        .collection('Vendors')
+                                        .doc(packageData['userId'])
+                                        .snapshots(),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData) {
+                                        return const CircularProgressIndicator();
+                                      }
+                                      return SizedBox(
+                                        width: MediaQuery.of(context).size.width *
+                                            0.275,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              snapshot.data!.get('business name'),
+                                              style: GoogleFonts.lateef(
+                                                  fontWeight: FontWeight.w400),
+                                            ),
+                                            Text(
+                                              widget.data['address'] !=
+                                                      'Vendor Location'
+                                                  ? widget.data['address']
+                                                  : snapshot.data!.get('address'),
+                                              style: GoogleFonts.lateef(
+                                                  fontWeight: FontWeight.w100),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(
+                                    height: 80,
                                   ),
                                 ],
                               ),
-                              Row(
+                              const SizedBox(
+                                width: 30,
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "Time: ",
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Date: ",
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w400),
+                                      ),
+                                      Text(
+                                        widget.data['event date']
+                                            .toString()
+                                            .split(' ')[0],
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w300),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    "${widget.data['start']} to ${widget.data['end']}",
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w300),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Time: ",
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      Text(
+                                        "${widget.data['start']} to ${widget.data['end']}",
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w300),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "Guests: ",
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w400),
+                                      ),
+                                      Text(
+                                        "${widget.data['guestCount']}",
+                                        style: GoogleFonts.lateef(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w300),
+                                      ),
+                                    ],
+                                  ),
+                                  // Add other details from booking form here
+                                  for (var key in widget.data.keys)
+                                    if (key != 'event date' &&
+                                        key != 'start' &&
+                                        key != 'end' &&
+                                        key != 'guests' &&
+                                        key != 'package id' &&
+                                        key != 'name' &&
+                                        key != 'address' &&
+                                        key != 'orderId' &&
+                                        key != 'userId' &&
+                                        key != 'selected_slots' &&
+                                        key != 'guestCount' &&
+                                        key != 'timeStamp')
+                                      _buildDetailRow(
+                                          key, widget.data[key].toString()),
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.width * 0.285,
                                   ),
                                 ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    "Guests: ",
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400),
-                                  ),
-                                  Text(
-                                    "${widget.data['guests']}",
-                                    style: GoogleFonts.lateef(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w300),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.width * 0.285,
                               ),
                             ],
                           ),
@@ -324,12 +341,47 @@ class _CartViewState extends State<CartView> {
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
+            Positioned(
+                      right: 5,
+                      //top: 0,
+                      bottom: 5,
+                      child: IconButton(
+                        onPressed: () {
+                          String? orderId = widget.data['orderId'];
+                          if (orderId != null) {
+                            _showDeleteConfirmation(context, orderId);
+                          }
+                        },
+                        icon: Icon(
+                          size: MediaQuery.of(context).size.width * 0.1,
+                          FluentSystemIcons.ic_fluent_delete_regular,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ),]
           );
         },
       ),
+    );
+  }
+  
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      
+      children: [
+        Text(
+          "$label: ",
+          style: GoogleFonts.lateef(fontSize: 15, fontWeight: FontWeight.w400),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.lateef(fontSize: 15, fontWeight: FontWeight.w300),
+        ),
+      ],
     );
   }
 }

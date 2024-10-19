@@ -49,7 +49,7 @@ class _CartTotalState extends State<CartTotal> {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        "Total: \$${total.toStringAsFixed(2)}",
+        "Total: ZAR ${total.toStringAsFixed(2)}",
         textScaler: const TextScaler.linear(2),
         style: GoogleFonts.lateef(),
       ),
