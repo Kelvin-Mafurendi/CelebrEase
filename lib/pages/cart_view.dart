@@ -297,6 +297,7 @@ class _CartViewState extends State<CartView> {
                                       ),
                                     ],
                                   ),
+                                  if(widget.data['guestCount'] != null)
                                   Row(
                                     children: [
                                       Text(
@@ -305,6 +306,7 @@ class _CartViewState extends State<CartView> {
                                             fontSize: 15,
                                             fontWeight: FontWeight.w400),
                                       ),
+                                      
                                       Text(
                                         "${widget.data['guestCount']}",
                                         style: GoogleFonts.lateef(

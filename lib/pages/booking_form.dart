@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -45,15 +46,30 @@ class _BookingFormState extends State<BookingForm> {
       {'name': 'checkOutDate', 'label': 'Check-out Date', 'type': 'date'},
       {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
       {
+        'name': 'numberOfRooms',
+        'label': 'Number of Rooms Required',
+        'type': 'number'
+      },
+      {
         'name': 'roomType',
         'label': 'Room Type',
         'type': 'select',
         'options': ['Single', 'Double', 'Suite', 'Villa']
       },
       {
-        'name': 'specialRequests',
-        'label': 'Special Requests',
-        'type': 'multiline'
+        'name': 'roomPreferences',
+        'label': 'Room Preferences',
+        'type': 'multiselect',
+        'options': [
+          'Non-smoking',
+          'Near Elevator',
+          'High Floor',
+          'Low Floor',
+          'Quiet Room',
+          'Ocean View',
+          'Garden View',
+          'Pool Access'
+        ]
       },
       {
         'name': 'addOns',
@@ -64,8 +80,16 @@ class _BookingFormState extends State<BookingForm> {
           'Airport Shuttle',
           'Late Check-out',
           'Spa Access',
-          'Room Service'
+          'Room Service',
+          'Extra Bed',
+          'Welcome Package',
+          'VIP Treatment'
         ]
+      },
+      {
+        'name': 'specialRequests',
+        'label': 'Special Requests',
+        'type': 'multiline'
       },
     ],
     'Bakery': [
@@ -75,8 +99,22 @@ class _BookingFormState extends State<BookingForm> {
         'type': 'select',
         'options': ['Cake', 'Cupcakes', 'Cookies', 'Bread', 'Pastries']
       },
-      {'name': 'servings', 'label': 'Number of Servings', 'type': 'number'},
+      {'name': 'guestCount', 'label': 'Number of Servings', 'type': 'number'},
       {'name': 'flavor', 'label': 'Flavor Preferences', 'type': 'text'},
+      {
+        'name': 'occasion',
+        'label': 'Occasion',
+        'type': 'select',
+        'options': [
+          'Birthday',
+          'Wedding',
+          'Anniversary',
+          'Baby Shower',
+          'Corporate Event',
+          'Holiday',
+          'Other'
+        ]
+      },
       {'name': 'design', 'label': 'Design Preferences', 'type': 'multiline'},
       {
         'name': 'dietary',
@@ -87,7 +125,10 @@ class _BookingFormState extends State<BookingForm> {
           'Vegan',
           'Nut-free',
           'Sugar-free',
-          'Dairy-free'
+          'Dairy-free',
+          'Egg-free',
+          'Kosher',
+          'Halal'
         ]
       },
       {
@@ -95,6 +136,11 @@ class _BookingFormState extends State<BookingForm> {
         'label': 'Delivery Method',
         'type': 'select',
         'options': ['Delivery', 'Pick-up']
+      },
+      {
+        'name': 'deliveryTime',
+        'label': 'Preferred Delivery/Pickup Time',
+        'type': 'text'
       },
     ],
     'Clothing': [
@@ -113,10 +159,31 @@ class _BookingFormState extends State<BookingForm> {
       {'name': 'size', 'label': 'Size/Measurements', 'type': 'multiline'},
       {'name': 'style', 'label': 'Style Preferences', 'type': 'text'},
       {
+        'name': 'materialPreferences',
+        'label': 'Material Preferences',
+        'type': 'multiselect',
+        'options': [
+          'Silk',
+          'Cotton',
+          'Linen',
+          'Velvet',
+          'Satin',
+          'Chiffon',
+          'Lace',
+          'Polyester'
+        ]
+      },
+      {
         'name': 'fittings',
         'label': 'Fittings Required',
         'type': 'select',
         'options': ['Yes', 'No']
+      },
+      {
+        'name': 'delivery',
+        'label': 'Delivery Method',
+        'type': 'select',
+        'options': ['Home Delivery', 'Store Pickup']
       },
       {
         'name': 'returnDate',
@@ -134,7 +201,10 @@ class _BookingFormState extends State<BookingForm> {
           'Centerpieces',
           'Floral Arches',
           'Corsages',
-          'Boutonnieres'
+          'Boutonnieres',
+          'Flower Crown',
+          'Table Arrangements',
+          'Loose Flowers'
         ]
       },
       {'name': 'colors', 'label': 'Color Preferences', 'type': 'text'},
@@ -142,6 +212,20 @@ class _BookingFormState extends State<BookingForm> {
         'name': 'arrangements',
         'label': 'Number of Arrangements',
         'type': 'number'
+      },
+      {
+        'name': 'eventType',
+        'label': 'Event Type',
+        'type': 'select',
+        'options': [
+          'Wedding',
+          'Funeral',
+          'Corporate',
+          'Birthday',
+          'Anniversary',
+          'Graduation',
+          'Other'
+        ]
       },
       {
         'name': 'delivery',
@@ -155,8 +239,13 @@ class _BookingFormState extends State<BookingForm> {
         'type': 'select',
         'options': ['Yes', 'No']
       },
+      {
+        'name': 'specificFlowers',
+        'label': 'Specific Flowers Requested',
+        'type': 'multiline'
+      },
     ],
-    'Food and Catering': [
+    'Food & Catering': [
       {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
       {
         'name': 'cuisineType',
@@ -168,8 +257,17 @@ class _BookingFormState extends State<BookingForm> {
           'Mediterranean',
           'American',
           'Indian',
-          'International'
+          'International',
+          'African',
+          'Middle Eastern',
+          'Mexican',
+          'French'
         ]
+      },
+      {
+        'name': 'cuisineDetails',
+        'label': 'Additional Cuisine Details',
+        'type': 'multiline'
       },
       {
         'name': 'serviceStyle',
@@ -180,14 +278,24 @@ class _BookingFormState extends State<BookingForm> {
           'Plated',
           'Family Style',
           'Food Stations',
-          'Cocktail Style'
+          'Cocktail Style',
+          'Drop-off Catering'
         ]
       },
       {
         'name': 'dietary',
         'label': 'Dietary Restrictions',
         'type': 'multiselect',
-        'options': ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-free']
+        'options': [
+          'Vegetarian',
+          'Vegan',
+          'Halal',
+          'Kosher',
+          'Gluten-free',
+          'Dairy-free',
+          'Nut-free',
+          'Shellfish-free'
+        ]
       },
       {
         'name': 'staffing',
@@ -213,7 +321,31 @@ class _BookingFormState extends State<BookingForm> {
         'name': 'material',
         'label': 'Material Preferences',
         'type': 'multiselect',
-        'options': ['Gold', 'Silver', 'Platinum', 'Diamond', 'Pearl']
+        'options': [
+          'Gold',
+          'Silver',
+          'Platinum',
+          'Diamond',
+          'Pearl',
+          'Rose Gold',
+          'White Gold',
+          'Titanium'
+        ]
+      },
+      {
+        'name': 'gemstonePreferences',
+        'label': 'Gemstone Preferences',
+        'type': 'multiselect',
+        'options': [
+          'Diamond',
+          'Ruby',
+          'Emerald',
+          'Sapphire',
+          'Pearl',
+          'Opal',
+          'Amethyst',
+          'Topaz'
+        ]
       },
       {
         'name': 'customization',
@@ -232,15 +364,54 @@ class _BookingFormState extends State<BookingForm> {
         'name': 'eventType',
         'label': 'Type of Event',
         'type': 'select',
-        'options': ['Wedding', 'Corporate', 'Family', 'Portrait', 'Product']
+        'options': [
+          'Wedding',
+          'Corporate',
+          'Family',
+          'Portrait',
+          'Product',
+          'Birthday Party',
+          'Corporate Event',
+          'Anniversary Celebration',
+          'Engagement Party',
+          'Baby Shower',
+          'Graduation Ceremony',
+          'Religious Event',
+          'Concert',
+          'Festival',
+          'Family Reunion',
+          'Holiday Party',
+          'Charity Event',
+          'Workshop',
+          'Exhibition',
+          'Sporting Event',
+          'School Event',
+          'Retirement Party',
+          'Private Party',
+          'Other'
+        ]
       },
-      {'name': 'hours', 'label': 'Hours Required', 'type': 'number'},
+      
       {
         'name': 'photographers',
         'label': 'Number of Photographers',
         'type': 'number'
       },
       {'name': 'location', 'label': 'Shooting Location', 'type': 'text'},
+      {
+        'name': 'editingPreferences',
+        'label': 'Editing Preferences',
+        'type': 'multiselect',
+        'options': [
+          'Basic Retouching',
+          'Advanced Retouching',
+          'Color Correction',
+          'Black & White Edits',
+          'Special Effects',
+          'HDR Processing',
+          'Background Editing'
+        ]
+      },
       {
         'name': 'specialRequests',
         'label': 'Special Requests',
@@ -255,7 +426,10 @@ class _BookingFormState extends State<BookingForm> {
           'Prints',
           'Photo Album',
           'Digital Files',
-          'Same-day Edit'
+          'Same-day Edit',
+          'Engagement Shoot',
+          'Photo Booth',
+          'Live Streaming'
         ]
       },
     ],
@@ -266,24 +440,52 @@ class _BookingFormState extends State<BookingForm> {
         'type': 'select',
         'options': [
           'Wedding',
-          'Corporate',
           'Music Video',
           'Documentary',
-          'Commercial'
+          'Commercial',
+          'Birthday Party',
+          'Corporate Event',
+          'Anniversary Celebration',
+          'Engagement Party',
+          'Baby Shower',
+          'Graduation Ceremony',
+          'Religious Event',
+          'Concert',
+          'Festival',
+          'Family Reunion',
+          'Holiday Party',
+          'Charity Event',
+          'Workshop',
+          'Exhibition',
+          'Photo/Video Shoot',
+          'Sporting Event',
+          'School Event',
+          'Retirement Party',
+          'Private Party',
+          'Other'
         ]
       },
-      {'name': 'duration', 'label': 'Recording Duration', 'type': 'number'},
+      
       {
         'name': 'videographers',
         'label': 'Number of Videographers',
         'type': 'number'
       },
       {'name': 'location', 'label': 'Filming Location', 'type': 'text'},
+      {'name': 'script', 'label': 'Script/Storyboard', 'type': 'multiline'},
       {
         'name': 'specialEffects',
         'label': 'Special Effects Required',
         'type': 'multiselect',
-        'options': ['Drone Footage', 'Slow Motion', 'Time-lapse', 'Animation']
+        'options': [
+          'Drone Footage',
+          'Slow Motion',
+          'Time-lapse',
+          'Animation',
+          'Color Grading',
+          'Special Transitions',
+          'Green Screen'
+        ]
       },
       {
         'name': 'deliveryFormat',
@@ -293,7 +495,9 @@ class _BookingFormState extends State<BookingForm> {
           'Digital Download',
           'USB Drive',
           'DVD/Blu-ray',
-          'Raw Footage'
+          'Raw Footage',
+          'Social Media Optimized',
+          'Cinema Format'
         ]
       },
     ],
@@ -304,126 +508,222 @@ class _BookingFormState extends State<BookingForm> {
         'type': 'select',
         'options': [
           'Wedding',
-          'Corporate',
-          'Birthday',
-          'Conference',
-          'Private Party'
+          'Birthday Party',
+          'Corporate Event',
+          'Anniversary Celebration',
+          'Engagement Party',
+          'Baby Shower',
+          'Graduation Ceremony',
+          'Religious Event',
+          'Concert',
+          'Festival',
+          'Family Reunion',
+          'Holiday Party',
+          'Charity Event',
+          'Workshop',
+          'Exhibition',
+          'Photo/Video Shoot',
+          'Sporting Event',
+          'School Event',
+          'Retirement Party',
+          'Funeral',
+          'Private Party',
+          'Other',
         ]
       },
-      {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
       {
-        'name': 'venuePreference',
-        'label': 'Venue Preference',
+        'name': 'venueCapacity',
+        'label': 'Venue Capacity (number of guests)',
+        'type': 'number'
+      },
+      
+      {
+        'name': 'venueType',
+        'label': 'Venue Type',
         'type': 'select',
         'options': ['Indoor', 'Outdoor', 'Both']
-      },
-      {
-        'name': 'seating',
-        'label': 'Seating Arrangement',
-        'type': 'select',
-        'options': ['Theater', 'Banquet', 'Classroom', 'U-Shape', 'Custom']
       },
       {
         'name': 'amenities',
         'label': 'Required Amenities',
         'type': 'multiselect',
-        'options': ['Parking', 'Sound System', 'Projector', 'Kitchen', 'Wi-Fi']
+        'options': [
+          'Parking',
+          'Air Conditioning',
+          'Kitchen',
+          'Stage',
+          'Sound System',
+          'Lighting',
+          'Furniture',
+          'Restrooms',
+          'Wheelchair Access',
+          'WI-FI'
+        ]
       },
       {
-        'name': 'catering',
-        'label': 'Catering Facilities',
+        'name': 'setupTime',
+        'label': 'Setup Time Required',
         'type': 'select',
-        'options': ['Required', 'Not Required']
-      },
+        'options': [
+          '1 hour before',
+          '2 hours before',
+          '3 hours before',
+          '4+ hours before'
+        ]
+      }
     ],
     'Music': [
       {
         'name': 'musicType',
         'label': 'Type of Music Service',
         'type': 'select',
-        'options': [
-          'DJ',
-          'Live Band',
-          'Solo Artist',
-          'Orchestra',
-          'String Quartet'
-        ]
+        'options': ['Live Band', 'DJ', 'Solo Performer', 'Orchestra', 'Choir']
       },
-      {'name': 'duration', 'label': 'Performance Duration', 'type': 'number'},
+      
       {
-        'name': 'songRequests',
-        'label': 'Song Requests/Preferences',
-        'type': 'multiline'
+        'name': 'numberOfPerformers',
+        'label': 'Number of Performers',
+        'type': 'number'
+      },
+      {
+        'name': 'musicGenre',
+        'label': 'Music Genre Preferences',
+        'type': 'multiselect',
+        'options': [
+          'Pop',
+          'Rock',
+          'Jazz',
+          'Classical',
+          'R&B',
+          'Hip-Hop',
+          'Traditional'
+        ]
       },
       {
         'name': 'equipment',
-        'label': 'Equipment Needs',
+        'label': 'Equipment Required',
         'type': 'multiselect',
         'options': [
           'Sound System',
-          'Lighting',
           'Microphones',
+          'Speakers',
+          'Lighting',
           'Instruments',
           'Stage'
         ]
+      }
+    ],
+    'Choreography': [
+      {
+        'name': 'performerCount',
+        'label': 'Number of Performers',
+        'type': 'number'
       },
-      {'name': 'breaks', 'label': 'Break Schedule', 'type': 'text'},
+      
+      {
+        'name': 'danceStyle',
+        'label': 'Dance Style',
+        'type': 'multiselect',
+        'options': [
+          'Contemporary',
+          'Traditional',
+          'Ballet',
+          'Hip-Hop',
+          'Ballroom',
+          'Cultural'
+        ]
+      },
+      {
+        'name': 'costumeRequirements',
+        'label': 'Costume Requirements',
+        'type': 'multiline'
+      }
+    ],
+    'MC': [
+      
+      {
+        'name': 'eventType',
+        'label': 'Type of Event',
+        'type': 'select',
+        'options': [
+          'Wedding',
+          'Corporate Event',
+          'Award Ceremony',
+          'Conference',
+          'Gala',
+          'Festival',
+          'Other'
+        ]
+      },
+      {
+        'name': 'languagePreference',
+        'label': 'Language Preference',
+        'type': 'multiselect',
+        'options': ['English', 'Afrikaans', 'Zulu', 'Xhosa', 'Other']
+      },
+      {
+        'name': 'specialRequirements',
+        'label': 'Special Requirements',
+        'type': 'multiline'
+      }
     ],
     'Beauty': [
       {
         'name': 'serviceType',
-        'label': 'Type of Service',
+        'label': 'Type of Beauty Service',
         'type': 'multiselect',
-        'options': ['Makeup', 'Hair Styling', 'Nails', 'Facial', 'Full Package']
+        'options': ['Makeup', 'Hair', 'Nails', 'Skincare', 'Full Package']
       },
-      {'name': 'peopleCount', 'label': 'Number of People', 'type': 'number'},
-      {'name': 'style', 'label': 'Style Reference', 'type': 'multiline'},
-      {'name': 'allergies', 'label': 'Allergies/Sensitivities', 'type': 'text'},
       {
-        'name': 'trial',
-        'label': 'Trial Session Required',
-        'type': 'select',
-        'options': ['Yes', 'No']
+        'name': 'guestCount',
+        'label': 'Number of Clients',
+        'type': 'number'
       },
+      {
+        'name': 'style',
+        'label': 'Style Preference',
+        'type': 'select',
+        'options': [
+          'Natural',
+          'Glamour',
+          'Bridal',
+          'Editorial',
+          'Special Effects',
+          'Cultural'
+        ]
+      },
+      
       {
         'name': 'location',
         'label': 'Service Location',
         'type': 'select',
         'options': ['At Venue', 'At Salon', 'At Home']
-      },
+      }
     ],
+    
     'Decor': [
       {
-        'name': 'eventType',
-        'label': 'Type of Event',
-        'type': 'select',
-        'options': ['Wedding', 'Birthday', 'Corporate', 'Holiday', 'Other']
+        'name': 'venueSize',
+        'label': 'Venue Size (square meters)',
+        'type': 'number'
       },
-      {'name': 'theme', 'label': 'Theme/Style', 'type': 'text'},
-      {'name': 'colorScheme', 'label': 'Color Scheme', 'type': 'text'},
+      {'name': 'theme', 'label': 'Theme', 'type': 'text'},
+      {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
       {
-        'name': 'items',
-        'label': 'Required Items',
+        'name': 'decorItems',
+        'label': 'Decor Items Required',
         'type': 'multiselect',
         'options': [
           'Flowers',
           'Lighting',
           'Furniture',
           'Backdrops',
-          'Table Settings'
+          'Table Settings',
+          'Draping',
+          'Centerpieces'
         ]
       },
-      {
-        'name': 'setup',
-        'label': 'Setup Required',
-        'type': 'select',
-        'options': ['Yes', 'No']
-      },
-      {
-        'name': 'specialItems',
-        'label': 'Special Items/Requests',
-        'type': 'multiline'
-      },
+      {'name': 'colorScheme', 'label': 'Color Scheme', 'type': 'text'}
     ],
     'Event Planning': [
       {
@@ -432,16 +732,19 @@ class _BookingFormState extends State<BookingForm> {
         'type': 'select',
         'options': [
           'Wedding',
-          'Corporate',
-          'Social Event',
+          'Corporate Event',
+          'Birthday',
+          'Anniversary',
+          'Product Launch',
           'Conference',
           'Other'
         ]
       },
       {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
+      
       {
-        'name': 'services',
-        'label': 'Required Services',
+        'name': 'planningServices',
+        'label': 'Planning Services Required',
         'type': 'multiselect',
         'options': [
           'Full Planning',
@@ -456,76 +759,175 @@ class _BookingFormState extends State<BookingForm> {
         'label': 'Budget Range',
         'type': 'select',
         'options': [
-          'Under \$5,000',
-          '\$5,000-\$10,000',
-          '\$10,000-\$20,000',
-          '\$20,000+'
+          'Under R10,000',
+          'R10,000 - R25,000',
+          'R25,000 - R50,000',
+          'R50,000+'
         ]
-      },
-      {
-        'name': 'preferences',
-        'label': 'Special Preferences',
-        'type': 'multiline'
-      },
+      }
     ],
     'Gifts': [
       {
         'name': 'giftType',
-        'label': 'Type of Gifts',
+        'label': 'Type of Gift',
         'type': 'select',
-        'options': [
-          'Corporate Gifts',
-          'Wedding Favors',
-          'Personal Gifts',
-          'Holiday Gifts'
-        ]
+        'options': ['Customized', 'Standard', 'Corporate', 'Wedding Favors']
       },
-      {'name': 'quantity', 'label': 'Quantity Required', 'type': 'number'},
+      {'name': 'quantity', 'label': 'Number of Items', 'type': 'number'},
       {
-        'name': 'customization',
-        'label': 'Customization Details',
+        'name': 'deliveryOption',
+        'label': 'Delivery Option',
+        'type': 'select',
+        'options': ['Pick-up', 'Standard Delivery', 'Express Delivery']
+      },
+      {
+        'name': 'giftPreferences',
+        'label': 'Gift Preferences',
         'type': 'multiline'
       },
       {
         'name': 'packaging',
-        'label': 'Special Packaging',
+        'label': 'Packaging Requirements',
         'type': 'select',
-        'options': ['Standard', 'Premium', 'Custom']
-      },
-      {
-        'name': 'delivery',
-        'label': 'Delivery Required',
-        'type': 'select',
-        'options': ['Yes', 'No']
-      },
+        'options': ['Standard', 'Premium', 'Luxury', 'Eco-Friendly']
+      }
     ],
-    'Hairdressing': [
+    'Hair Dressing': [
+      {'name': 'guestCount', 'label': 'Number of Clients', 'type': 'number'},
       {
-        'name': 'serviceType',
-        'label': 'Type of Service',
-        'type': 'multiselect',
-        'options': ['Styling', 'Coloring', 'Cutting', 'Extensions', 'Treatment']
-      },
-      {'name': 'peopleCount', 'label': 'Number of People', 'type': 'number'},
-      {'name': 'style', 'label': 'Style Reference', 'type': 'multiline'},
-      {
-        'name': 'extensions',
-        'label': 'Extensions Required',
+        'name': 'style',
+        'label': 'Hairstyle Type',
         'type': 'select',
-        'options': ['Yes', 'No']
+        'options': [
+          'Braids',
+          'Weaves',
+          'Natural Styling',
+          'Cuts',
+          'Color',
+          'Bridal',
+          'Formal'
+        ]
       },
-      {
-        'name': 'trial',
-        'label': 'Trial Session Required',
-        'type': 'select',
-        'options': ['Yes', 'No']
-      },
+      
       {
         'name': 'location',
         'label': 'Service Location',
         'type': 'select',
-        'options': ['At Venue', 'At Salon', 'At Home']
+        'options': ['At Salon', 'At Home', 'At Venue']
       },
+      {
+        'name': 'additionalServices',
+        'label': 'Additional Services',
+        'type': 'multiselect',
+        'options': [
+          'Hair Treatment',
+          'Scalp Treatment',
+          'Hair Extensions',
+          'Hair Products'
+        ]
+      }
+    ],
+    'Event Security': [
+      {
+        'name': 'eventType',
+        'label': 'Type of Event',
+        'type': 'select',
+        'options': [
+          'Wedding',
+          'Birthday Party',
+          'Private Party',
+          'Corporate Event',
+          'Anniversary Celebration',
+          'Engagement Party',
+          'Baby Shower',
+          'Graduation Ceremony',
+          'Religious Event',
+          'Concert',
+          'Festival',
+          'Family Reunion',
+          'Holiday Party',
+          'Charity Event',
+          'Workshop',
+          'Exhibition',
+          'Photo/Video Shoot',
+          'Sporting Event',
+          'School Event',
+          'Retirement Party',
+          'Funeral',
+          'Other'
+        ]
+      },
+      {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
+      {
+        'name': 'securityPersonnel',
+        'label': 'Number of Security Personnel Required',
+        'type': 'number'
+      },
+      {
+        'name': 'securityType',
+        'label': 'Type of Security',
+        'type': 'select',
+        'options': [
+          'Armed Security',
+          'Unarmed Security',
+          'Bodyguards',
+          'Crowd Control',
+          'Entrance and Exit Control',
+          'Surveillance Monitoring'
+        ]
+      },
+      {
+        'name': 'budget',
+        'label': 'Budget Range',
+        'type': 'select',
+        'options': [
+          'Under ZAR 5,000',
+          'ZAR 5,000-ZAR 10,000',
+          'ZAR 10,000-ZAR 20,000',
+          'ZAR 20,000+'
+        ]
+      },
+      {
+        'name': 'preferences',
+        'label': 'Special Instructions or Requirements',
+        'type': 'multiline'
+      }
+    ],
+    'Transport': [
+      {
+        'name': 'vehicleType',
+        'label': 'Type of Vehicle',
+        'type': 'select',
+        'options': ['Sedan', 'SUV', 'Van', 'Bus', 'Limousine', 'Luxury Car']
+      },
+      {
+        'name': 'numberOfVehicles',
+        'label': 'Number of Vehicles Required',
+        'type': 'number'
+      },
+      {
+        'name': 'estimatedDistance',
+        'label': 'Estimated Distance (km)',
+        'type': 'number'
+      },
+      
+      {
+        'name': 'passengerCount',
+        'label': 'Number of Passengers',
+        'type': 'number'
+      },
+      {
+        'name': 'specialRequirements',
+        'label': 'Special Requirements',
+        'type': 'multiselect',
+        'options': [
+          'Child Seats',
+          'Wheelchair Access',
+          'Luggage Space',
+          'Professional Driver',
+          'GPS Navigation'
+        ]
+      }
     ],
   };
 
@@ -547,6 +949,7 @@ class _BookingFormState extends State<BookingForm> {
 
   @override
   void dispose() {
+    _controllers.forEach((_, controller) => controller.dispose());
     nameController.dispose();
     addressController.dispose();
     notesController.dispose();
@@ -875,7 +1278,6 @@ class _BookingFormState extends State<BookingForm> {
                     if (selectedDate != null) buildTimeSlotPicker(),
                     if (_selectedService != null) ..._buildCustomFields(),
                     const SizedBox(height: 16.0),
-                    
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: _submitForm,
@@ -890,120 +1292,86 @@ class _BookingFormState extends State<BookingForm> {
 
   // Function to build dynamic custom fields based on the selected service
   List<Widget> _buildCustomFields() {
-  if (_selectedService == null ||
-      !serviceFields.containsKey(_selectedService)) {
-    return [];
+    if (_selectedService == null ||
+        !serviceFields.containsKey(_selectedService)) {
+      return [];
+    }
+
+    return serviceFields[_selectedService]?.map((field) {
+          // Create a controller if it doesn't exist
+          if (!_controllers.containsKey(field['name'])) {
+            _controllers[field['name']] = TextEditingController(
+                text: _serviceData[field['name']]?.toString() ?? '');
+          }
+
+          switch (field['type']) {
+            case 'date':
+              return _buildDateField(field);
+            case 'number':
+              return _buildNumberField(field);
+            case 'text':
+              return _buildTextField(field);
+            case 'multiline':
+              return _buildMultilineTextField(field);
+            case 'select':
+              return _buildDropdownField(field);
+            case 'multiselect':
+              return _buildMultiselectField(field);
+            default:
+              return SizedBox.shrink();
+          }
+        }).toList() ??
+        [];
   }
 
-  return serviceFields[_selectedService]?.map((field) {
-        switch (field['type']) {
-          case 'date':
-            return _buildDateField(field);
-          case 'number':
-            return _buildNumberField(field);
-          case 'text':
-            return _buildTextField(field);
-          case 'multiline':
-            return _buildMultilineTextField(field);
-          case 'select':
-            return _buildDropdownField(field);
-          case 'multiselect':
-            return _buildMultiselectField(field);
-          default:
-            return SizedBox.shrink();
-        }
-      }).toList() ??
-      [];
-}
+// Add this map to your state class
+  final Map<String, TextEditingController> _controllers = {};
 
-Widget _buildDateField(Map field) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: TextFormField(
-      //textDirection: ,
-      decoration: InputDecoration(
-        
-        labelText: field['label'],
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.calendar_today),
-      ),
-      readOnly: true,
-      controller: TextEditingController(
-        text: _serviceData[field['name']] ?? '',
-      ),
-      onTap: () async {
-        final pickedDate = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        );
-        if (pickedDate != null) {
-          setState(() {
-            // Save the formatted date as a string
-            _serviceData[field['name']] = DateFormat('yyyy-MM-dd').format(pickedDate);
-          });
-        }
-      },
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please select a ${field['label']}';
-        }
-        return null;
-      },
-    ),
-  );
-}
-
-
-Widget _buildNumberField(Map field) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: TextFormField(
-      controller: TextEditingController(
-          text: _serviceData[field['name']]?.toString() ?? ''),
-      decoration: InputDecoration(
-        labelText: field['label'],
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      onChanged: (value) {
-        setState(() {
-          _serviceData[field['name']] = int.tryParse(value) ?? 0;
-        });
-      },
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter a ${field['label']}';
-        }
-        return null;
-      },
-    ),
-  );
-}
- Widget _buildTextField(Map field) {
+  Widget _buildTextField(Map field) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
-        controller: TextEditingController(
-            text: _serviceData[field['name']]?.toString() ?? ''),
+        controller: _controllers[field['name']],
+        //textDirection: TextDirection.ltr, // Explicitly set text direction
         decoration: InputDecoration(
           labelText: field['label'],
           border: OutlineInputBorder(),
         ),
         onChanged: (value) {
-          // Cancel the previous timer if it exists
-          _debounce?.cancel();
-          // Start a new timer with a delay
-          _debounce = Timer(Duration(milliseconds: 10000), () { // Adjust delay as needed
-            setState(() {
-              _serviceData[field['name']] = value;
-            });
+          setState(() {
+            _serviceData[field['name']] = value;
           });
         },
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Please enter a ${field['label']}';
+            return 'Please enter ${field['label']}';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildNumberField(Map field) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: _controllers[field['name']],
+        //textDirection: TextDirection.ltr,
+        decoration: InputDecoration(
+          labelText: field['label'],
+          border: OutlineInputBorder(),
+        ),
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        onChanged: (value) {
+          setState(() {
+            _serviceData[field['name']] = int.tryParse(value) ?? 0;
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter ${field['label']}';
           }
           return null;
         },
@@ -1015,25 +1383,21 @@ Widget _buildNumberField(Map field) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
-        controller: TextEditingController(
-            text: _serviceData[field['name']]?.toString() ?? ''),
+        controller: _controllers[field['name']],
+        //textDirection: TextDirection.ltr,
         decoration: InputDecoration(
           labelText: field['label'],
           border: OutlineInputBorder(),
         ),
         maxLines: 3,
         onChanged: (value) {
-          // Same debouncing logic as in _buildTextField
-          _debounce?.cancel();
-          _debounce = Timer(Duration(milliseconds: 10000), () {
-            setState(() {
-              _serviceData[field['name']] = value;
-            });
+          setState(() {
+            _serviceData[field['name']] = value;
           });
         },
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Please enter a ${field['label']}';
+            return 'Please enter ${field['label']}';
           }
           return null;
         },
@@ -1041,140 +1405,180 @@ Widget _buildNumberField(Map field) {
     );
   }
 
-Widget _buildDropdownField(Map field) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: DropdownButtonFormField(
-      decoration: InputDecoration(
-        labelText: field['label'],
-        border: OutlineInputBorder(),
-      ),
-      items: (field['options'] as List)
-          .map((option) => DropdownMenuItem(
-                value: option,
-                child: Text(option),
-              ))
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _serviceData[field['name']] = value;
-        });
-      },
-      validator: (value) {
-        if (value == null) {
-          return 'Please select a ${field['label']}';
-        }
-        return null;
-      },
-    ),
-  );
-}
-
-Widget _buildMultiselectField(Map field) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(field['label']),
-        ...(field['options'] as List).map((option) {
-          return CheckboxListTile(
-            title: Text(option.toString()),
-            value: _serviceData[field['name']]?.contains(option) ?? false,
-            onChanged: (value) {
-              setState(() {
-                if (value!) {
-                  _serviceData[field['name']] ??= [];
-                  (_serviceData[field['name']] as List).add(option);
-                } else {
-                  (_serviceData[field['name']] as List).remove(option);
-                }
-              });
-            },
+  Widget _buildDateField(Map field) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        //textDirection: ,
+        decoration: InputDecoration(
+          labelText: field['label'],
+          border: OutlineInputBorder(),
+          prefixIcon: Icon(Icons.calendar_today),
+        ),
+        readOnly: true,
+        controller: TextEditingController(
+          text: _serviceData[field['name']] ?? '',
+        ),
+        onTap: () async {
+          final pickedDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 365)),
           );
-        }).toList(),
-      ],
-    ),
-  );
-}
+          if (pickedDate != null) {
+            setState(() {
+              // Save the formatted date as a string
+              _serviceData[field['name']] =
+                  DateFormat('yyyy-MM-dd').format(pickedDate);
+            });
+          }
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please select a ${field['label']}';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(Map field) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField(
+        decoration: InputDecoration(
+          labelText: field['label'],
+          border: OutlineInputBorder(),
+        ),
+        items: (field['options'] as List)
+            .map((option) => DropdownMenuItem(
+                  value: option,
+                  child: Text(option),
+                ))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            _serviceData[field['name']] = value;
+          });
+        },
+        validator: (value) {
+          if (value == null) {
+            return 'Please select a ${field['label']}';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildMultiselectField(Map field) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(field['label']),
+          ...(field['options'] as List).map((option) {
+            return CheckboxListTile(
+              title: Text(option.toString()),
+              value: _serviceData[field['name']]?.contains(option) ?? false,
+              onChanged: (value) {
+                setState(() {
+                  if (value!) {
+                    _serviceData[field['name']] ??= [];
+                    (_serviceData[field['name']] as List).add(option);
+                  } else {
+                    (_serviceData[field['name']] as List).remove(option);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
 
   // Submit form logic
   Future _submitForm() async {
-  if (_formKey.currentState!.validate() && _validateBookingDuration()) {
-    try {
-      final firstSlot = _selectedTimeSlots.first;
-      final lastSlot = _selectedTimeSlots.last;
+    if (_formKey.currentState!.validate() && _validateBookingDuration()) {
+      try {
+        final firstSlot = _selectedTimeSlots.first;
+        final lastSlot = _selectedTimeSlots.last;
 
-      // Basic booking data [1]
-      Map<String,dynamic> data = {
-        'package id': widget.package_id,
-        'name': nameController.text,
-        'event date': selectedDate,
-        'start': _formatTimeOfDay(firstSlot.start),
-        'end': _formatTimeOfDay(lastSlot.end),
-        'selected_slots':
-            _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
-        'address': addressController.text,
-        'event': eventTypeController.text,
-        'guests': numberOfGuestsController.text,
-      };
+        // Basic booking data [1]
+        Map<String, dynamic> data = {
+          'package id': widget.package_id,
+          'name': nameController.text,
+          'event date': selectedDate,
+          'start': _formatTimeOfDay(firstSlot.start),
+          'end': _formatTimeOfDay(lastSlot.end),
+          'selected_slots':
+              _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
+          'address': addressController.text,
+          'event': eventTypeController.text,
+          'guests': numberOfGuestsController.text,
+        };
 
-      // Add extra notes if provided [2]
-      if (notesController.text.isNotEmpty) {
-        data['extra notes'] = notesController.text;
+        // Add extra notes if provided [2]
+        if (notesController.text.isNotEmpty) {
+          data['extra notes'] = notesController.text;
+        }
+
+        // Add data from _serviceData to the booking data
+        data.addAll(_serviceData);
+
+        // Update form data using state management [2]
+        bool success = await Provider.of<ChangeManager>(context, listen: false)
+            .updateForm(data);
+
+        // Show result dialog [2, 3]
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(success ? "Success" : "Error"),
+              content: Text(success
+                  ? "Booking added to cart"
+                  : "Failed to add booking to cart"),
+              actions: [
+                TextButton(
+                  child: const Text("OK"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    if (success) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } catch (e) {
+        // Show error dialog [3]
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Error"),
+              content: Text("An error occurred: ${e.toString()}"),
+              actions: [
+                TextButton(
+                  child: const Text("OK"),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            );
+          },
+        );
       }
-
-      // Add data from _serviceData to the booking data
-      data.addAll(_serviceData);
-
-      // Update form data using state management [2]
-      bool success =
-          await Provider.of<ChangeManager>(context, listen: false).updateForm(data);
-
-      // Show result dialog [2, 3]
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text(success ? "Success" : "Error"),
-            content: Text(success
-                ? "Booking added to cart"
-                : "Failed to add booking to cart"),
-            actions: [
-              TextButton(
-                child: const Text("OK"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  if (success) {
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } catch (e) {
-      // Show error dialog [3]
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Error"),
-            content: Text("An error occurred: ${e.toString()}"),
-            actions: [
-              TextButton(
-                child: const Text("OK"),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          );
-        },
-      );
     }
   }
-}}
+}
 
 class TimeSlot {
   final TimeOfDay start;
