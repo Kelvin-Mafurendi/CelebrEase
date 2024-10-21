@@ -143,6 +143,261 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
     );
   }
 
+<<<<<<< HEAD
+=======
+  final Map<String, List<String>> serviceFields = {
+    'Accomodation': [
+      'roomType',
+      'amenities',
+      'capacity',
+      'availability',
+    ],
+    'Bakery': [
+      'itemTypes',
+      'customOrders',
+      'quantityOptions',
+    ],
+    'Clothing': [
+      'clothingType',
+      'sizes',
+      'customDesign',
+      'materials',
+    ],
+    'Flowers': [
+      'flowerTypes',
+      'bouquetStyles',
+      'delivery',
+    ],
+    'Food & Catering': [
+      'cuisineType',
+      'menuItems',
+      'dietaryOptions',
+      'servingCapacity',
+    ],
+    'Jewelry': [
+      'jewelryType',
+      'materials',
+      'customization',
+    ],
+    'Photography': [
+      'shootType',
+      'duration',
+      'deliverables',
+      'equipment',
+    ],
+    'Videography': [
+      'duration',
+      'editingOptions',
+      'addOns',
+    ],
+    'Venues': [
+      'venueType',
+      'capacity',
+      'amenities',
+      'availability',
+    ],
+    'Transport': [
+      'vehicleType',
+      'range',
+      'capacity',
+      'addOns',
+    ],
+    'Music': [
+      'musicType',
+      'duration',
+      'equipment',
+    ],
+    'Choreography': [
+      'danceStyle',
+      'rehearsalDuration',
+      'numberOfDancers',
+    ],
+    'MC': [
+      'eventTypes',
+      'duration',
+      'languages',
+      'experience',
+    ],
+    'Beauty': [
+      'makeupTypes',
+      'products',
+      'trialSessions',
+    ],
+    'Decor': [
+      'decorStyle',
+      'colorSchemes',
+      'decorTypes',
+      'setupTime',
+    ],
+    'Event Planning': [
+      'eventTypes',
+      'planningServices',
+      'teamSize',
+    ],
+    'Event Security': [
+      'eventTypes',
+      'planningServices',
+      'teamSize',
+    ],
+    'Gifts': [
+      'giftTypes',
+      'customization',
+      'delivery',
+    ],
+    'Hair Dressing': [
+      'hairServices',
+      'duration',
+      'products',
+    ],
+    'Other': [
+      'serviceType',
+      'customization',
+      'availability',
+    ],
+  };
+
+  // Updated rate units map with service-specific units
+  final Map<String, List<String>> rateUnits = {
+    'Accomodation': ['per night', 'per week', 'per month'],
+    'Bakery': ['per item', 'per dozen', 'per order'],
+    'Clothing': ['per item', 'per rental', 'per set'],
+    'Flowers': ['per arrangement', 'per bouquet', 'per event'],
+    'Food & Catering': ['per person', 'per event', 'per hour'],
+    'Jewelry': ['per piece', 'per set', 'per custom order'],
+    'Photography': ['per hour', 'per event', 'per package'],
+    'Videography': ['per hour', 'per event', 'per package'],
+    'Venues': ['per hour', 'per day', 'per event'],
+    'Transport': ['per trip', 'per hour', 'per day'],
+    'Music': ['per hour', 'per event', 'per performance'],
+    'Choreography': ['per session', 'per event', 'per performance'],
+    'MC': ['per hour', 'per event'],
+    'Beauty': ['per person', 'per session', 'per event'],
+    'Decor': ['per event', 'per item', 'per package'],
+    'Event Planning': ['per event', 'per hour', 'per package'],
+    'Event Security': ['per event', 'per hour', 'per package'],
+    'Gifts': ['per item', 'per package', 'per order'],
+    'Hair Dressing': ['per service', 'per hour', 'per person'],
+    'Other': ['per service', 'per hour', 'per event'],
+  };
+
+  // Updated field labels map with comprehensive labels
+  final Map<String, String> fieldLabels = {
+    'packageName': 'Package Name',
+    'rate': 'Rate',
+    'description': 'Description',
+    'roomType': 'Room Type',
+    'amenities': 'Amenities',
+    'capacity': 'Capacity',
+    'itemTypes': 'Item Types',
+    'customOrders': 'Custom Orders',
+    'quantityOptions': 'Quantity Options',
+    'clothingType': 'Type of Clothing',
+    'sizes': 'Available Sizes',
+    'customDesign': 'Custom Design Options',
+    'materials': 'Materials Used',
+    'flowerTypes': 'Types of Flowers',
+    'bouquetStyles': 'Bouquet Styles',
+    'delivery': 'Delivery Options',
+    'cuisineType': 'Cuisine Type',
+    'menuItems': 'Menu Items',
+    'dietaryOptions': 'Dietary Options',
+    'servingCapacity': 'Number of People Served',
+    'jewelryType': 'Type of Jewelry',
+    'customization': 'Customization Options',
+    'shootType': 'Type of Photography',
+    'duration': 'Duration',
+    'deliverables': 'Deliverables',
+    'equipment': 'Equipment Included',
+    'editingOptions': 'Editing Options',
+    'addOns': 'Additional Services',
+    'venueType': 'Venue Type',
+    'range': 'Service Range',
+    'musicType': 'Type of Music',
+    'danceStyle': 'Dance Style',
+    'rehearsalDuration': 'Rehearsal Duration',
+    'numberOfDancers': 'Number of Dancers',
+    'eventTypes': 'Event Types',
+    'languages': 'Languages',
+    'experience': 'Years of Experience',
+    'makeupTypes': 'Types of Makeup',
+    'products': 'Products Used',
+    'trialSessions': 'Trial Sessions',
+    'decorStyle': 'Decoration Style',
+    'colorSchemes': 'Color Schemes',
+    'decorTypes': 'Types of Decorations',
+    'setupTime': 'Setup Time',
+    'planningServices': 'Planning Services',
+    'teamSize': 'Team Size',
+    'giftTypes': 'Types of Gifts',
+    'hairServices': 'Hair Services',
+    'serviceType': 'Type of Service',
+  };
+
+  // Updated field hints map with comprehensive hints
+  final Map<String, String> fieldHints = {
+    'packageName': 'Enter a unique name for your package',
+    'rate': 'Enter the price',
+    'description': 'Provide a detailed description of your package',
+    'roomType': 'E.g., Single, Double, Suite',
+    'amenities': 'List all available amenities, separated by commas',
+    'capacity': 'Maximum number of people',
+    'itemTypes': 'Types of items available, separated by commas',
+    'customOrders': 'Describe custom order options',
+    'quantityOptions': 'Specify minimum and maximum order quantities',
+    'clothingType': 'E.g., Formal, Casual, Traditional',
+    'sizes': 'Available sizes, separated by commas',
+    'customDesign': 'Describe custom design options',
+    'materials': 'List materials used, separated by commas',
+    'flowerTypes': 'Types of flowers available',
+    'bouquetStyles': 'Available arrangement styles',
+    'delivery': 'Describe delivery options and areas',
+    'cuisineType': 'Type of cuisine offered',
+    'menuItems': 'List main menu items',
+    'dietaryOptions': 'Available dietary accommodation options',
+    'servingCapacity': 'Maximum number of people you can serve',
+    'jewelryType': 'Types of jewelry pieces offered',
+    'customization': 'Available customization options',
+    'shootType': 'Types of photography services offered',
+    'duration': 'Length of service or event',
+    'deliverables': "What's included in the final delivery",
+    'equipment': 'List of equipment provided',
+    'editingOptions': 'Available editing and post-production services',
+    'addOns': 'Additional services available',
+    'venueType': 'Type of venue and setting',
+    'range': 'Service area or distance covered',
+    'musicType': 'Styles of music offered',
+    'danceStyle': 'Types of dance styles taught',
+    'rehearsalDuration': 'Length of rehearsal sessions',
+    'numberOfDancers': 'Number of dancers included',
+    'eventTypes': 'Types of events covered',
+    'languages': 'Languages spoken, separated by commas',
+    'experience': 'Years of experience in the field',
+    'makeupTypes': 'Types of makeup services offered',
+    'products': 'Products and brands used',
+    'trialSessions': 'Trial session availability and details',
+    'decorStyle': 'Decoration styles available',
+    'colorSchemes': 'Available color schemes',
+    'decorTypes': 'Types of decorations offered',
+    'setupTime': 'Time required for setup',
+    'planningServices': 'Planning services included',
+    'teamSize': 'Number of team members',
+    'giftTypes': 'Types of gifts available',
+    'hairServices': 'Hair services offered',
+    'serviceType': 'Specify the type of service offered',
+  };
+
+  void _loadInitialData() {
+    widget.initialData?.forEach((key, value) {
+      if (controllers.containsKey(key)) {
+        controllers[key]?.text = value.toString();
+      }
+    });
+  }
+
+
+  
+
+>>>>>>> c9e768eed49b46c5a981be6b1330daa9f878830d
   Widget _buildCurrencyDropdown() {
     final currencies = [
       'USD', 'EUR', 'GBP', 'AOA', 'NGN', 'ZAR', 'KES',
