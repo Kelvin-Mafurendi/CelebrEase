@@ -21,6 +21,8 @@ class ChangeManager extends ChangeNotifier {
   final Map<String, dynamic> _bookingForm = {};
   List<String> _serviceTypes = []; 
   bool _isLoadingServices = false;
+  String _selectedService = '';
+  
   
   var uuid = Uuid();
 
@@ -31,6 +33,19 @@ class ChangeManager extends ChangeNotifier {
   Map<String, dynamic> get bookingForm => _bookingForm;
   List<String> get serviceTypes => _serviceTypes; 
   bool get isLoadingServices => _isLoadingServices;
+  String get selectedService => _selectedService;
+
+  void setService(String service)  {
+    _selectedService = service;
+    print('A service has been selected $service');
+    notifyListeners();
+  }
+
+  String getService() {
+    return _selectedService != ''
+        ? _selectedService
+        : 'Accomodation';
+  }
 
 
   Future<void> loadProfiledata(
