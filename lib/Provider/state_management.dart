@@ -614,7 +614,7 @@ Future<String> uploadPackageImageToStorage(File image) async {
   List<Map<String, dynamic>> get bookings => _bookings;
 
   // Update the addToCart functionality
-  Future<bool> updateForm(Map<String, dynamic> newData) async {
+  Future<bool> updateForm(Map<String, dynamic> newData, {bool isEditing = false}) async {
     try {
       // Create a new map to store the booking data
       final Map<String, dynamic> bookingData = {};

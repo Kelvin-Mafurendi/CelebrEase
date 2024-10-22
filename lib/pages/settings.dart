@@ -6,7 +6,7 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/Provider/theme_notifier.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
-import 'package:provider/provider.dart'; // Ensure provider is imported
+import 'package:provider/provider.dart';
 
 class Settings extends StatelessWidget {
   final String userType;
@@ -14,15 +14,14 @@ class Settings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier =
-        Provider.of<ThemeNotifier>(context); // Access the theme notifier
-    final profileData =
-        Provider.of<ChangeManager>(context, listen: false).profileData;
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final profileData = Provider.of<ChangeManager>(context, listen: false).profileData;
+
+    // Variables for theme modes
+    ThemeMode currentThemeMode = themeNotifier.themeMode;
 
     return Scaffold(
-      appBar: AppBar(
-          //title: const Text('Settings'),
-          ),
+      appBar: AppBar(),
       body: ListView(
         scrollDirection: Axis.vertical,
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -33,45 +32,48 @@ class Settings extends StatelessWidget {
             textScaler: TextScaler.linear(2.7),
             style: GoogleFonts.lateef(fontWeight: FontWeight.bold),
           ),
-          const Divider(
-            thickness: 0.1,
-          ),
+          const Divider(thickness: 0.1),
           const SizedBox(height: 20),
           Text(
             'Preferences',
             textScaler: const TextScaler.linear(2),
             style: GoogleFonts.lateef(),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
             children: [
-              Text(
-                'Dark mode',
-                textScaler: const TextScaler.linear(1.5),
-                style: GoogleFonts.lateef(),
+              RadioListTile<ThemeMode>(
+                title: Text('System Theme', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                value: ThemeMode.system,
+                groupValue: currentThemeMode,
+                onChanged: (ThemeMode? mode) {
+                  themeNotifier.setThemeMode(mode!);
+                },
               ),
-              Switch(
-                value: themeNotifier.themeMode ==
-                    ThemeMode.dark, // Check current theme
-                onChanged: (bool isDark) {
-                  themeNotifier.setThemeMode(
-                    isDark ? ThemeMode.dark : ThemeMode.light,
-                  ); // Change theme mode
+              RadioListTile<ThemeMode>(
+                title: Text('Light Mode', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                value: ThemeMode.light,
+                groupValue: currentThemeMode,
+                onChanged: (ThemeMode? mode) {
+                  themeNotifier.setThemeMode(mode!);
+                },
+              ),
+              RadioListTile<ThemeMode>(
+                title: Text('Dark Mode', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                value: ThemeMode.dark,
+                groupValue: currentThemeMode,
+                onChanged: (ThemeMode? mode) {
+                  themeNotifier.setThemeMode(mode!);
                 },
               ),
             ],
           ),
-          SizedBox(
-            height: 20,
-          ),
+          SizedBox(height: 20),
           Text(
             'Account Settings',
             textScaler: const TextScaler.linear(2),
             style: GoogleFonts.lateef(),
           ),
-          SizedBox(
-            height: 10,
-          ),
+          SizedBox(height: 10),
           InkWell(
             onTap: () {
               Navigator.push(
@@ -91,17 +93,13 @@ class Settings extends StatelessWidget {
               style: GoogleFonts.lateef(),
             ),
           ),
-          SizedBox(
-            height: 10,
-          ),
+          SizedBox(height: 10),
           Text(
             'Change Password',
             textScaler: const TextScaler.linear(1.5),
             style: GoogleFonts.lateef(),
           ),
-          SizedBox(
-            height: 20,
-          ),
+          SizedBox(height: 20),
           Text(
             'Privacy & Security',
             textScaler: const TextScaler.linear(2),

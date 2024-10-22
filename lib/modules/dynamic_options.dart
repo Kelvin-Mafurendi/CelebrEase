@@ -20,8 +20,8 @@ class DynamicOptions extends StatefulWidget {
 class _DynamicOptionsState extends State<DynamicOptions> {
   List<Map<String, dynamic>> fields = [];
   String selectedService = '';
-  List<TextEditingController> _optionControllers = [];
-  List<TextEditingController> _priceControllers = [];
+  final List<TextEditingController> _optionControllers = [];
+  final List<TextEditingController> _priceControllers = [];
 
   @override
   void initState() {
@@ -47,25 +47,23 @@ class _DynamicOptionsState extends State<DynamicOptions> {
     if (vendorServiceFields.containsKey(selectedService)) {
       var serviceFields = vendorServiceFields[selectedService];
       if (serviceFields != null) {
-        if (serviceFields is List<Map<String, dynamic>>) {
-          for (var field in serviceFields) {
-            if ((field['type'] == 'select' || field['type'] == 'multiselect')) {
-              setState(() {
-                fields.add({
-                  'name': field['label'],
-                  'fieldName': field['fieldName'],
-                  'label': field['hint'],
-                  'hint': field['hint'],
-                  'type': field['type'],
-                  'options': [], // Each option will be a map containing the option text and price info
-                });
-                _optionControllers.add(TextEditingController());
-                _priceControllers.add(TextEditingController());
+        for (var field in serviceFields) {
+          if ((field['type'] == 'select' || field['type'] == 'multiselect')) {
+            setState(() {
+              fields.add({
+                'name': field['label'],
+                'fieldName': field['fieldName'],
+                'label': field['hint'],
+                'hint': field['hint'],
+                'type': field['type'],
+                'options': [], // Each option will be a map containing the option text and price info
               });
-            }
+              _optionControllers.add(TextEditingController());
+              _priceControllers.add(TextEditingController());
+            });
           }
         }
-      }
+            }
     }
   }
 

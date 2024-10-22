@@ -12,11 +12,15 @@ import 'package:provider/provider.dart';
 
 class BookingForm extends StatefulWidget {
   final String package_id;
+  final bool isEditing;
+  final Map<String, dynamic>? existingBookingData;
 
   const BookingForm({
-    Key? key,
+    super.key,
     required this.package_id,
-  }) : super(key: key);
+    this.isEditing = false,
+    this.existingBookingData,
+  });
 
   @override
   _BookingFormState createState() => _BookingFormState();
@@ -27,10 +31,10 @@ class _BookingFormState extends State<BookingForm> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime? _selectedDate;
   String? _selectedService;
-  Map<String, dynamic> _serviceData = {};
+  final Map<String, dynamic> _serviceData = {};
   List<TimeSlot> _availableTimeSlots = [];
-  List<TimeSlot> _selectedTimeSlots = [];
-  bool _isLoading = false;
+  final List<TimeSlot> _selectedTimeSlots = [];
+  final bool _isLoading = false;
   String? _vendorId;
   String? _serviceType;
   DateTime? selectedDate;
@@ -40,7 +44,6 @@ class _BookingFormState extends State<BookingForm> {
   static const int MIN_BOOKING_HOURS = 1;
   static const int MAX_BOOKING_HOURS = 8;
 
-
   // Controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
@@ -49,13 +52,72 @@ class _BookingFormState extends State<BookingForm> {
   final TextEditingController numberOfGuestsController =
       TextEditingController();
 
-  @override
+  // Add new variables for dynamic options
+  // Add new variables for dynamic options
+  Map<String, List<DynamicOption>> dynamicOptions = {};
+  bool isLoadingOptions = false;
+
+ @override
   void initState() {
     super.initState();
-    //getServiceCategories();
     addressController.text = 'Vendor Location';
-    _initializeVendorId(); //and load initial data
+    _initializeVendorId();
+    
+    // Initialize form with existing data if editing
+    if (widget.isEditing && widget.existingBookingData != null) {
+      _initializeExistingData();
+    }
   }
+
+
+  Future<void> _loadDynamicOptions(DocumentSnapshot packageDoc) async {
+  try {
+    setState(() => isLoadingOptions = true);
+
+    final data = packageDoc.data() as Map<String, dynamic>?;
+    if (data == null || !data.containsKey('dynamicOptions')) {
+      print('No dynamic options found');
+      return;
+    }
+
+    final List<dynamic> options = data['dynamicOptions'] ?? [];
+    dynamicOptions.clear(); // Clear existing options before loading new ones
+
+    for (var option in options) {
+      if (option is Map<String, dynamic>) {
+        final fieldName = option['fieldName']?.toString().toLowerCase() ?? '';
+        final List<dynamic> rawOptions = option['options'] ?? [];
+        
+        // Convert each option to DynamicOption object
+        final List<DynamicOption> convertedOptions = rawOptions.map((opt) {
+          if (opt is Map<String, dynamic>) {
+            return DynamicOption(
+              text: opt['text'] ?? '',
+              price: (opt['price'] ?? 0.0).toDouble(),
+              priceType: opt['priceType'] ?? 'free'
+            );
+          }
+          // If the option is just a string, create a free option
+          return DynamicOption(
+            text: opt.toString(),
+            price: 0.0,
+            priceType: 'free'
+          );
+        }).toList();
+
+        if (fieldName.isNotEmpty && convertedOptions.isNotEmpty) {
+          dynamicOptions[fieldName] = convertedOptions;
+        }
+      }
+    }
+
+    print('Loaded dynamic options: $dynamicOptions'); // Debug log
+  } catch (e) {
+    print('Error loading dynamic options: $e');
+  } finally {
+    setState(() => isLoadingOptions = false);
+  }
+}
 
   @override
   void dispose() {
@@ -74,17 +136,63 @@ class _BookingFormState extends State<BookingForm> {
           .collection('Packages')
           .doc(widget.package_id)
           .get();
-
+      print(packageDoc.data());
       if (packageDoc.exists && mounted) {
         setState(() {
           _vendorId = packageDoc.data()?['userId'];
           _serviceType = packageDoc.data()?['serviceType'];
           _selectedService = _serviceType;
         });
+
+        // Load dynamic options after getting basic package info
+        await _loadDynamicOptions(packageDoc);
       }
     } catch (e) {
       print('Error initializing vendor ID: $e');
     }
+  }
+void _initializeExistingData() {
+    final data = widget.existingBookingData!;
+    
+    // Initialize basic fields
+    setState(() {
+      selectedDate = data['event date']?.toDate();
+      addressController.text = data['address'] ?? 'Vendor Location';
+      notesController.text = data['extra notes'] ?? '';
+      
+      // Initialize time slots
+      if (data['start'] != null && data['end'] != null) {
+        final startTime = parseTimeString(data['start']);
+        final endTime = parseTimeString(data['end']);
+        
+        // Reset selected time slots
+        _selectedTimeSlots.clear();
+        
+        // Add all slots between start and end time
+        for (var slot in _availableTimeSlots) {
+          if (slot.start.hour >= startTime.hour && 
+              slot.end.hour <= endTime.hour) {
+            _selectedTimeSlots.add(slot);
+          }
+        }
+      }
+
+      // Initialize service data
+      _serviceData.clear();
+      data.forEach((key, value) {
+        if (!['package id', 'orderId', 'userId', 'timeStamp'].contains(key)) {
+          _serviceData[key] = value;
+        }
+      });
+    });
+
+    // Initialize controllers for custom fields
+    serviceFields[_selectedService]?.forEach((field) {
+      final fieldName = field['name'];
+      if (data.containsKey(fieldName)) {
+        _controllers[fieldName]?.text = data[fieldName].toString();
+      }
+    });
   }
 
   /*Future<void> _selectDate(BuildContext context) async {
@@ -370,13 +478,14 @@ class _BookingFormState extends State<BookingForm> {
     );
   }
 
+  // Update the build method to show loading state
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Booking Form"),
       ),
-      body: _selectedService == null
+      body: _selectedService == null || isLoadingOptions
           ? Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
@@ -387,7 +496,6 @@ class _BookingFormState extends State<BookingForm> {
                     buildDatePicker(),
                     if (selectedDate != null) buildTimeSlotPicker(),
                     if (_selectedService != null) ..._buildCustomFields(),
-                    const SizedBox(height: 16.0),
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: _submitForm,
@@ -401,13 +509,21 @@ class _BookingFormState extends State<BookingForm> {
   }
 
   // Function to build dynamic custom fields based on the selected service
-  List<Widget> _buildCustomFields() {
-    if (_selectedService == null ||
-        !serviceFields.containsKey(_selectedService)) {
+ List<Widget> _buildCustomFields() {
+    if (_selectedService == null || !serviceFields.containsKey(_selectedService)) {
       return [];
     }
 
     return serviceFields[_selectedService]?.map((field) {
+          // Skip select/multiselect fields if no matching dynamic options exist
+          if ((field['type'] == 'select' || field['type'] == 'multiselect')) {
+            final fieldName = field['name'].toString().toLowerCase();
+            if (!dynamicOptions.containsKey(fieldName) || 
+                dynamicOptions[fieldName]?.isEmpty == true) {
+              return SizedBox.shrink(); // Hide the field
+            }
+          }
+
           // Create a controller if it doesn't exist
           if (!_controllers.containsKey(field['name'])) {
             _controllers[field['name']] = TextEditingController(
@@ -430,9 +546,10 @@ class _BookingFormState extends State<BookingForm> {
             default:
               return SizedBox.shrink();
           }
-        }).toList() ??
-        [];
-  }
+        })
+        .where((widget) => widget.key != null || widget is! SizedBox)
+        .toList() ?? [];
+}
 
 // Add this map to your state class
   final Map<String, TextEditingController> _controllers = {};
@@ -554,20 +671,36 @@ class _BookingFormState extends State<BookingForm> {
     );
   }
 
-  Widget _buildDropdownField(Map field) {
+// Modify the _buildDropdownField method
+  // Update only the dropdown and multiselect field builders
+ // Update the _buildDropdownField method to handle missing options more gracefully
+Widget _buildDropdownField(Map field) {
+    final fieldName = field['name'].toString().toLowerCase();
+    final dynamicFieldOptions = dynamicOptions[fieldName];
+
+    // Only build the dropdown if we have dynamic options
+    if (dynamicFieldOptions == null || dynamicFieldOptions.isEmpty) {
+      return SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField(
+      child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: field['label'],
           border: OutlineInputBorder(),
         ),
-        items: (field['options'] as List)
-            .map((option) => DropdownMenuItem(
-                  value: option,
-                  child: Text(option),
-                ))
-            .toList(),
+        items: dynamicFieldOptions.map((option) {
+          final displayText = option.priceType == 'paid'
+              ? '${option.text} (+${option.price.toStringAsFixed(2)})'
+              : option.text;
+
+          return DropdownMenuItem(
+            value: option.text,
+            child: Text(displayText),
+          );
+        }).toList(),
+        value: _serviceData[field['name']],
         onChanged: (value) {
           setState(() {
             _serviceData[field['name']] = value;
@@ -581,70 +714,86 @@ class _BookingFormState extends State<BookingForm> {
         },
       ),
     );
-  }
+}
 
+
+  // Modify the _buildMultiselectField method
   Widget _buildMultiselectField(Map field) {
+    final fieldName = field['name'].toString().toLowerCase();
+    final dynamicFieldOptions = dynamicOptions[fieldName];
+
+    // Only build the multiselect if we have dynamic options
+    if (dynamicFieldOptions == null || dynamicFieldOptions.isEmpty) {
+      return SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(field['label']),
-          ...(field['options'] as List).map((option) {
+          ...dynamicFieldOptions.map((option) {
+            final isSelected = (_serviceData[field['name']] ?? []).contains(option.text);
+            final displayText = option.priceType == 'paid'
+                ? '${option.text} (+${option.price.toStringAsFixed(2)})'
+                : option.text;
+
             return CheckboxListTile(
-              title: Text(option.toString()),
-              value: _serviceData[field['name']]?.contains(option) ?? false,
+              title: Text(displayText),
+              value: isSelected,
               onChanged: (value) {
                 setState(() {
                   if (value!) {
                     _serviceData[field['name']] ??= [];
-                    (_serviceData[field['name']] as List).add(option);
+                    (_serviceData[field['name']] as List).add(option.text);
                   } else {
-                    (_serviceData[field['name']] as List).remove(option);
+                    (_serviceData[field['name']] as List).remove(option.text);
                   }
                 });
               },
             );
-          }).toList(),
+          }),
         ],
       ),
     );
-  }
-
+}
   // Submit form logic
-  Future _submitForm() async {
+ Future _submitForm() async {
     if (_formKey.currentState!.validate() && _validateBookingDuration()) {
       try {
         final firstSlot = _selectedTimeSlots.first;
         final lastSlot = _selectedTimeSlots.last;
 
-        // Basic booking data [1]
+        // Prepare booking data
         Map<String, dynamic> data = {
           'package id': widget.package_id,
           'name': nameController.text,
           'event date': selectedDate,
           'start': _formatTimeOfDay(firstSlot.start),
           'end': _formatTimeOfDay(lastSlot.end),
-          'selected_slots':
-              _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
+          'selected_slots': _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
           'address': addressController.text,
           'event': eventTypeController.text,
           'guests': numberOfGuestsController.text,
         };
 
-        // Add extra notes if provided [2]
         if (notesController.text.isNotEmpty) {
           data['extra notes'] = notesController.text;
         }
 
-        // Add data from _serviceData to the booking data
+        // Add data from _serviceData
         data.addAll(_serviceData);
 
-        // Update form data using state management [2]
-        bool success = await Provider.of<ChangeManager>(context, listen: false)
-            .updateForm(data);
+        // If editing, preserve the original orderId and update instead of creating new
+        if (widget.isEditing && widget.existingBookingData != null) {
+          data['orderId'] = widget.existingBookingData!['orderId'];
+        }
 
-        // Show result dialog [2, 3]
+        // Update form data using state management
+        bool success = await Provider.of<ChangeManager>(context, listen: false)
+            .updateForm(data, isEditing: widget.isEditing);
+
         if (!mounted) return;
         showDialog(
           context: context,
@@ -652,15 +801,17 @@ class _BookingFormState extends State<BookingForm> {
             return AlertDialog(
               title: Text(success ? "Success" : "Error"),
               content: Text(success
-                  ? "Booking added to cart"
-                  : "Failed to add booking to cart"),
+                  ? widget.isEditing 
+                      ? "Booking updated successfully"
+                      : "Booking added to cart"
+                  : "Failed to ${widget.isEditing ? 'update' : 'add'} booking"),
               actions: [
                 TextButton(
                   child: const Text("OK"),
                   onPressed: () {
                     Navigator.of(context).pop();
                     if (success) {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Return to cart
                     }
                   },
                 ),
@@ -669,7 +820,6 @@ class _BookingFormState extends State<BookingForm> {
           },
         );
       } catch (e) {
-        // Show error dialog [3]
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -688,6 +838,7 @@ class _BookingFormState extends State<BookingForm> {
       }
     }
   }
+
 }
 
 class TimeSlot {
@@ -741,3 +892,25 @@ class TimeSlot {
 }
 
 enum SlotStatus { available, unavailable, booked }
+
+// Add this class to handle dynamic options
+// Add this class near the top of your file, outside the BookingForm class
+class DynamicOption {
+  final String text;
+  final double price;
+  final String priceType;
+
+  DynamicOption({
+    required this.text,
+    required this.price,
+    required this.priceType,
+  });
+
+  factory DynamicOption.fromMap(Map<String, dynamic> map) {
+    return DynamicOption(
+      text: map['text'] ?? '',
+      price: (map['price'] ?? 0.0).toDouble(),
+      priceType: map['priceType'] ?? 'free',
+    );
+  }
+}

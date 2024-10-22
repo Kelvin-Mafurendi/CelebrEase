@@ -15,7 +15,7 @@ import 'package:maroro/modules/form_field_maps.dart';
 class DynamicPackageForm extends StatefulWidget {
   final Map? initialData;
 
-  const DynamicPackageForm({Key? key, this.initialData}) : super(key: key);
+  const DynamicPackageForm({super.key, this.initialData});
 
   @override
   State<DynamicPackageForm> createState() => _DynamicPackageFormState();
@@ -70,9 +70,8 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
 
   Future<void> _loadServices() async {
     try {
-      final servicesSnapshot = await FirebaseFirestore.instance
-          .collection('Services')
-          .get();
+      final servicesSnapshot =
+          await FirebaseFirestore.instance.collection('Services').get();
       setState(() {
         availableServices = servicesSnapshot.docs.map((doc) => doc.id).toList();
       });
@@ -114,21 +113,23 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
           selectedServiceType = newValue;
           selectedRateUnit = null;
           _dynamicOptions = [];
-          
+
           // Keep default field controllers but reinitialize service-specific ones
-          final tempControllers = Map<String, TextEditingController>.from(controllers);
+          final tempControllers =
+              Map<String, TextEditingController>.from(controllers);
           controllers.forEach((key, controller) {
             if (!defaultFields.contains(key)) {
               controller.dispose();
             }
           });
           controllers.clear();
-          
+
           // Restore default field controllers
-          defaultFields.forEach((field) {
-            controllers[field] = tempControllers[field] ?? TextEditingController();
-          });
-          
+          for (var field in defaultFields) {
+            controllers[field] =
+                tempControllers[field] ?? TextEditingController();
+          }
+
           // Initialize new service-specific field controllers
           if (newValue != null && vendorServiceFields.containsKey(newValue)) {
             for (var field in vendorServiceFields[newValue]!) {
@@ -139,15 +140,31 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
           }
         });
       },
-      validator: (value) => value == null ? 'Please select a service type' : null,
+      validator: (value) =>
+          value == null ? 'Please select a service type' : null,
     );
   }
 
   Widget _buildCurrencyDropdown() {
     final currencies = [
-      'USD', 'EUR', 'GBP', 'AOA', 'NGN', 'ZAR', 'KES',
-      'UGX', 'TZS', 'RWF', 'BIF', 'ETB', 'GHS', 'XOF',
-      'XAF', 'MAD', 'EGP', 'ZWL'
+      'USD',
+      'EUR',
+      'GBP',
+      'AOA',
+      'NGN',
+      'ZAR',
+      'KES',
+      'UGX',
+      'TZS',
+      'RWF',
+      'BIF',
+      'ETB',
+      'GHS',
+      'XOF',
+      'XAF',
+      'MAD',
+      'EGP',
+      'ZWL'
     ];
 
     return DropdownButtonFormField<String>(
@@ -171,7 +188,7 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
       },
     );
   }
-  
+
   Widget _buildRateSection() {
     final availableUnits = selectedServiceType != null
         ? rateUnits[selectedServiceType] ?? ['flat rate']
@@ -195,7 +212,8 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
                   hintText: 'Enter amount',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
@@ -230,7 +248,8 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
               selectedRateUnit = newValue;
             });
           },
-          validator: (value) => value == null ? 'Please select a rate unit' : null,
+          validator: (value) =>
+              value == null ? 'Please select a rate unit' : null,
         ),
       ],
     );
@@ -284,8 +303,6 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
     );
   }
 
-
-  
   Widget _buildFormField(String fieldName, {Map<String, dynamic>? fieldData}) {
     if (!controllers.containsKey(fieldName)) {
       controllers[fieldName] = TextEditingController();
@@ -344,211 +361,213 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
     }
   }
   // Update _buildRateSection to include hints
- 
+
   // Update _buildServiceSpecificFields to use vendorServiceFields
- Widget _buildServiceSpecificFields() {
-  if (selectedServiceType == null) return Container();
+  Widget _buildServiceSpecificFields() {
+    if (selectedServiceType == null) return Container();
 
-  final fields = vendorServiceFields[selectedServiceType] ?? [];
-  List<Widget> fieldWidgets = [];
+    final fields = vendorServiceFields[selectedServiceType] ?? [];
+    List<Widget> fieldWidgets = [];
 
-  // 1. First, add the DynamicOptions widget if there are any select/multiselect fields
-  bool hasSelectFields = fields.any((field) => 
-    field['type'] == 'select' || field['type'] == 'multiselect'
-  );
+    // 1. First, add the DynamicOptions widget if there are any select/multiselect fields
+    bool hasSelectFields = fields.any(
+        (field) => field['type'] == 'select' || field['type'] == 'multiselect');
 
-  if (hasSelectFields) {
-    fieldWidgets.add(
-      Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Package Options',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: MediaQuery.of(context).size.width * 0.85,
-              child: DynamicOptions(
-                service: selectedServiceType!,
-                onOptionsChanged: _handleDynamicOptionsChanged,
+    if (hasSelectFields) {
+      fieldWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Package Options',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              SizedBox(
+                height: MediaQuery.of(context).size.width * 0.85,
+                child: DynamicOptions(
+                  service: selectedServiceType!,
+                  onOptionsChanged: _handleDynamicOptionsChanged,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      );
+    }
+
+    // 2. Process all other fields
+    for (var field in fields) {
+      final fieldName = field['fieldName'];
+      final fieldType = field['type'];
+      final fieldLabel = field['label'] ?? _formatFieldLabel(fieldName);
+
+      // Skip select/multiselect fields as they're handled by DynamicOptions
+      if (fieldType == 'select' || fieldType == 'multiselect') {
+        continue;
+      }
+
+      // Handle different field types
+      Widget fieldWidget;
+      switch (fieldType) {
+        case 'availability':
+          fieldWidget = _buildAvailabilityCalendar();
+          break;
+
+        case 'number':
+          fieldWidget = TextFormField(
+            controller: controllers[fieldName],
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              hintText: field['hint'] ?? 'Enter a number',
+              border: const OutlineInputBorder(),
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter $fieldLabel';
+              }
+              if (double.tryParse(value) == null) {
+                return 'Please enter a valid number';
+              }
+              return null;
+            },
+          );
+          break;
+
+        case 'date':
+          fieldWidget = TextFormField(
+            controller: controllers[fieldName],
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              hintText: field['hint'] ?? 'Select a date',
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.calendar_today),
+            ),
+            readOnly: true,
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (date != null) {
+                controllers[fieldName]?.text =
+                    DateFormat('yyyy-MM-dd').format(date);
+              }
+            },
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please select a date' : null,
+          );
+          break;
+
+        case 'time':
+          fieldWidget = TextFormField(
+            controller: controllers[fieldName],
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              hintText: field['hint'] ?? 'Select a time',
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.access_time),
+            ),
+            readOnly: true,
+            onTap: () async {
+              final time = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+              if (time != null) {
+                controllers[fieldName]?.text = time.format(context);
+              }
+            },
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please select a time' : null,
+          );
+          break;
+
+        case 'textarea':
+          fieldWidget = TextFormField(
+            controller: controllers[fieldName],
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              hintText: field['hint'] ?? 'Enter details',
+              border: const OutlineInputBorder(),
+            ),
+            maxLines: 5,
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please enter $fieldLabel' : null,
+          );
+          break;
+
+        case 'checkbox':
+          final checkboxController =
+              controllers[fieldName] ?? TextEditingController(text: 'false');
+          fieldWidget = CheckboxListTile(
+            title: Text(fieldLabel),
+            value: checkboxController.text == 'true',
+            onChanged: (bool? value) {
+              setState(() {
+                checkboxController.text = value?.toString() ?? 'false';
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+          );
+          break;
+
+        case 'switch':
+          final switchController =
+              controllers[fieldName] ?? TextEditingController(text: 'false');
+          fieldWidget = SwitchListTile(
+            title: Text(fieldLabel),
+            value: switchController.text == 'true',
+            onChanged: (bool value) {
+              setState(() {
+                switchController.text = value.toString();
+              });
+            },
+          );
+          break;
+
+        case 'table':
+          fieldWidget = _buildDataTable(fieldName);
+          break;
+
+        // Default to regular text field for unknown types
+        default:
+          fieldWidget = TextFormField(
+            controller: controllers[fieldName],
+            decoration: InputDecoration(
+              labelText: fieldLabel,
+              hintText: field['hint'] ?? 'Enter ${fieldLabel.toLowerCase()}',
+              border: const OutlineInputBorder(),
+            ),
+            validator: (value) =>
+                value?.isEmpty ?? true ? 'Please enter $fieldLabel' : null,
+          );
+      }
+
+      // Add the field widget with consistent padding
+      fieldWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: fieldWidget,
+        ),
+      );
+    }
+
+    // 3. Return all widgets in a column
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: fieldWidgets,
     );
   }
 
-  // 2. Process all other fields
-  for (var field in fields) {
-    final fieldName = field['fieldName'];
-    final fieldType = field['type'];
-    final fieldLabel = field['label'] ?? _formatFieldLabel(fieldName);
-
-    // Skip select/multiselect fields as they're handled by DynamicOptions
-    if (fieldType == 'select' || fieldType == 'multiselect') {
-      continue;
-    }
-
-    // Handle different field types
-    Widget fieldWidget;
-    switch (fieldType) {
-      case 'availability':
-        fieldWidget = _buildAvailabilityCalendar();
-        break;
-
-      case 'number':
-        fieldWidget = TextFormField(
-          controller: controllers[fieldName],
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            hintText: field['hint'] ?? 'Enter a number',
-            border: const OutlineInputBorder(),
-          ),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-          ],
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter $fieldLabel';
-            }
-            if (double.tryParse(value) == null) {
-              return 'Please enter a valid number';
-            }
-            return null;
-          },
-        );
-        break;
-
-      case 'date':
-        fieldWidget = TextFormField(
-          controller: controllers[fieldName],
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            hintText: field['hint'] ?? 'Select a date',
-            border: const OutlineInputBorder(),
-            suffixIcon: const Icon(Icons.calendar_today),
-          ),
-          readOnly: true,
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-            );
-            if (date != null) {
-              controllers[fieldName]?.text = 
-                  DateFormat('yyyy-MM-dd').format(date);
-            }
-          },
-          validator: (value) => 
-              value?.isEmpty ?? true ? 'Please select a date' : null,
-        );
-        break;
-
-      case 'time':
-        fieldWidget = TextFormField(
-          controller: controllers[fieldName],
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            hintText: field['hint'] ?? 'Select a time',
-            border: const OutlineInputBorder(),
-            suffixIcon: const Icon(Icons.access_time),
-          ),
-          readOnly: true,
-          onTap: () async {
-            final time = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.now(),
-            );
-            if (time != null) {
-              controllers[fieldName]?.text = time.format(context);
-            }
-          },
-          validator: (value) => 
-              value?.isEmpty ?? true ? 'Please select a time' : null,
-        );
-        break;
-
-      case 'textarea':
-        fieldWidget = TextFormField(
-          controller: controllers[fieldName],
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            hintText: field['hint'] ?? 'Enter details',
-            border: const OutlineInputBorder(),
-          ),
-          maxLines: 5,
-          validator: (value) => 
-              value?.isEmpty ?? true ? 'Please enter $fieldLabel' : null,
-        );
-        break;
-
-      case 'checkbox':
-        final checkboxController = controllers[fieldName] ?? TextEditingController(text: 'false');
-        fieldWidget = CheckboxListTile(
-          title: Text(fieldLabel),
-          value: checkboxController.text == 'true',
-          onChanged: (bool? value) {
-            setState(() {
-              checkboxController.text = value?.toString() ?? 'false';
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-        );
-        break;
-
-      case 'switch':
-        final switchController = controllers[fieldName] ?? TextEditingController(text: 'false');
-        fieldWidget = SwitchListTile(
-          title: Text(fieldLabel),
-          value: switchController.text == 'true',
-          onChanged: (bool value) {
-            setState(() {
-              switchController.text = value.toString();
-            });
-          },
-        );
-        break;
-
-      case 'table':
-        fieldWidget = _buildDataTable(fieldName);
-        break;
-
-      // Default to regular text field for unknown types
-      default:
-        fieldWidget = TextFormField(
-          controller: controllers[fieldName],
-          decoration: InputDecoration(
-            labelText: fieldLabel,
-            hintText: field['hint'] ?? 'Enter ${fieldLabel.toLowerCase()}',
-            border: const OutlineInputBorder(),
-          ),
-          validator: (value) => 
-              value?.isEmpty ?? true ? 'Please enter $fieldLabel' : null,
-        );
-    }
-
-    // Add the field widget with consistent padding
-    fieldWidgets.add(
-      Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: fieldWidget,
-      ),
-    );
-  }
-
-  // 3. Return all widgets in a column
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: fieldWidgets,
-  );
-}
   Widget _buildDataTable(String field) {
     final items = <Map<String, dynamic>>[];
     // Implement logic to populate items based on 'field'
@@ -602,12 +621,13 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
       ),
     );
   }
+
   String _formatFieldLabel(String field) {
-  return field
-      .replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}')
-      .capitalize()
-      .trim();
-}
+    return field
+        .replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}')
+        .capitalize()
+        .trim();
+  }
 
   Future _showAddItemDialog(String field) async {
     final nameController = TextEditingController();
@@ -648,62 +668,63 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
   }
 
   // Update the _submitForm method to include dynamic options:
-Future _submitForm() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      Map<String, dynamic> data = {};
+  Future _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        Map<String, dynamic> data = {};
 
-      // Add all form field values
-      controllers.forEach((key, controller) {
-        data[key] = controller.text;
-      });
+        // Add all form field values
+        controllers.forEach((key, controller) {
+          data[key] = controller.text;
+        });
 
-      // Format rate with currency and unit
-      data['rate'] = '$selectedCurrency ${controllers['rate']!.text} $selectedRateUnit';
+        // Format rate with currency and unit
+        data['rate'] =
+            '$selectedCurrency ${controllers['rate']!.text} $selectedRateUnit';
 
-      // Add service type
-      data['serviceType'] = selectedServiceType;
+        // Add service type
+        data['serviceType'] = selectedServiceType;
 
-      // Add dynamic options
-      if (_dynamicOptions.isNotEmpty) {
-        data['dynamicOptions'] = _dynamicOptions.map((field) {
-          return {
-            'fieldName': field['fieldName'],
-            'name': field['name'],
-            'type': field['type'],
-            'options': field['options'],
-          };
-        }).toList();
+        // Add dynamic options
+        if (_dynamicOptions.isNotEmpty) {
+          data['dynamicOptions'] = _dynamicOptions.map((field) {
+            return {
+              'fieldName': field['fieldName'],
+              'name': field['name'],
+              'type': field['type'],
+              'options': field['options'],
+            };
+          }).toList();
+        }
+
+        // Add image path if exists
+        final packageImage = context.read<ChangeManager>().getPackageImage();
+        if (packageImage != null) {
+          data['mainPicPath'] = packageImage.path;
+        }
+
+        // Add selected dates if applicable
+        if (selectedDates.isNotEmpty) {
+          data['availableDates'] = selectedDates
+              .map((date) => DateFormat('yyyy-MM-dd').format(date))
+              .toList();
+        }
+
+        // Update package using state management
+        context.read<ChangeManager>().updatePackage(data);
+
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving package: $e')),
+        );
       }
-
-      // Add image path if exists
-      final packageImage = context.read<ChangeManager>().getPackageImage();
-      if (packageImage != null) {
-        data['mainPicPath'] = packageImage.path;
-      }
-
-      // Add selected dates if applicable
-      if (selectedDates.isNotEmpty) {
-        data['availableDates'] = selectedDates
-            .map((date) => DateFormat('yyyy-MM-dd').format(date))
-            .toList();
-      }
-
-      // Update package using state management
-      context.read<ChangeManager>().updatePackage(data);
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving package: $e')),
-      );
     }
   }
-}
 
-   @override
+  @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -760,8 +781,8 @@ Future _submitForm() async {
     controllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
-
 }
+
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/cart.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +33,19 @@ class _CartViewState extends State<CartView> {
   void initState() {
     super.initState();
     _loadRate();
+  }
+
+  void _navigateToEditForm() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookingForm(
+          package_id: widget.data['package id'],
+          isEditing: true,
+          existingBookingData: widget.data,
+        ),
+      ),
+    );
   }
 
   void _loadRate() async {
@@ -143,9 +157,8 @@ class _CartViewState extends State<CartView> {
           Map<String, dynamic> packageData =
               snapshot.data!.data() as Map<String, dynamic>;
 
-
-          return Stack(
-            children: [Card(
+          return Stack(children: [
+            Card(
               elevation: 10,
               shadowColor: secondaryColor,
               surfaceTintColor: Theme.of(context).cardColor,
@@ -156,37 +169,35 @@ class _CartViewState extends State<CartView> {
                   scrollDirection: Axis.horizontal,
                   child: Stack(
                     children: [
-                      
                       Positioned(
                         //right: 0,
                         bottom: 0,
                         left: 0,
                         child: Text(
-                          "${packageData['rate'].toString().split('per')[0]}",
+                          packageData['rate'].toString().split('per')[0],
                           textScaler: const TextScaler.linear(4),
                           style: GoogleFonts.lateef(color: Colors.grey[500]),
                         ),
                       ),
                       Positioned(
-                        top: 0 ,
-                        left: MediaQuery.of(context).size.width *0.3,
+                        top: 0,
+                        left: MediaQuery.of(context).size.width * 0.3,
                         //right: 0,
                         child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  packageData['serviceType'] ?? 'Unknown',
-                                  style: GoogleFonts.lateef(
-                                      fontSize: 20, fontWeight: FontWeight.w600),
-                                ),
-                              ],
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              packageData['serviceType'] ?? 'Unknown',
+                              style: GoogleFonts.lateef(
+                                  fontSize: 20, fontWeight: FontWeight.w600),
                             ),
+                          ],
+                        ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          
                           const SizedBox(
                             height: 30,
                           ),
@@ -208,10 +219,11 @@ class _CartViewState extends State<CartView> {
                                     child: CachedNetworkImage(
                                       imageUrl: packageData['mainPicPath'],
                                       fit: BoxFit.cover,
-                                      width:
-                                          MediaQuery.of(context).size.width * 0.275,
+                                      width: MediaQuery.of(context).size.width *
+                                          0.275,
                                       height:
-                                          MediaQuery.of(context).size.width * 0.275,
+                                          MediaQuery.of(context).size.width *
+                                              0.275,
                                     ),
                                   ),
                                   const SizedBox(
@@ -227,14 +239,16 @@ class _CartViewState extends State<CartView> {
                                         return const CircularProgressIndicator();
                                       }
                                       return SizedBox(
-                                        width: MediaQuery.of(context).size.width *
-                                            0.275,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.275,
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.center,
                                           children: [
                                             Text(
-                                              snapshot.data!.get('business name'),
+                                              snapshot.data!
+                                                  .get('business name'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w400),
                                             ),
@@ -242,7 +256,8 @@ class _CartViewState extends State<CartView> {
                                               widget.data['address'] !=
                                                       'Vendor Location'
                                                   ? widget.data['address']
-                                                  : snapshot.data!.get('address'),
+                                                  : snapshot.data!
+                                                      .get('address'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w100),
                                             ),
@@ -297,24 +312,23 @@ class _CartViewState extends State<CartView> {
                                       ),
                                     ],
                                   ),
-                                  if(widget.data['guestCount'] != null)
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Guests: ",
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400),
-                                      ),
-                                      
-                                      Text(
-                                        "${widget.data['guestCount']}",
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w300),
-                                      ),
-                                    ],
-                                  ),
+                                  if (widget.data['guestCount'] != null)
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Guests: ",
+                                          style: GoogleFonts.lateef(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w400),
+                                        ),
+                                        Text(
+                                          "${widget.data['guestCount']}",
+                                          style: GoogleFonts.lateef(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w300),
+                                        ),
+                                      ],
+                                    ),
                                   // Add other details from booking form here
                                   for (var key in widget.data.keys)
                                     if (key != 'event date' &&
@@ -332,8 +346,8 @@ class _CartViewState extends State<CartView> {
                                       _buildDetailRow(
                                           key, widget.data[key].toString()),
                                   SizedBox(
-                                    height:
-                                        MediaQuery.of(context).size.width * 0.285,
+                                    height: MediaQuery.of(context).size.width *
+                                        0.285,
                                   ),
                                 ],
                               ),
@@ -347,33 +361,56 @@ class _CartViewState extends State<CartView> {
               ),
             ),
             Positioned(
-                      right: 5,
-                      //top: 0,
-                      bottom: 5,
-                      child: IconButton(
-                        onPressed: () {
-                          String? orderId = widget.data['orderId'];
-                          if (orderId != null) {
-                            _showDeleteConfirmation(context, orderId);
-                          }
-                        },
-                        icon: Icon(
-                          size: MediaQuery.of(context).size.width * 0.1,
-                          FluentSystemIcons.ic_fluent_delete_regular,
-                          color: primaryColor,
-                        ),
+              right: 5,
+              //top: 0,
+              bottom: 5,
+              child: IconButton(
+                onPressed: () {
+                  String? orderId = widget.data['orderId'];
+                  if (orderId != null) {
+                    _showDeleteConfirmation(context, orderId);
+                  }
+                },
+                icon: Icon(
+                  size: MediaQuery.of(context).size.width * 0.1,
+                  FluentSystemIcons.ic_fluent_delete_regular,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 20,
+              top: 20,
+              child: InkWell(
+                onTap: (){},
+                child: Row(
+                  children: [
+                    Icon(
+                      FluentSystemIcons.ic_fluent_edit_regular,
+                      color: primaryColor,
+                      size: MediaQuery.of(context).size.width * 0.08,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Edit',
+                      style: GoogleFonts.lateef(
+                        color: primaryColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),]
-          );
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]);
         },
       ),
     );
   }
-  
 
   Widget _buildDetailRow(String label, String value) {
     return Row(
-      
       children: [
         Text(
           "$label: ",

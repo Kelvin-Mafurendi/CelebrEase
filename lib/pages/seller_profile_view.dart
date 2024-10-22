@@ -379,7 +379,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    FilledButton(
+                    /*FilledButton(
                       onPressed: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) =>BookingForm(package_id: ''),),);
                       },
@@ -387,7 +387,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                         padding: EdgeInsets.all(8.0),
                         child: Text('Bookmark Vendor'),
                       ),
-                    ),
+                    ),*/
                     FilledButton(
                       onPressed: () =>
                           _startChat(context, widget.userId, brandName),
