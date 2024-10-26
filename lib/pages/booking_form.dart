@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:maroro/Provider/state_management.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/modules/form_field_maps.dart';
 //import 'package:maroro/pages/vendor_calender.dart';
 import 'package:provider/provider.dart';
@@ -28,17 +29,13 @@ class BookingForm extends StatefulWidget {
 
 class _BookingFormState extends State<BookingForm> {
   final _formKey = GlobalKey<FormState>();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  DateTime? _selectedDate;
   String? _selectedService;
   final Map<String, dynamic> _serviceData = {};
   List<TimeSlot> _availableTimeSlots = [];
   final List<TimeSlot> _selectedTimeSlots = [];
-  final bool _isLoading = false;
   String? _vendorId;
   String? _serviceType;
   DateTime? selectedDate;
-  Timer? _debounce;
 
   // Constants for booking duration limits
   static const int MIN_BOOKING_HOURS = 1;
@@ -57,67 +54,62 @@ class _BookingFormState extends State<BookingForm> {
   Map<String, List<DynamicOption>> dynamicOptions = {};
   bool isLoadingOptions = false;
 
- @override
+  @override
   void initState() {
     super.initState();
     addressController.text = 'Vendor Location';
     _initializeVendorId();
-    
+
     // Initialize form with existing data if editing
     if (widget.isEditing && widget.existingBookingData != null) {
       _initializeExistingData();
     }
   }
 
-
   Future<void> _loadDynamicOptions(DocumentSnapshot packageDoc) async {
-  try {
-    setState(() => isLoadingOptions = true);
+    try {
+      setState(() => isLoadingOptions = true);
 
-    final data = packageDoc.data() as Map<String, dynamic>?;
-    if (data == null || !data.containsKey('dynamicOptions')) {
-      print('No dynamic options found');
-      return;
-    }
+      final data = packageDoc.data() as Map<String, dynamic>?;
+      if (data == null || !data.containsKey('dynamicOptions')) {
+        print('No dynamic options found');
+        return;
+      }
 
-    final List<dynamic> options = data['dynamicOptions'] ?? [];
-    dynamicOptions.clear(); // Clear existing options before loading new ones
+      final List<dynamic> options = data['dynamicOptions'] ?? [];
+      dynamicOptions.clear(); // Clear existing options before loading new ones
 
-    for (var option in options) {
-      if (option is Map<String, dynamic>) {
-        final fieldName = option['fieldName']?.toString().toLowerCase() ?? '';
-        final List<dynamic> rawOptions = option['options'] ?? [];
-        
-        // Convert each option to DynamicOption object
-        final List<DynamicOption> convertedOptions = rawOptions.map((opt) {
-          if (opt is Map<String, dynamic>) {
+      for (var option in options) {
+        if (option is Map<String, dynamic>) {
+          final fieldName = option['fieldName']?.toString().toLowerCase() ?? '';
+          final List<dynamic> rawOptions = option['options'] ?? [];
+
+          // Convert each option to DynamicOption object
+          final List<DynamicOption> convertedOptions = rawOptions.map((opt) {
+            if (opt is Map<String, dynamic>) {
+              return DynamicOption(
+                  text: opt['text'] ?? '',
+                  price: (opt['price'] ?? 0.0).toDouble(),
+                  priceType: opt['priceType'] ?? 'free');
+            }
+            // If the option is just a string, create a free option
             return DynamicOption(
-              text: opt['text'] ?? '',
-              price: (opt['price'] ?? 0.0).toDouble(),
-              priceType: opt['priceType'] ?? 'free'
-            );
-          }
-          // If the option is just a string, create a free option
-          return DynamicOption(
-            text: opt.toString(),
-            price: 0.0,
-            priceType: 'free'
-          );
-        }).toList();
+                text: opt.toString(), price: 0.0, priceType: 'free');
+          }).toList();
 
-        if (fieldName.isNotEmpty && convertedOptions.isNotEmpty) {
-          dynamicOptions[fieldName] = convertedOptions;
+          if (fieldName.isNotEmpty && convertedOptions.isNotEmpty) {
+            dynamicOptions[fieldName] = convertedOptions;
+          }
         }
       }
-    }
 
-    print('Loaded dynamic options: $dynamicOptions'); // Debug log
-  } catch (e) {
-    print('Error loading dynamic options: $e');
-  } finally {
-    setState(() => isLoadingOptions = false);
+      print('Loaded dynamic options: $dynamicOptions'); // Debug log
+    } catch (e) {
+      print('Error loading dynamic options: $e');
+    } finally {
+      setState(() => isLoadingOptions = false);
+    }
   }
-}
 
   @override
   void dispose() {
@@ -151,26 +143,27 @@ class _BookingFormState extends State<BookingForm> {
       print('Error initializing vendor ID: $e');
     }
   }
-void _initializeExistingData() {
+
+  void _initializeExistingData() {
     final data = widget.existingBookingData!;
-    
+
     // Initialize basic fields
     setState(() {
       selectedDate = data['event date']?.toDate();
       addressController.text = data['address'] ?? 'Vendor Location';
       notesController.text = data['extra notes'] ?? '';
-      
+
       // Initialize time slots
       if (data['start'] != null && data['end'] != null) {
         final startTime = parseTimeString(data['start']);
         final endTime = parseTimeString(data['end']);
-        
+
         // Reset selected time slots
         _selectedTimeSlots.clear();
-        
+
         // Add all slots between start and end time
         for (var slot in _availableTimeSlots) {
-          if (slot.start.hour >= startTime.hour && 
+          if (slot.start.hour >= startTime.hour &&
               slot.end.hour <= endTime.hour) {
             _selectedTimeSlots.add(slot);
           }
@@ -195,20 +188,6 @@ void _initializeExistingData() {
     });
   }
 
-  /*Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-      _loadTimeSlots();
-    }
-  }*/
 
   Future<void> _loadAvailableTimeSlots(DateTime date) async {
     if (_vendorId == null) return;
@@ -430,7 +409,7 @@ void _initializeExistingData() {
               'Selected Time Range: ${_getFormattedTimeRange()}',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
+                color: accentColor,
                 fontSize: 16,
               ),
             ),
@@ -509,47 +488,51 @@ void _initializeExistingData() {
   }
 
   // Function to build dynamic custom fields based on the selected service
- List<Widget> _buildCustomFields() {
-    if (_selectedService == null || !serviceFields.containsKey(_selectedService)) {
+  List<Widget> _buildCustomFields() {
+    if (_selectedService == null ||
+        !serviceFields.containsKey(_selectedService)) {
       return [];
     }
 
-    return serviceFields[_selectedService]?.map((field) {
-          // Skip select/multiselect fields if no matching dynamic options exist
-          if ((field['type'] == 'select' || field['type'] == 'multiselect')) {
-            final fieldName = field['name'].toString().toLowerCase();
-            if (!dynamicOptions.containsKey(fieldName) || 
-                dynamicOptions[fieldName]?.isEmpty == true) {
-              return SizedBox.shrink(); // Hide the field
-            }
-          }
+    return serviceFields[_selectedService]
+            ?.map((field) {
+              // Skip select/multiselect fields if no matching dynamic options exist
+              if ((field['type'] == 'select' ||
+                  field['type'] == 'multiselect')) {
+                final fieldName = field['name'].toString().toLowerCase();
+                if (!dynamicOptions.containsKey(fieldName) ||
+                    dynamicOptions[fieldName]?.isEmpty == true) {
+                  return SizedBox.shrink(); // Hide the field
+                }
+              }
 
-          // Create a controller if it doesn't exist
-          if (!_controllers.containsKey(field['name'])) {
-            _controllers[field['name']] = TextEditingController(
-                text: _serviceData[field['name']]?.toString() ?? '');
-          }
+              // Create a controller if it doesn't exist
+              if (!_controllers.containsKey(field['name'])) {
+                _controllers[field['name']] = TextEditingController(
+                    text: _serviceData[field['name']]?.toString() ?? '');
+              }
 
-          switch (field['type']) {
-            case 'date':
-              return _buildDateField(field);
-            case 'number':
-              return _buildNumberField(field);
-            case 'text':
-              return _buildTextField(field);
-            case 'multiline':
-              return _buildMultilineTextField(field);
-            case 'select':
-              return _buildDropdownField(field);
-            case 'multiselect':
-              return _buildMultiselectField(field);
-            default:
-              return SizedBox.shrink();
-          }
-        })
-        .where((widget) => widget.key != null || widget is! SizedBox)
-        .toList() ?? [];
-}
+              switch (field['type']) {
+                case 'date':
+                  return _buildDateField(field);
+                case 'number':
+                  return _buildNumberField(field);
+                case 'text':
+                  return _buildTextField(field);
+                case 'multiline':
+                  return _buildMultilineTextField(field);
+                case 'select':
+                  return _buildDropdownField(field);
+                case 'multiselect':
+                  return _buildMultiselectField(field);
+                default:
+                  return SizedBox.shrink();
+              }
+            })
+            .where((widget) => widget.key != null || widget is! SizedBox)
+            .toList() ??
+        [];
+  }
 
 // Add this map to your state class
   final Map<String, TextEditingController> _controllers = {};
@@ -671,10 +654,7 @@ void _initializeExistingData() {
     );
   }
 
-// Modify the _buildDropdownField method
-  // Update only the dropdown and multiselect field builders
- // Update the _buildDropdownField method to handle missing options more gracefully
-Widget _buildDropdownField(Map field) {
+  Widget _buildDropdownField(Map field) {
     final fieldName = field['name'].toString().toLowerCase();
     final dynamicFieldOptions = dynamicOptions[fieldName];
 
@@ -714,8 +694,7 @@ Widget _buildDropdownField(Map field) {
         },
       ),
     );
-}
-
+  }
 
   // Modify the _buildMultiselectField method
   Widget _buildMultiselectField(Map field) {
@@ -734,7 +713,8 @@ Widget _buildDropdownField(Map field) {
         children: [
           Text(field['label']),
           ...dynamicFieldOptions.map((option) {
-            final isSelected = (_serviceData[field['name']] ?? []).contains(option.text);
+            final isSelected =
+                (_serviceData[field['name']] ?? []).contains(option.text);
             final displayText = option.priceType == 'paid'
                 ? '${option.text} (+${option.price.toStringAsFixed(2)})'
                 : option.text;
@@ -757,9 +737,10 @@ Widget _buildDropdownField(Map field) {
         ],
       ),
     );
-}
+  }
+
   // Submit form logic
- Future _submitForm() async {
+  Future _submitForm() async {
     if (_formKey.currentState!.validate() && _validateBookingDuration()) {
       try {
         final firstSlot = _selectedTimeSlots.first;
@@ -772,10 +753,12 @@ Widget _buildDropdownField(Map field) {
           'event date': selectedDate,
           'start': _formatTimeOfDay(firstSlot.start),
           'end': _formatTimeOfDay(lastSlot.end),
-          'selected_slots': _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
+          'selected_slots':
+              _selectedTimeSlots.map((slot) => slot.toMap()).toList(),
           'address': addressController.text,
           'event': eventTypeController.text,
           'guests': numberOfGuestsController.text,
+          'vendorId':_vendorId,
         };
 
         if (notesController.text.isNotEmpty) {
@@ -801,7 +784,7 @@ Widget _buildDropdownField(Map field) {
             return AlertDialog(
               title: Text(success ? "Success" : "Error"),
               content: Text(success
-                  ? widget.isEditing 
+                  ? widget.isEditing
                       ? "Booking updated successfully"
                       : "Booking added to cart"
                   : "Failed to ${widget.isEditing ? 'update' : 'add'} booking"),
@@ -838,7 +821,6 @@ Widget _buildDropdownField(Map field) {
       }
     }
   }
-
 }
 
 class TimeSlot {

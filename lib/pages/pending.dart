@@ -3,15 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:maroro/pages/cart_view.dart';
+import 'package:maroro/pages/pending_view.dart';
 
-class Cart extends StatefulWidget {
-  const Cart({super.key});
+class Pending extends StatefulWidget {
+  const Pending({super.key});
 
   @override
-  State<Cart> createState() => _CartState();
+  State<Pending> createState() => _PendingState();
 }
 
-class _CartState extends State<Cart> {
+class _PendingState extends State<Pending> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Map<String, double> _itemRates = {};
@@ -44,8 +45,8 @@ class _CartState extends State<Cart> {
 
     try {
       return _firestore
-          .collection('Cart')
-          .where('userId', isEqualTo: user.uid)
+          .collection('Pending')
+          .where('vendorId', isEqualTo: user.uid)
           //.orderBy('timeStamp', descending: true)
           .snapshots();
     } catch (e) {
@@ -89,7 +90,7 @@ class _CartState extends State<Cart> {
             children: [
               Center(
                 child: Text(
-                  'Your Shopping cart is empty.',
+                  'You have no Pending Cart Confirmations',
                   style: GoogleFonts.lateef(fontSize: 20),
                 ),
               ),
@@ -100,7 +101,7 @@ class _CartState extends State<Cart> {
                 ),
                 child: FilledButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Continue Shopping'),
+                  child: const Text('Continue selling'),
                 ),
               ),
             ],
@@ -130,7 +131,7 @@ class _CartState extends State<Cart> {
                       top: 50,
                     ),
                     child: Text(
-                      'Cart',
+                      'Cart Confirmations',
                       textScaler: const TextScaler.linear(2.7),
                       style: GoogleFonts.lateef(fontWeight: FontWeight.bold),
                     ),
@@ -141,7 +142,7 @@ class _CartState extends State<Cart> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       String itemId = data[index]['package id'];
-                      return CartView(
+                      return PendingView(
                         key: ValueKey(itemId),
                         data: data[index],
                         rate: _itemRates[itemId] ?? 0.0,
@@ -161,32 +162,15 @@ class _CartState extends State<Cart> {
                 SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      CartTotal(
-                        itemRates: _itemRates,
-                        itemQuantities: _itemQuantities,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        child: ElevatedButton(
-                          style: const ButtonStyle(
-                            elevation: WidgetStatePropertyAll(1),
-                          ),
-                          onPressed: () {
-                            // Implement checkout logic
-                          },
-                          child: const Text('Check Out'),
-                        ),
-                      ),
+                      SizedBox(height: 30,),
+                      
                       Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width * 0.2,
                         ),
                         child: FilledButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Continue Shopping'),
+                          child: const Text('Continue Selling'),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -222,19 +206,12 @@ class CartTotal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          "Total: ZAR ${_calculateTotal().toStringAsFixed(2)}",
-          textScaler: const TextScaler.linear(2),
-          style: GoogleFonts.lateef(),
-        ),
-        Text(
-          "Deposit: ZAR ${_calculateTotal().toStringAsFixed(2)}",
-          textScaler: const TextScaler.linear(1.3),
-          style: GoogleFonts.lateef(),
-        ),
-      ],
+    return Center(
+      child: Text(
+        "Total: ZAR ${_calculateTotal().toStringAsFixed(2)}",
+        textScaler: const TextScaler.linear(2),
+        style: GoogleFonts.lateef(),
+      ),
     );
   }
 }

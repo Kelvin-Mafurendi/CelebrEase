@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +13,7 @@ import 'package:maroro/pages/event.dart';
 import 'package:maroro/pages/landing_page.dart';
 import 'package:maroro/pages/mainscreen.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
+import 'package:maroro/pages/pending.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/trends.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +27,6 @@ class Screen1 extends StatefulWidget {
 }
 
 class _Screen1State extends State<Screen1> {
-  
   int selectedIndex = 0;
   Widget page = const Mainscreen();
 
@@ -56,11 +59,14 @@ class _Screen1State extends State<Screen1> {
     });
   }
 
+  final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+
   @override
   Widget build(BuildContext context) {
     print('the value of userType:${widget.userType}');
-    int bookings = Provider.of<ChangeManager>(context).bookings.length;
-    
+
     // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
@@ -95,15 +101,77 @@ class _Screen1State extends State<Screen1> {
                     },
                     child: const Icon(Icons.shopping_cart_outlined),
                   ),
-                  Positioned(right:10,top: 3,child: Text('$bookings',style: GoogleFonts.lateef(color: Colors.white),))
-                ]))
-            : null,
+                  Positioned(
+                    right: 10,
+                    top: 3,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: _fireStore.collection('Cart').where('userId',isEqualTo: _auth.currentUser!.uid).snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          // Get the number of documents in the Cart collection
+                          int bookings = snapshot.data!.docs.length;
+
+                          return Text(
+                            '$bookings',
+                            style: GoogleFonts.lateef(color: Colors.white),
+                          );
+                        } else {
+                          return Text(
+                            '0', // Show 0 if no data is available
+                            style: GoogleFonts.lateef(color: Colors.white),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ]),
+              )
+            : Positioned(
+                top: 10,
+                right: 10,
+                child: Stack(children: [
+                  FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Pending()));
+                    },
+                    child: const Icon(FluentSystemIcons.ic_fluent_checkmark_circle_regular),
+                  ),
+                  Positioned(
+                    right: 10,
+                    top: 3,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: _fireStore.collection('Pending').where('vendorId',isEqualTo: _auth.currentUser!.uid).snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          // Get the number of documents in the Cart collection
+                          int bookings = snapshot.data!.docs.length;
+
+                          return Text(
+                            '$bookings',
+                            style: GoogleFonts.lateef(color: Colors.white),
+                          );
+                        } else {
+                          return Text(
+                            '0', // Show 0 if no data is available
+                            style: GoogleFonts.lateef(color: Colors.white),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ]),
+              ),
         drawer: selectedIndex == 0
             ? MyDrawer(
                 userType: widget.userType,
               )
             : null,
-        appBar: selectedIndex == 0 ? EventAppBar(title: '', userType:widget.userType,) : null,
+        appBar: selectedIndex == 0
+            ? EventAppBar(
+                title: '',
+                userType: widget.userType,
+              )
+            : null,
         bottomNavigationBar: BottomNavigationBar(
           elevation: 10,
           //backgroundColor: const Color(0xFFF1E1D5),

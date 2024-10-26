@@ -2,23 +2,26 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delightful_toast/delight_toast.dart';
 import 'package:delightful_toast/toast/components/toast_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/rate_editor.dart';
 import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/cart.dart';
+import 'package:maroro/pages/chart_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-class CartView extends StatefulWidget {
+class PendingView extends StatefulWidget {
   final Map<String, dynamic> data;
   final double rate;
   final VoidCallback onItemDeleted;
 
-  const CartView({
+  const PendingView({
     super.key,
     required this.data,
     required this.rate,
@@ -26,20 +29,24 @@ class CartView extends StatefulWidget {
   });
 
   @override
-  State<CartView> createState() => _CartViewState();
+  State<PendingView> createState() => _PendingViewState();
 }
 
-class _CartViewState extends State<CartView> {
+class _PendingViewState extends State<PendingView> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _rateLoaded = false;
   bool pending = false;
   bool confirmed = false;
+  bool _isEditingRate = false;
+  late TextEditingController _rateController;
   late Stream<DocumentSnapshot> pendingStream;
   late Stream<DocumentSnapshot> confirmationStream;
 
   @override
   void initState() {
     super.initState();
+    _rateController = TextEditingController();
     _loadRate();
     // Initialize the pending status stream
     pendingStream = _firestore
@@ -55,6 +62,7 @@ class _CartViewState extends State<CartView> {
         });
       }
     });
+
     confirmationStream = _firestore
         .collection('Confirmations')
         .doc(widget.data['orderId'])
@@ -66,30 +74,48 @@ class _CartViewState extends State<CartView> {
         setState(() {
           confirmed = snapshot.exists;
         });
-        if (confirmed) {
-          DelightToastBar(
-            builder: (context) => ToastCard(
-              title: Text(
-                'Cart',
-                style: GoogleFonts.lateef(),
-              ),
-              subtitle: Text(
-                "Booking Confirmed, ready for check out!",
-                style: GoogleFonts.lateef(),
-              ),
-              leading: Icon(CupertinoIcons.info),
-              trailing: Text(
-                DateTime.now().toString(),
-                style: GoogleFonts.lateef(),
-              ),
-            ),
-          ).show(context);
-        }
       }
     });
   }
 
-  Future<void> _connectVendor() async {
+  Future<void> _startChat(
+      BuildContext context, String vendorId, String vendorName) async {
+    final currentUserId = _auth.currentUser!.uid;
+    final chatId = currentUserId.compareTo(vendorId) < 0
+        ? '${currentUserId}_$vendorId'
+        : '${vendorId}_$currentUserId';
+
+    final chatDoc = await _firestore.collection('chats').doc(chatId).get();
+
+    if (!chatDoc.exists) {
+      // Create a new chat document if it doesn't exist
+      await _firestore.collection('chats').doc(chatId).set({
+        'participants': [currentUserId, vendorId],
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Navigate to the ChatScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
+          chatId: chatId,
+          vendorId: vendorId,
+          vendorName: vendorName,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmOrder() async {
     String name = '';
     final doc = await _firestore
         .collection('Packages')
@@ -101,30 +127,44 @@ class _CartViewState extends State<CartView> {
       name = packageData['packageName'];
     }
 
-    if (!pending && !confirmed) {
+    // Update the rate in Firebase if it was edited
+    if (_isEditingRate) {
+      await _firestore
+          .collection('Cart')
+          .doc(widget.data['orderId'])
+          .update({'rate': '${_rateController.text}per person'});
+      setState(() {
+        _isEditingRate = false;
+      });
+    }
+
+    if (pending && !confirmed) {
+      await _firestore
+          .collection('Confirmations')
+          .doc(widget.data['orderId'])
+          .set(widget.data);
       await _firestore
           .collection('Pending')
           .doc(widget.data['orderId'])
-          .set(widget.data);
-
+          .delete();
       DelightToastBar(
         builder: (context) => ToastCard(
           title: Text(
-            'Cart',
+            'Cart Confirmations',
             style: GoogleFonts.lateef(),
           ),
           subtitle: Text(
-            "Your '$name' booking has been sent to the vendor for confirmation. You will be able to check out as soon as the Vendor confirms.",
+            "Your '$name' confirmation has been sent to the customer. Now they can check out.",
             style: GoogleFonts.lateef(),
           ),
           leading: Icon(CupertinoIcons.info),
           trailing: Text(
-            DateTime.now().toString(),
+            DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
             style: GoogleFonts.lateef(),
           ),
         ),
       ).show(context);
-    } else if (pending && !confirmed) {
+    } else if (confirmed && !pending) {
       DelightToastBar(
         builder: (context) => ToastCard(
           title: Text(
@@ -132,7 +172,7 @@ class _CartViewState extends State<CartView> {
             style: GoogleFonts.lateef(),
           ),
           subtitle: Text(
-            "Confirmation pending for '$name' booking...",
+            "'$name' booking already confirmed...",
             style: GoogleFonts.lateef(),
           ),
           leading: CircularProgressIndicator(
@@ -240,6 +280,27 @@ class _CartViewState extends State<CartView> {
     );
   }
 
+   void _showRateEditor(BuildContext context, String currentRate) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => RateEditOverlay(
+        initialRate: currentRate,
+        onSave: (newRate) async {
+          // Update Firestore
+          await _firestore
+              .collection('Cart')
+              .doc(widget.data['orderId'])
+              .update({'rate': '${newRate} per item'});
+          Navigator.pop(context);
+        },
+        onCancel: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -265,6 +326,11 @@ class _CartViewState extends State<CartView> {
           Map<String, dynamic> packageData =
               snapshot.data!.data() as Map<String, dynamic>;
 
+          // Set initial rate value if editing starts
+          if (!_isEditingRate) {
+            _rateController.text = formatRate(packageData['rate'].toString());
+          }
+
           return Stack(children: [
             Card(
               elevation: 10,
@@ -277,18 +343,14 @@ class _CartViewState extends State<CartView> {
                   scrollDirection: Axis.horizontal,
                   child: Stack(
                     children: [
-                      Positioned(
-                        //right: 0,
+                     Positioned(
                         bottom: 0,
                         left: 0,
-                        child: confirmed
-                            ? RateWidget(data: widget.data)
-                            : Text(
-                                packageData['rate'].toString().split('per')[0],
-                                textScaler: const TextScaler.linear(4),
-                                style:
-                                    GoogleFonts.lateef(color: Colors.grey[500]),
-                              ),
+                        child: Text(
+                          packageData['rate'].toString().split('per')[0],
+                          textScaler: const TextScaler.linear(4),
+                          style: GoogleFonts.lateef(color: Colors.grey[500]),
+                        ),
                       ),
                       Positioned(
                         top: 0,
@@ -342,8 +404,8 @@ class _CartViewState extends State<CartView> {
                                   ),
                                   StreamBuilder<DocumentSnapshot>(
                                     stream: _firestore
-                                        .collection('Vendors')
-                                        .doc(packageData['userId'])
+                                        .collection('Customers')
+                                        .doc(widget.data['userId'])
                                         .snapshots(),
                                     builder: (context, snapshot) {
                                       if (!snapshot.hasData) {
@@ -358,17 +420,12 @@ class _CartViewState extends State<CartView> {
                                               CrossAxisAlignment.center,
                                           children: [
                                             Text(
-                                              snapshot.data!
-                                                  .get('business name'),
+                                              snapshot.data!.get('username'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w400),
                                             ),
                                             Text(
-                                              widget.data['address'] !=
-                                                      'Vendor Location'
-                                                  ? widget.data['address']
-                                                  : snapshot.data!
-                                                      .get('address'),
+                                              snapshot.data!.get('location'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w100),
                                             ),
@@ -485,21 +542,17 @@ class _CartViewState extends State<CartView> {
               child: Column(
                 children: [
                   IconButton(
-                    onPressed: () {
-                      String? orderId = widget.data['orderId'];
-                      if (orderId != null) {
-                        _showDeleteConfirmation(context, orderId);
-                      }
-                    },
+                    onPressed: () =>
+                        _startChat(context, widget.data['userId'], 'Customer'),
                     icon: Icon(
                       size: MediaQuery.of(context).size.width * 0.07,
-                      FluentSystemIcons.ic_fluent_delete_regular,
+                      FluentSystemIcons.ic_fluent_chat_regular,
                       color: primaryColor,
                     ),
                   ),
                   //const SizedBox(width: 4),
                   Text(
-                    'Delete',
+                    'Chat',
                     style: GoogleFonts.lateef(
                       color: primaryColor,
                       fontSize: 16,
@@ -509,36 +562,12 @@ class _CartViewState extends State<CartView> {
                 ],
               ),
             ),
-            Positioned(
-              right: 90,
-              bottom: 5,
-              child: InkWell(
-                onTap: () {},
-                child: Column(
-                  children: [
-                    Icon(
-                      FluentSystemIcons.ic_fluent_edit_regular,
-                      color: primaryColor,
-                      size: MediaQuery.of(context).size.width * 0.07,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Edit',
-                      style: GoogleFonts.lateef(
-                        color: primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+           
             Positioned(
                 top: 20,
                 right: 20,
                 child: InkWell(
-                  onTap: _connectVendor,
+                  onTap: _confirmOrder,
                   child: Column(
                     children: [
                       Icon(
@@ -568,7 +597,36 @@ class _CartViewState extends State<CartView> {
                       ),
                     ],
                   ),
-                ))
+                ),),
+
+                 Positioned(
+                right: 90,
+                bottom: 5,
+                child: InkWell(
+                  onTap: () => _showRateEditor(
+                    context,
+                    formatRate(packageData['rate'].toString()),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        FluentSystemIcons.ic_fluent_edit_regular,
+                        color: primaryColor,
+                        size: MediaQuery.of(context).size.width * 0.07,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Edit',
+                        style: GoogleFonts.lateef(
+                          color: primaryColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ]);
         },
       ),
@@ -591,46 +649,97 @@ class _CartViewState extends State<CartView> {
   }
 }
 
-class RateWidget extends StatelessWidget {
-  final Map<String, dynamic> data;
 
-  RateWidget({required this.data});
+class RateEditOverlay extends StatefulWidget {
+  final String initialRate;
+  final Function(String) onSave;
+  final VoidCallback onCancel;
 
-  Future<String> getRate() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Cart')
-        .where('orderId', isEqualTo: data['orderId'])
-        .get();
+  const RateEditOverlay({
+    Key? key,
+    required this.initialRate,
+    required this.onSave,
+    required this.onCancel,
+  }) : super(key: key);
 
-    if (snapshot.docs.isNotEmpty) {
-      String rate = snapshot.docs.first.data()['rate'];
-      return rate.split('per')[0].trim(); // Process as needed
-    } else {
-      return "Rate not found";
-    }
+  @override
+  State<RateEditOverlay> createState() => _RateEditOverlayState();
+}
+
+class _RateEditOverlayState extends State<RateEditOverlay> {
+  late TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialRate);
+    // Request focus after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: getRate(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text(
-            "Loading...",
-            textScaler: const TextScaler.linear(3),
-            style: GoogleFonts.lateef(color: Colors.grey[500]),
-          ); // Optional loading indicator
-        } else if (snapshot.hasError) {
-          return Text("Error: ${snapshot.error}");
-        } else {
-          return Text(
-            "${snapshot.data}",
-            textScaler: const TextScaler.linear(4),
-            style: GoogleFonts.lateef(color: Colors.grey[500]),
-          );
-        }
-      },
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Card(
+          margin: const EdgeInsets.all(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.lateef(
+                    color: Colors.grey[500],
+                    fontSize: MediaQuery.of(context).size.width * 0.05,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Edit Rate',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: widget.onCancel,
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.lateef(),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => widget.onSave(_controller.text),
+                      child: Text(
+                        'Save',
+                        style: GoogleFonts.lateef(),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/pages/landing_page.dart';
+import 'package:maroro/pages/offline.dart';
 import 'package:maroro/pages/screen1.dart';
 
 class AuthGate extends StatefulWidget {
@@ -78,7 +80,15 @@ class _AuthGateState extends State<AuthGate> {
                   userTypeSnapshot.data != 'User not found') {
                 return Screen1(userType: userTypeSnapshot.data!);
               } else {
-                return const Text('User type not found');
+                return Column(
+                  children: [SizedBox(height: MediaQuery.of(context).size.height * 0.5,),Icon(FluentSystemIcons.ic_fluent_connector_regular),
+                    const Text('Check your internet connectivity.'),
+                    Padding(padding: EdgeInsets.symmetric(vertical: 20,horizontal: 50)),
+                    ElevatedButton(onPressed: (){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Offline()));
+                    }, child: Text('Play Offline'))
+                  ],
+                );
               }
             },
           );
