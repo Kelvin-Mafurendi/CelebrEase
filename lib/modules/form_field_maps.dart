@@ -290,7 +290,7 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
     {
       'name': 'gemstonePreferences',
       'label': 'Gemstone Preferences',
-      'type': 'multiselect',
+      'type': 'select',
       'options': [
         'Diamond',
         'Ruby',
@@ -304,8 +304,8 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
     },
     {
       'name': 'customization',
-      'label': 'Customization Details',
-      'type': 'multiline'
+      'label': 'Customization Options',
+      'type': 'select'
     },
     {'name': 'sizing', 'label': 'Sizing Requirements', 'type': 'text'},
     {'name': 'returnDate', 'label': 'Return Date (if rental)', 'type': 'date'},

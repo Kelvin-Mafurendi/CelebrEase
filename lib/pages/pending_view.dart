@@ -132,10 +132,16 @@ class _PendingViewState extends State<PendingView> {
       await _firestore
           .collection('Cart')
           .doc(widget.data['orderId'])
-          .update({'rate': '${_rateController.text}per person'});
+          .update({'rate': '${_rateController.text} per person'});
       setState(() {
         _isEditingRate = false;
       });
+    }else if(!_isEditingRate){
+      await _firestore
+          .collection('Cart')
+          .doc(widget.data['orderId'])
+          .update({'rate': '${widget.data['rate']} per person'});
+
     }
 
     if (pending && !confirmed) {
@@ -292,7 +298,7 @@ class _PendingViewState extends State<PendingView> {
           await _firestore
               .collection('Cart')
               .doc(widget.data['orderId'])
-              .update({'rate': '${newRate} per item'});
+              .update({'rate': '$newRate per item'});
           Navigator.pop(context);
         },
         onCancel: () => Navigator.pop(context),
@@ -656,11 +662,11 @@ class RateEditOverlay extends StatefulWidget {
   final VoidCallback onCancel;
 
   const RateEditOverlay({
-    Key? key,
+    super.key,
     required this.initialRate,
     required this.onSave,
     required this.onCancel,
-  }) : super(key: key);
+  });
 
   @override
   State<RateEditOverlay> createState() => _RateEditOverlayState();

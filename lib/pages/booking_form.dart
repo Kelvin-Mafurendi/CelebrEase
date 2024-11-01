@@ -232,8 +232,8 @@ class _BookingFormState extends State<BookingForm> {
         String? startTimeString = vendorSnapshot['startTime'];
         String? endTimeString = vendorSnapshot['endTime'];
 
-        if (startTimeString != null && endTimeString != null) {
-          List<String> startParts = startTimeString.split(':');
+        if (endTimeString != null) {
+          List<String> startParts = startTimeString!.split(':');
           List<String> endParts = endTimeString.split(':');
 
           startTime = TimeOfDay(

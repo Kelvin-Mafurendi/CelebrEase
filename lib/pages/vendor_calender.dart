@@ -119,8 +119,8 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
         String? endTimeString = vendorSnapshot['endTime'];
 
         // If both start and end times are available, parse them
-        if (startTimeString != null && endTimeString != null) {
-          List<String> startParts = startTimeString.split(':');
+        if (endTimeString != null) {
+          List<String> startParts = startTimeString!.split(':');
           List<String> endParts = endTimeString.split(':');
 
           startTime = TimeOfDay(

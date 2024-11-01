@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/bundles.dart';
+import 'package:maroro/pages/cart.dart';
 import 'package:maroro/pages/chats.dart';
 import 'package:maroro/pages/event.dart';
 import 'package:maroro/pages/landing_page.dart';
@@ -15,6 +16,7 @@ import 'package:maroro/pages/mainscreen.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
 import 'package:maroro/pages/pending.dart';
 import 'package:maroro/pages/seller_profile.dart';
+import 'package:maroro/pages/shared_cart.dart';
 import 'package:maroro/pages/trends.dart';
 import 'package:provider/provider.dart';
 
@@ -97,7 +99,7 @@ class _Screen1State extends State<Screen1> {
                 child: Stack(children: [
                   FloatingActionButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/cart');
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Cart(cartType: CartType.self)));
                     },
                     child: const Icon(Icons.shopping_cart_outlined),
                   ),

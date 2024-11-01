@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delightful_toast/delight_toast.dart';
 import 'package:delightful_toast/toast/components/toast_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,8 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/cart.dart';
+import 'package:maroro/pages/shared_cart.dart';
+import 'package:maroro/pages/user_search.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -17,12 +20,13 @@ class CartView extends StatefulWidget {
   final Map<String, dynamic> data;
   final double rate;
   final VoidCallback onItemDeleted;
+  final CartType cartType;
 
   const CartView({
     super.key,
     required this.data,
     required this.rate,
-    required this.onItemDeleted,
+    required this.onItemDeleted, required this.cartType,
   });
 
   @override
@@ -31,6 +35,7 @@ class CartView extends StatefulWidget {
 
 class _CartViewState extends State<CartView> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _rateLoaded = false;
   bool pending = false;
   bool confirmed = false;
@@ -87,6 +92,111 @@ class _CartViewState extends State<CartView> {
         }
       }
     });
+  }
+
+  Future<void> _shareBooking() async {
+    // Show search overlay
+    final selectedUser = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return UserSearchDialog(
+          currentUserId:
+              _auth.currentUser!.uid, // Exclude current user from search
+        );
+      },
+    );
+
+    // If a user was selected
+    if (selectedUser != null) {
+      try {
+        // Reference to Firestore
+        final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+        // Prepare booking data to be shared
+        Map<String, dynamic> sharedBookingData = Map.from(widget.data);
+
+        // Add a partnerIds field as an array
+        sharedBookingData['partnerIds'] = [selectedUser['userId']];
+
+        // Add a timestamp for when the booking was shared
+        sharedBookingData['sharedAt'] = FieldValue.serverTimestamp();
+
+        // Add the shared booking to the 'Shared Carts' collection
+        try {
+          // First, try to get the document
+          final docSnapshot = await firestore
+              .collection('Shared Carts')
+              .doc(widget.data['orderId'])
+              .get();
+
+          if (docSnapshot.exists) {
+            // Document exists, update by adding to the array
+            await firestore
+                .collection('Shared Carts')
+                .doc(widget.data['orderId'])
+                .update({
+              'partnerIds': FieldValue.arrayUnion([selectedUser['userId']])
+            });
+          } else {
+            // Document doesn't exist, create a new document
+            await firestore
+                .collection('Shared Carts')
+                .doc(widget.data['orderId'])
+                .set(sharedBookingData);
+          }
+          DelightToastBar(
+          builder: (context) => ToastCard(
+            title: Text(
+              'Booking Shared',
+              style: GoogleFonts.lateef(),
+            ),
+            subtitle: Text(
+              "Booking shared with ${selectedUser['name']}",
+              style: GoogleFonts.lateef(),
+            ),
+            leading: Icon(Icons.check_circle_outline),
+          ),
+        ).show(context);
+        } catch (e) {
+          print('Error handling shared cart: $e');
+           DelightToastBar(
+          builder: (context) => ToastCard(
+            title: Text(
+              'Share Failed',
+              style: GoogleFonts.lateef(),
+            ),
+            subtitle: Text(
+              "Unable to share booking: $e",
+              style: GoogleFonts.lateef(),
+            ),
+            leading: Icon(Icons.error_outline),
+          ),
+        ).show(context);
+          // Optional: Handle the error appropriately
+        }
+
+        // Show success toast
+        
+      } catch (e) {
+        // Handle any errors
+        print('Error sharing booking: $e');
+         DelightToastBar(
+          builder: (context) => ToastCard(
+            title: Text(
+              'Share Failed',
+              style: GoogleFonts.lateef(),
+            ),
+            subtitle: Text(
+              "Unable to share booking: $e",
+              style: GoogleFonts.lateef(),
+            ),
+            leading: Icon(Icons.error_outline),
+          ),
+        ).show(context);
+        
+       
+      }
+    }
   }
 
   Future<void> _connectVendor() async {
@@ -481,61 +591,101 @@ class _CartViewState extends State<CartView> {
             Positioned(
               right: 10,
               //top: 0,
-              bottom: 5,
-              child: Column(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      String? orderId = widget.data['orderId'];
-                      if (orderId != null) {
-                        _showDeleteConfirmation(context, orderId);
-                      }
-                    },
-                    icon: Icon(
-                      size: MediaQuery.of(context).size.width * 0.07,
-                      FluentSystemIcons.ic_fluent_delete_regular,
-                      color: primaryColor,
+              top: 10,
+              child: PopupMenuButton(
+                //color: secondaryColor,
+                iconSize: 30,
+                iconColor: Colors.grey[500],
+                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                  PopupMenuItem(
+                    //value: SampleItem.itemOne,
+                    child: Row(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(FluentSystemIcons.ic_fluent_edit_regular),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text('Edit Booking',
+                            style: GoogleFonts.lateef(fontSize: 20)),
+                      ],
                     ),
                   ),
-                  //const SizedBox(width: 4),
-                  Text(
-                    'Delete',
-                    style: GoogleFonts.lateef(
-                      color: primaryColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  PopupMenuItem(
+                    //value: SampleItem.itemOne,
+                    child: Row(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(FluentSystemIcons.ic_fluent_chat_regular),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text('Chat With Vendor',
+                            style: GoogleFonts.lateef(fontSize: 20)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    onTap: _shareBooking,
+                    //value: SampleItem.itemOne,
+                    child: Row(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(FluentSystemIcons.ic_fluent_share_regular),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'Share Booking',
+                          style: GoogleFonts.lateef(fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    //value: SampleItem.itemOne,
+                    child: Row(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(FluentSystemIcons.ic_fluent_bookmark_regular),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text('Bookmark Package',
+                            style: GoogleFonts.lateef(fontSize: 20)),
+                      ],
+                    ),
+                  ),
+                  if(widget.cartType == CartType.self)
+                  PopupMenuItem(
+                    onTap: () {
+                      String? orderId = widget.data['orderId'];
+                      _showDeleteConfirmation(context, orderId!);
+                    },
+                    //value: SampleItem.itemOne,
+                    child: Row(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          FluentSystemIcons.ic_fluent_delete_regular,
+                          color: primaryColor,
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          'Delete Booking',
+                          style: GoogleFonts.lateef(
+                              color: primaryColor, fontSize: 20),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
             Positioned(
-              right: 90,
-              bottom: 5,
-              child: InkWell(
-                onTap: () {},
-                child: Column(
-                  children: [
-                    Icon(
-                      FluentSystemIcons.ic_fluent_edit_regular,
-                      color: primaryColor,
-                      size: MediaQuery.of(context).size.width * 0.07,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Edit',
-                      style: GoogleFonts.lateef(
-                        color: primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-                top: 20,
+                bottom: 40,
                 right: 20,
                 child: InkWell(
                   onTap: _connectVendor,
@@ -594,7 +744,7 @@ class _CartViewState extends State<CartView> {
 class RateWidget extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  RateWidget({required this.data});
+  const RateWidget({super.key, required this.data});
 
   Future<String> getRate() async {
     final snapshot = await FirebaseFirestore.instance

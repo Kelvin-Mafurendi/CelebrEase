@@ -34,6 +34,40 @@ class ChangeManager extends ChangeNotifier {
   bool get isLoadingServices => _isLoadingServices;
   String get selectedService => _selectedService;
 
+  // When creating a new user or updating profile
+  void createOrUpdateUser(String name, String username, String userId) {
+    // Generate search variations
+    List<String> nameSearchVariations = _generateSearchVariations(name);
+    List<String> usernameSearchVariations = _generateSearchVariations(username);
+    print('Name search variations: $nameSearchVariations');
+    print('Username search variations: $usernameSearchVariations');
+
+    FirebaseFirestore.instance.collection('Customers').doc(userId).update({
+      'name': name,
+      'username': username,
+      'searchName': nameSearchVariations,
+      'searchUsername': usernameSearchVariations,
+      // other user fields...
+    });
+  }
+
+  List<String> _generateSearchVariations(String input) {
+    if (input.isEmpty) return [];
+
+    Set<String> variations = {};
+    input = input.toLowerCase();
+
+    // Add full string
+    variations.add(input);
+
+    // Add prefixes
+    for (int i = 1; i <= input.length; i++) {
+      variations.add(input.substring(0, i));
+    }
+
+    return variations.toList();
+  }
+
   void setService(String service) {
     _selectedService = service;
     print('A service has been selected $service');
@@ -64,6 +98,8 @@ class ChangeManager extends ChangeNotifier {
       });
 
       _profileData['timeStamp'] = DateTime.now().toString();
+      createOrUpdateUser(_profileData['name'], _profileData['username'],
+          _profileData['userId']);
 
       // Upload the modified _profileData to the database
       await updateProfileDataInDatabase(_profileData, userType);
@@ -101,6 +137,8 @@ class ChangeManager extends ChangeNotifier {
     await uploadProfileDataToDatabase(_profileData, userType).whenComplete(() {
       EasyLoading.dismiss();
     });
+    createOrUpdateUser(
+        _profileData['name'], _profileData['username'], _profileData['userId']);
 
     notifyListeners(); // Notify listeners of changes
   }
@@ -649,12 +687,17 @@ class ChangeManager extends ChangeNotifier {
         final confirmationsQuery = await _fireStore
             .collection('Confirmations')
             .where('orderId', isEqualTo: orderId)
-           // .where('userId', isEqualTo: user.uid)
+            // .where('userId', isEqualTo: user.uid)
             .get();
         final pendingQuery = await _fireStore
             .collection('Pending')
             .where('orderId', isEqualTo: orderId)
-           // .where('userId', isEqualTo: user.uid)
+            // .where('userId', isEqualTo: user.uid)
+            .get();
+        final sharedCartQuery = await _fireStore
+            .collection('Shared Carts')
+            .where('orderId', isEqualTo: orderId)
+            // .where('userId', isEqualTo: user.uid)
             .get();
 
         if (querySnapshot.docs.isNotEmpty) {
@@ -667,6 +710,12 @@ class ChangeManager extends ChangeNotifier {
           }
           try {
             await pendingQuery.docs.first.reference.delete();
+          } catch (e) {
+            print(e);
+          }
+          try {
+            print('Trying to delete from shared carts');
+            await sharedCartQuery.docs.first.reference.delete();
           } catch (e) {
             print(e);
           }

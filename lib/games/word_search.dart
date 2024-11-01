@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 class WordSearchGame extends StatefulWidget {
+  const WordSearchGame({super.key});
+
   @override
   _WordSearchGameState createState() => _WordSearchGameState();
 }
@@ -259,8 +261,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
             initializeGame();
           });
         },
-        child: Icon(Icons.refresh),
         backgroundColor: Colors.purple,
+        child: Icon(Icons.refresh),
       ),
     );
   }

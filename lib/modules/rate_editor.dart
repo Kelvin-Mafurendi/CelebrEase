@@ -10,12 +10,12 @@ class RateEditor extends StatefulWidget {
   final VoidCallback onEditToggle;
 
   const RateEditor({
-    Key? key,
+    super.key,
     required this.initialRate,
     required this.onRateChanged,
     required this.isEditing,
     required this.onEditToggle,
-  }) : super(key: key);
+  });
 
   @override
   State<RateEditor> createState() => _RateEditorState();

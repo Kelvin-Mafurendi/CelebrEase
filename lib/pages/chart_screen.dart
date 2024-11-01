@@ -93,6 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'lastMessage': message.text,
         'lastMessageTime': FieldValue.serverTimestamp(),
       });
+      
 
       Fluttertoast.showToast(
         msg: "Message sent",

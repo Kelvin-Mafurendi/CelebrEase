@@ -24,6 +24,8 @@ class PowerUp {
 }
 
 class PartyTetrisGame extends StatefulWidget {
+  const PartyTetrisGame({super.key});
+
   @override
   _PartyTetrisGameState createState() => _PartyTetrisGameState();
 }
@@ -627,8 +629,8 @@ class PowerUpButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     required this.isActive,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

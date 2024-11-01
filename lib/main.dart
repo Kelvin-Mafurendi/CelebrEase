@@ -11,6 +11,7 @@ import 'package:maroro/Auth/signup.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/Provider/theme_notifier.dart';
 import 'package:maroro/firebase_options.dart';
+import 'package:maroro/modules/notification_service.dart';
 import 'package:maroro/pages/add_package.dart';
 import 'package:maroro/pages/bundles.dart';
 import 'package:maroro/pages/cart.dart';
@@ -27,6 +28,7 @@ import 'package:maroro/pages/notifications.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/screen1.dart';
 import 'package:maroro/pages/settings.dart';
+import 'package:maroro/pages/shared_cart.dart';
 import 'package:maroro/pages/trends.dart';
 import 'package:provider/provider.dart';
 
@@ -96,6 +98,7 @@ ThemeData darkTheme = ThemeData(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
   // Preload the Lateef font
   await GoogleFonts.pendingFonts([
     GoogleFonts.lateef(),
@@ -116,6 +119,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize notifications after building context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      LocalNotificationService.initialize(context);
+      LocalNotificationService.requestPermissions();
+    });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -162,7 +170,7 @@ class MyApp extends StatelessWidget {
             '/SignUp': (context) => const SignUp(),
             '/Membership': (context) => const Membership(),
             '/notifications': (context) => const Notifications(),
-            '/cart': (context) => const Cart(),
+            '/cart': (context) =>  Cart(cartType: CartType.self,),
             '/addPackage': (context) => const AddPackage(initialData: {}),
             '/addhighlight': (context) => const AddHighlight(initialData: {}),
             '/editProfile': (context) => EditProfile(
