@@ -25,20 +25,28 @@ class _LogInState extends State<LogIn> {
 
   Future<String> getUserType(String userId) async {
     // Check if the user exists in the 'Customers' collection
-    var customerDocument =
-        await _firestore.collection('Customers').doc(userId).get();
-    if (customerDocument.exists) {
+    final customerQuerySnapshot = await FirebaseFirestore.instance
+        .collection('Customers')
+        .where('userId', isEqualTo: userId)
+        .limit(1) // Limit to one result for efficiency
+        .get();
+
+    if (customerQuerySnapshot.docs.isNotEmpty) {
       return 'Customers';
     }
 
     // If not found in 'Customers', check the 'Vendors' collection
-    var vendorDocument =
-        await _firestore.collection('Vendors').doc(userId).get();
-    if (vendorDocument.exists) {
+    final vendorQuerySnapshot = await FirebaseFirestore.instance
+        .collection('Vendors')
+        .where('userId', isEqualTo: userId)
+        .limit(1) // Limit to one result for efficiency
+        .get();
+
+    if (vendorQuerySnapshot.docs.isNotEmpty) {
       return 'Vendors';
     }
 
-    // Return some default value if not found in either collection
+    // Return a default value if not found in either collection
     return 'User not found';
   }
 
@@ -65,11 +73,12 @@ class _LogInState extends State<LogIn> {
         if (context.mounted) Navigator.of(context).pop();
 
         // Navigate to first page, replacing the login page
-        if (context.mounted){
+        if (context.mounted) {
           String userId = cred.user!.uid.toString();
           String userType = await getUserType(userId);
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => AuthGate( userType:userType)),
+            MaterialPageRoute(
+                builder: (context) => AuthGate(userType: userType)),
             (route) => false,
           );
         }

@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 class UserSearchDialog extends StatefulWidget {
   final String currentUserId;
 
-  const UserSearchDialog({Key? key, required this.currentUserId})
-      : super(key: key);
+  const UserSearchDialog({super.key, required this.currentUserId});
 
   @override
   _UserSearchDialogState createState() => _UserSearchDialogState();

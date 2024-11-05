@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/pages/package_view.dart';
 
 class ProductCard extends StatelessWidget {
@@ -9,18 +11,23 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Extract package_id consistently
+    final String packageId = data['packageId'] ?? '';
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String userId = auth.currentUser!.uid;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => PackageView(
-              packageName: data['packageName'],
-              rate: data['rate'],
-              description: data['description'],
-              userId: data['userId'],
-              imagePath: data['mainPicPath'],
-              package_id: '',
+              packageName: data['packageName'] ?? '',
+              rate: data['rate'] ?? '',
+              description: data['description'] ?? '',
+              userId: data['userId'] ?? '',
+              imagePath: data['packagePic'] ?? '',
+              package_id: packageId, // Pass the actual package_id
             ),
           ),
         );
@@ -32,7 +39,9 @@ class ProductCard extends StatelessWidget {
           height: 120,
           child: Card(
             elevation: 4,
-            color:Theme.of(context).brightness == Brightness.light? stickerColor:stickerColorDark,
+            color: Theme.of(context).brightness == Brightness.light
+                ? stickerColor
+                : stickerColorDark,
             child: Stack(
               children: [
                 Positioned(
@@ -44,7 +53,7 @@ class ProductCard extends StatelessWidget {
                       bottomLeft: Radius.circular(4),
                     ),
                     child: Image.network(
-                      data['mainPicPath'] ?? '',
+                      data['packagePic'] ?? '',
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
@@ -54,7 +63,7 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 128, // 120 (image width) + 8 (padding)
+                  left: 128,
                   top: 0,
                   right: 8,
                   bottom: 0,
@@ -91,6 +100,16 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                if(userId == data['userId'])
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: ThreeDotMenu(
+                    items: const ['Edit Package', 'Hide Package', 'Delete Package'],
+                    type: 'Packages',
+                    id: packageId,
                   ),
                 ),
               ],

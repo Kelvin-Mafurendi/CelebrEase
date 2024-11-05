@@ -59,8 +59,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
   @override
   Widget build(BuildContext context) {
     //final String userId = _auth.currentUser!.uid;
-    return StreamBuilder<DocumentSnapshot>(
-        stream: _firestore.collection('Vendors').doc(widget.userId).snapshots(),
+    return StreamBuilder<QuerySnapshot>(
+        stream: _firestore.collection('Vendors').where('userId',isEqualTo: widget.userId).limit(1).snapshots(),
         builder: (context, snapshot1) {
           if (snapshot1.hasError) {
             return const Text('Something went wrong');
@@ -78,42 +78,19 @@ class _SellerProfileViewState extends State<SellerProfileView> {
             return const Text('No data available');
           }
 
-          if (!snapshot1.data!.exists) {
-            //print('Document does not exist');
-            return ShaderMask(
-              shaderCallback: (bounds) {
-                return LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary, // Primary Color
-                    accentColor, // Accent Color
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                );
-              },
-              child: Text(
-                'CelebrEaser',
-                style: GoogleFonts.merienda(
-                  fontSize: 40,
-                  color: Colors.white, // Use white or any contrasting color
-                ),
-              ),
-            );
-          }
-          var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
+         
+          var userProfile = snapshot1.data!.docs.first;
           // Use null-aware operators and provide default values
-          String? imagePath = userProfile?['imagePath'] as String?;
+          String? imagePath = userProfile['profilePic'];
           String brandName =
-              userProfile?['business name'] as String? ?? 'Brand Name';
-          String location = userProfile?['location'] as String? ?? 'Location';
-          String category = userProfile?['category'] as String? ?? 'Category';
+              userProfile['business name'] as String? ?? 'Brand Name';
+          String location = userProfile['location'] as String? ?? 'Location';
+          String category = userProfile['category'] as String? ?? 'Category';
           String startTime =
-              userProfile?['startTime'] as String? ?? 'Start Time';
-          String endTime = userProfile?['endTime'] as String? ?? 'End Time';
+              userProfile['startTime'] as String? ?? 'Start Time';
+          String endTime = userProfile['endTime'] as String? ?? 'End Time';
           String about =
-              userProfile?['business description'] as String? ?? 'About';
+              userProfile['business description'] as String? ?? 'About';
           //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
           return CustomScrollView(
             scrollDirection: Axis.vertical,
@@ -254,6 +231,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                     stream: _firestore
                         .collection('Highlights')
                         .where('userId', isEqualTo: widget.userId)
+                        .where('hidden',isEqualTo: 'false')
                         .snapshots(),
                     builder: (context, snapshot2) {
                       if (snapshot2.hasError) {

@@ -76,6 +76,7 @@ class PackageBrowser extends StatefulWidget {
 class _PackageBrowserState extends State<PackageBrowser> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, String>> packageList = [];
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -88,29 +89,36 @@ class _PackageBrowserState extends State<PackageBrowser> {
       QuerySnapshot querySnapshot = await _firestore
           .collection('Packages')
           .where('serviceType', isEqualTo: widget.service)
+          .where('hidden', isEqualTo: 'false')
           .get();
-      setState(() {
-        packageList = querySnapshot.docs.map((doc) {
-          return {
-            'name': doc['packageName'] as String,
-            'description': doc['description'] as String,
-            'rate': doc['rate'] as String,
-            'imagePath': doc['mainPicPath'] as String,
-            'userId': doc['userId'] as String,
-            'package_id':doc.id.toString()
-          };
-        }).toList();
-      });
+          
+      // Check if the widget is still mounted before calling setState
+      if (!_disposed && mounted) {
+        setState(() {
+          packageList = querySnapshot.docs.map((doc) {
+            return {
+              'name': doc['packageName'] as String,
+              'description': doc['description'] as String,
+              'rate': doc['rate'] as String,
+              'imagePath': doc['packagePic'] as String,
+              'userId': doc['userId'] as String,
+              'package_id': doc.id.toString()
+            };
+          }).toList();
+        });
+      }
     } catch (e) {
-      print('Error fetching packages: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to load packages. Please try again.'),
-        ),
-      );
+      // Only show error if widget is still mounted
+      if (!_disposed && mounted) {
+        print('Error fetching packages: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load packages. Please try again.'),
+          ),
+        );
+      }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(

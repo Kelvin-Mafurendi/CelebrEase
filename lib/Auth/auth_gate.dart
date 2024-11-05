@@ -23,18 +23,29 @@ class _AuthGateState extends State<AuthGate> {
   Future<String> getUserType() async {
     String userId = _auth.currentUser!.uid;
 
-    var customerDocument =
-        await _firestore.collection('Customers').doc(userId).get();
-    if (customerDocument.exists) {
+    // Check if the user exists in the 'Customers' collection
+    final customerQuerySnapshot = await FirebaseFirestore.instance
+        .collection('Customers')
+        .where('userId', isEqualTo: userId)
+        .limit(1) // Limit to one result for efficiency
+        .get();
+
+    if (customerQuerySnapshot.docs.isNotEmpty) {
       return 'Customers';
     }
 
-    var vendorDocument =
-        await _firestore.collection('Vendors').doc(userId).get();
-    if (vendorDocument.exists) {
+    // If not found in 'Customers', check the 'Vendors' collection
+    final vendorQuerySnapshot = await FirebaseFirestore.instance
+        .collection('Vendors')
+        .where('userId', isEqualTo: userId)
+        .limit(1) // Limit to one result for efficiency
+        .get();
+
+    if (vendorQuerySnapshot.docs.isNotEmpty) {
       return 'Vendors';
     }
 
+    // Return a default value if not found in either collection
     return 'User not found';
   }
 
@@ -81,12 +92,23 @@ class _AuthGateState extends State<AuthGate> {
                 return Screen1(userType: userTypeSnapshot.data!);
               } else {
                 return Column(
-                  children: [SizedBox(height: MediaQuery.of(context).size.height * 0.5,),Icon(FluentSystemIcons.ic_fluent_connector_regular),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                    ),
+                    Icon(FluentSystemIcons.ic_fluent_connector_regular),
                     const Text('Check your internet connectivity.'),
-                    Padding(padding: EdgeInsets.symmetric(vertical: 20,horizontal: 50)),
-                    ElevatedButton(onPressed: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Offline()));
-                    }, child: Text('Play Offline'))
+                    Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 20, horizontal: 50)),
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Offline()));
+                        },
+                        child: Text('Play Offline'))
                   ],
                 );
               }

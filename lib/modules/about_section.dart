@@ -25,8 +25,12 @@ class _AboutSectionState extends State<AboutSection> {
   @override
   Widget build(BuildContext context) {
     final String userId = _auth.currentUser!.uid;
-    return StreamBuilder<DocumentSnapshot>(
-      stream: _firestore.collection(widget.userType).doc(userId).snapshots(),
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection(widget.userType)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .snapshots(),
       builder: (context, snapshot1) {
         if (snapshot1.hasError) {
           return const Text('Something went wrong');
@@ -44,49 +48,36 @@ class _AboutSectionState extends State<AboutSection> {
           return const Text('No data available');
         }
 
-        if (!snapshot1.data!.exists) {
-          return Row(
-            children: [
-              const Text('Profile not found'),
-              const Spacer(),
-              InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, '/editProfile');
-                },
-                child: const Text(
-                  'Setup Profile',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w200,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-
-        var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
+        Map<String, dynamic> userProfile =
+            snapshot1.data!.docs.first.data() as Map<String, dynamic>;
 
         // Use null-aware operators and provide default values
-        String about = userProfile?['business description'] as String? ?? 'About';
+        String about =
+            userProfile['business description'] as String? ?? 'About';
+            print('userProfile data: $userProfile');
 
-        if (userProfile?['userType'] == 'Vendors') {
+        if (userProfile['userType'] == 'Vendors') {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'About',
-                textScaler:const TextScaler.linear(1.2), // Corrected to `textScaleFactor`
+                textScaler: const TextScaler.linear(
+                    1.2), // Corrected to `textScaleFactor`
                 style: GoogleFonts.merienda(),
               ),
               Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                   child: Text(
                     about,
                     maxLines: isexpanded ? null : 3,
-                    overflow: isexpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    overflow: isexpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.w300),
                   ),
                 ),
@@ -104,7 +95,9 @@ class _AboutSectionState extends State<AboutSection> {
           );
         } else {
           // Handle other user types or return an empty container
-          return const SizedBox(height: 10,); // Or any other placeholder widget
+          return const SizedBox(
+            height: 10,
+          ); // Or any other placeholder widget
         }
       },
     );

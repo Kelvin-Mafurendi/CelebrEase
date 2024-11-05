@@ -176,7 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // Update ChangeManager if needed (e.g., for profile image)
         if (fileType == FileType.image) {
           Provider.of<ChangeManager>(context, listen: false)
-              .setProfileImage(file);
+              .setImage('chat','chatFile',file);
         }
       }
     } catch (e) {

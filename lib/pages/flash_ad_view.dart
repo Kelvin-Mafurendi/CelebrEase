@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/pages/seller_profile_view.dart';
 
 class FlashAdView extends StatefulWidget {
@@ -22,6 +24,7 @@ class FlashAdView extends StatefulWidget {
 class _FlashAdViewState extends State<FlashAdView> {
   late PageController _pageController;
   late int _currentIndex;
+  String packageId = '';
 
   @override
   void initState() {
@@ -63,84 +66,107 @@ class _FlashAdViewState extends State<FlashAdView> {
 
   Widget _buildAdPage(QueryDocumentSnapshot ad) {
     final adData = ad.data() as Map<String, dynamic>;
-    final DateTime dateTime = DateTime.parse(adData['timeStamp']);
+    packageId = adData['flashAdId'];
+
+    final Timestamp timestamp = adData['timeStamp'];
+    final DateTime dateTime =
+        timestamp.toDate(); // Converts Firestore Timestamp to DateTime
     final String dayOfWeek = _getDayOfWeek(dateTime);
     final String timeOfDay = _getTimeOfDay(dateTime);
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String userId = auth.currentUser!.uid;
 
-    return Column(
-      children: [
-        const Spacer(),
-        Container(
-          width: MediaQuery.of(context).size.width - 40,
-          height: MediaQuery.of(context).size.width - 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.white,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: CachedNetworkImage(
-              imageUrl: adData['mainPicPath'],
-              fit: BoxFit.cover,
+    return Stack(children: [
+      ListView(
+        padding: EdgeInsets.all(10),
+        children: [
+           SizedBox(height: MediaQuery.of(context).size.height *0.29,),
+          Container(
+            width: MediaQuery.of(context).size.width - 40,
+            height: MediaQuery.of(context).size.width - 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: Colors.white,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: CachedNetworkImage(
+                imageUrl: adData['adPic'],
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              dayOfWeek,
-              style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              timeOfDay,
-              style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
-            ),
-          ],
-        ),
-        ListTile(
-          title: Text(
-            adData['title'] ?? 'No Title',
-            style: GoogleFonts.lateef(fontSize: 25),
-          ),
-          subtitle: Text(
-            adData['description'] ?? 'No Description',
-            style: GoogleFonts.lateef(fontSize: 18),
-          ),
-          leading: const Icon(FluentSystemIcons.ic_fluent_flash_on_filled),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 20, bottom: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SellerProfileView(userId: adData['userId']),
-                    ),
-                  );
-                },
-                splashColor: Colors.grey,
-                child: const Text('Visit vendor'),
+              Text(
+                dayOfWeek.toString(),
+                style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
               ),
               const SizedBox(width: 10),
-              const Icon(FluentSystemIcons.ic_fluent_arrow_forward_regular),
+              Text(
+                timeOfDay.toString(),
+                style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
+              ),
             ],
           ),
+          ListTile(
+            title: Text(
+              adData['title'] ?? 'No Title',
+              style: GoogleFonts.lateef(fontSize: 25),
+            ),
+            subtitle: Text(
+              adData['description'] ?? 'No Description',
+              style: GoogleFonts.lateef(fontSize: 18,fontWeight: FontWeight.w300),
+            ),
+            leading: const Icon(FluentSystemIcons.ic_fluent_flash_on_filled),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 20, bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SellerProfileView(userId: adData['userId']),
+                      ),
+                    );
+                  },
+                  splashColor: Colors.grey,
+                  child: const Text('Visit vendor',style: TextStyle(fontWeight: FontWeight.w400),),
+                ),
+                const SizedBox(width: 10),
+                 Icon(FluentSystemIcons.ic_fluent_arrow_forward_regular,weight: 0.00000001,),
+              ],
+            ),
+          ),
+        ],
+      ),
+      if(adData['userId'] == userId)
+      Positioned(
+        right: 0,
+        //bottom: 0,
+        child: ThreeDotMenu(
+          items: const ['Edit FlashAd', 'Hide FlashAd', 'Delete FlashAd'],
+          type: 'FlashAds',
+          id: packageId,
         ),
-      ],
-    );
+      )
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flash Ad ${_currentIndex + 1}/${widget.ads.length}'),
+        title: Text(
+          'FlashAd\u2122 ${_currentIndex + 1}/${widget.ads.length}',
+          style: GoogleFonts.lateef(fontSize: 35),
+        ),
       ),
       body: PageView.builder(
         controller: _pageController,

@@ -15,7 +15,8 @@ class Settings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
-    final profileData = Provider.of<ChangeManager>(context, listen: false).profileData;
+    final profileData =
+        Provider.of<ChangeManager>(context, listen: false).profileData;
 
     // Variables for theme modes
     ThemeMode currentThemeMode = themeNotifier.themeMode;
@@ -42,27 +43,39 @@ class Settings extends StatelessWidget {
           Column(
             children: [
               RadioListTile<ThemeMode>(
-                title: Text('System Theme', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                title: Text('System Theme',
+                    textScaler: const TextScaler.linear(1.5),
+                    style: GoogleFonts.lateef()),
                 value: ThemeMode.system,
                 groupValue: currentThemeMode,
-                onChanged: (ThemeMode? mode) {
-                  themeNotifier.setThemeMode(mode!);
+                onChanged: (ThemeMode? mode) async {
+                  if (mode != null) {
+                    await themeNotifier.setThemeMode(mode);
+                  }
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: Text('Light Mode', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                title: Text('Light Mode',
+                    textScaler: const TextScaler.linear(1.5),
+                    style: GoogleFonts.lateef()),
                 value: ThemeMode.light,
                 groupValue: currentThemeMode,
-                onChanged: (ThemeMode? mode) {
-                  themeNotifier.setThemeMode(mode!);
+                onChanged: (ThemeMode? mode) async {
+                  if (mode != null) {
+                    await themeNotifier.setThemeMode(mode);
+                  }
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: Text('Dark Mode', textScaler: const TextScaler.linear(1.5), style: GoogleFonts.lateef()),
+                title: Text('Dark Mode',
+                    textScaler: const TextScaler.linear(1.5),
+                    style: GoogleFonts.lateef()),
                 value: ThemeMode.dark,
                 groupValue: currentThemeMode,
-                onChanged: (ThemeMode? mode) {
-                  themeNotifier.setThemeMode(mode!);
+                onChanged: (ThemeMode? mode) async {
+                  if (mode != null) {
+                    await themeNotifier.setThemeMode(mode);
+                  }
                 },
               ),
             ],

@@ -78,6 +78,7 @@ class _SignUpState extends State<SignUp> {
             'location': '$cityValue, $stateValue, $countryValue',
             'email': emailController.text,
             'userId': cred.user!.uid,
+            'userType':userType,
           };
 
           // Add additional fields for vendors
@@ -90,11 +91,13 @@ class _SignUpState extends State<SignUp> {
               'startTime': selectedStartTime,
               'endTime': selectedCloseTime,
               'address':addressController.text,
+              //'userId': cred.user!.uid,
+           
              
             });
           }
 
-          Provider.of<ChangeManager>(context,listen: false).changeProfiledata(userData,userType); 
+          Provider.of<ChangeManager>(context,listen: false).handleData(collection: userType, dataType: 'profile', newData: userData, operation: OperationType.create,fileFields: {'profilePic':'Profile Images'}); 
             setState(() {
               _formKey.currentState!.reset();
               emailController.clear();
@@ -274,7 +277,7 @@ class _SignUpState extends State<SignUp> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 15),
                   child: Stack(children: [
-                    AddProfileImage(),
+                    AddImage(dataType: 'profile', fieldName: 'profilePic'),
                     
                   ]),
                 ),

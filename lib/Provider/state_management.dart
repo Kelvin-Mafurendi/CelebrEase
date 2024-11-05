@@ -1,388 +1,522 @@
 // ignore_for_file: avoid_print
 
-import 'dart:math';
-
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:maroro/pages/cart.dart';
-import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:math' show min;
+
+enum OperationType { create, update }
 
 class ChangeManager extends ChangeNotifier {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final Map<String, dynamic> _profileData = {};
-  final Map<String, dynamic> _bookingForm = {};
+  final uuid = Uuid();
+
+  // Centralized data store with initial states
+  final Map<String, Map<String, dynamic>> _dataStore = {
+    'profile': {},
+    'highlight': {},
+    'package': {},
+    'flashAd': {},
+    'bookingForm': {},
+  };
+
+  // Service management
   List<String> _serviceTypes = [];
   bool _isLoadingServices = false;
-  String _selectedService = '';
+  final String _selectedService = '';
 
-  var uuid = Uuid();
-
-  Map<String, dynamic> get profileData => _profileData;
-  Map<String, dynamic> get highlightData => _highlight;
-  Map<String, dynamic> get packageData => _package;
-  Map<String, dynamic> get flashAd => _flashAd;
-  Map<String, dynamic> get bookingForm => _bookingForm;
+  // Getters
+  Map<String, dynamic> get profileData => _dataStore['profile']!;
+  Map<String, dynamic> get highlightData => _dataStore['highlight']!;
+  Map<String, dynamic> get packageData => _dataStore['package']!;
+  Map<String, dynamic> get flashAd => _dataStore['flashAd']!;
+  Map<String, dynamic> get bookingForm => _dataStore['bookingForm']!;
   List<String> get serviceTypes => _serviceTypes;
   bool get isLoadingServices => _isLoadingServices;
   String get selectedService => _selectedService;
 
-  // When creating a new user or updating profile
-  void createOrUpdateUser(String name, String username, String userId) {
-    // Generate search variations
-    List<String> nameSearchVariations = _generateSearchVariations(name);
-    List<String> usernameSearchVariations = _generateSearchVariations(username);
-    print('Name search variations: $nameSearchVariations');
-    print('Username search variations: $usernameSearchVariations');
+  // Unified file upload handler
+  // Modified uploadFile method with better null checking
+  Future<String> uploadFile({
+    required File file,
+    required String storagePath,
+    String? customFileName,
+  }) async {
+    try {
+      // Generate a unique filename if not provided
+      final fileName = customFileName ??
+          '${DateTime.now().millisecondsSinceEpoch}_${path.basename(file.path)}';
 
-    FirebaseFirestore.instance.collection('Customers').doc(userId).update({
-      'name': name,
-      'username': username,
-      'searchName': nameSearchVariations,
-      'searchUsername': usernameSearchVariations,
-      // other user fields...
-    });
+      // Create the full storage reference path
+      final storageRef =
+          _firebaseStorage.ref().child(storagePath).child(fileName);
+
+      // Upload the file
+      final uploadTask = await storageRef.putFile(file);
+
+      if (uploadTask.state == TaskState.success) {
+        // Get and return the download URL
+        final downloadUrl = await storageRef.getDownloadURL();
+        print('File uploaded successfully. Download URL: $downloadUrl');
+        return downloadUrl;
+      } else {
+        throw Exception('Upload failed: ${uploadTask.state}');
+      }
+    } catch (e) {
+      print('Error uploading file: $e');
+      throw Exception('Failed to upload file: $e');
+    }
   }
 
-  List<String> _generateSearchVariations(String input) {
+  // Unified data operation handler
+  Future<void> handleData({
+    required String dataType,
+    required Map<String, dynamic> newData,
+    required String collection,
+    required OperationType operation,
+    String? userType,
+    String? documentId,
+    Map<String, String>? fileFields,
+  }) async {
+    try {
+      EasyLoading.show(status: 'Processing...');
+
+      // Get current user ID
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        EasyLoading.dismiss();
+        throw Exception('User not authenticated');
+      }
+
+      // Create a copy of the data to modify
+      Map<String, dynamic> finalData = Map.from(newData);
+
+      // For updates, get the document ID if not provided
+      if (operation == OperationType.update && documentId == null) {
+        documentId = userId; // Use userId as documentId for profile updates
+      }
+
+      // Generate search variations based on data type
+      switch (dataType) {
+        case 'profile':
+          if (finalData.containsKey('business name')) {
+            finalData['searchName'] =
+                generateSearchVariations(finalData['business name']);
+          }
+          if (finalData.containsKey('username')) {
+            finalData['searchUsername'] =
+                generateSearchVariations(finalData['username']);
+          }
+          break;
+        case 'package':
+          if (finalData.containsKey('packageName')) {
+            finalData['searchPackageName'] =
+                generateSearchVariations(finalData['packageName']);
+          }
+          break;
+        case 'flashAd':
+          if (finalData.containsKey('title')) {
+            finalData['searchTitle'] =
+                generateSearchVariations(finalData['title']);
+          }
+          if (finalData.containsKey('description')) {
+            finalData['searchDescription'] =
+                generateSearchVariations(finalData['description']);
+          }
+          break;
+        case 'highlight':
+          if (finalData.containsKey('packageName')) {
+            finalData['searchPackageName'] =
+                generateSearchVariations(finalData['packageName']);
+          }
+          break;
+      }
+
+      // Handle file uploads if present
+      if (fileFields != null) {
+        for (var entry in fileFields.entries) {
+          final fieldName = entry.key;
+          final storagePath = entry.value;
+          final imageFile = getImage(dataType, fieldName);
+
+          if (imageFile != null) {
+            try {
+              EasyLoading.show(status: 'Uploading image...');
+              final downloadUrl = await uploadFile(
+                file: imageFile,
+                storagePath: storagePath,
+              );
+              finalData[fieldName] = downloadUrl;
+            } catch (e) {
+              print('Error uploading image for $fieldName: $e');
+              EasyLoading.dismiss();
+              throw Exception('Failed to upload image: $e');
+            }
+          }
+        }
+      }
+
+      // Add metadata
+      if (operation == OperationType.create) {
+        finalData.addAll({
+          'userId': userId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'timeStamp': FieldValue.serverTimestamp(),
+        });
+      } else {
+        finalData['updatedAt'] = FieldValue.serverTimestamp();
+      }
+
+      // Remove any null or empty values
+      finalData.removeWhere(
+          (key, value) => value == null || value.toString().isEmpty);
+
+      if (finalData.isEmpty && operation == OperationType.update) {
+        EasyLoading.dismiss();
+        return; // Nothing to update
+      }
+
+      EasyLoading.show(status: 'Saving data...');
+
+      // Perform Firestore operation
+      if (operation == OperationType.create) {
+        final docRef = documentId != null
+            ? _fireStore.collection(collection).doc(documentId)
+            : _fireStore.collection(collection).doc();
+        finalData['${dataType}Id'] = docRef.id;
+        finalData['hidden'] = 'false';
+
+        await docRef.set(finalData);
+
+        // Update local store with the new document ID
+        if (documentId == null) {
+          _dataStore[dataType]!['id'] = docRef.id;
+        }
+      } else {
+        if (documentId == null) {
+          EasyLoading.dismiss();
+          throw Exception('Document ID is required for update operations');
+        }
+
+        // Handle profile updates
+        if (dataType == 'profile') {
+          // First try to get existing profile document
+          final querySnapshot = await _fireStore
+              .collection(collection)
+              .where('userId', isEqualTo: userId)
+              .get();
+
+          DocumentReference docRef;
+          if (querySnapshot.docs.isNotEmpty) {
+            // Update existing document
+            docRef = querySnapshot.docs.first.reference;
+          } else {
+            // Create new document if none exists
+            docRef = _fireStore.collection(collection).doc();
+            finalData['userId'] = userId;
+          }
+
+          await docRef.set(finalData, SetOptions(merge: true));
+        } else {
+          // Handle non-profile updates
+          await _fireStore
+              .collection(collection)
+              .doc(documentId)
+              .update(finalData);
+        }
+      }
+
+      // Update local data store
+      _dataStore[dataType] = {..._dataStore[dataType] ?? {}, ...finalData};
+
+      // Clear the temporary image paths after successful upload
+      if (fileFields != null) {
+        for (var entry in fileFields.entries) {
+          clearImage(dataType, entry.key);
+        }
+      }
+
+      notifyListeners();
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Saved successfully');
+    } catch (e) {
+      print('Error in handleData for $dataType: $e');
+      EasyLoading.dismiss();
+      EasyLoading.showError('Error: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  // Example usage methods
+  Future<void> createNewPackage(Map<String, dynamic> packageData) async {
+    await handleData(
+      dataType: 'package',
+      newData: packageData,
+      collection: 'Packages',
+      operation: OperationType.create,
+      fileFields: {
+        'mainPicPath': 'PackageImages',
+        'videoPath': 'PackageVideos',
+      },
+    );
+  }
+
+  Future<void> updateExistingPackage(
+      String packageId, Map<String, dynamic> updates) async {
+    await handleData(
+      dataType: 'package',
+      newData: updates,
+      collection: 'Packages',
+      operation: OperationType.update,
+      documentId: packageId,
+      fileFields: {
+        'mainPicPath': 'PackageImages',
+        'videoPath': 'PackageVideos',
+      },
+    );
+  }
+
+  // Search functionality
+
+  List<String> generateSearchVariations(String input) {
     if (input.isEmpty) return [];
 
+    // Initialize set to avoid duplicates
     Set<String> variations = {};
-    input = input.toLowerCase();
 
-    // Add full string
+    // Convert input to lowercase and trim
+    input = input.toLowerCase().trim();
+
+    // Split the input into individual words
+    List<String> words = input
+        .split(RegExp(
+            r'[\s\-_,.]')) // Split on spaces, hyphens, underscores, commas, periods
+        .where((word) => word.isNotEmpty)
+        .toList();
+
+    // Add the complete original input
     variations.add(input);
 
-    // Add prefixes
+    // Add individual words
+    variations.addAll(words);
+
+    // Generate prefix variations for the complete input
     for (int i = 1; i <= input.length; i++) {
       variations.add(input.substring(0, i));
     }
 
-    return variations.toList();
-  }
-
-  void setService(String service) {
-    _selectedService = service;
-    print('A service has been selected $service');
-    notifyListeners();
-  }
-
-  String getService() {
-    return _selectedService != '' ? _selectedService : 'Accomodation';
-  }
-
-  Future<void> loadProfiledata(
-      Map<String, dynamic> newData, String userType) async {
-    EasyLoading.show();
-
-    try {
-      // Handle profile image update
-      if (newData['imagePath'] != null && newData['imagePath'] is File) {
-        String downloadUrl =
-            await uploadProfileImageToStorage(newData['imagePath']);
-        newData['imagePath'] = downloadUrl;
+    // Generate variations for each individual word
+    for (String word in words) {
+      // Add prefixes of each word
+      for (int i = 1; i <= word.length; i++) {
+        variations.add(word.substring(0, i));
       }
-
-      // Update only the fields that have changed
-      newData.forEach((key, value) {
-        if (value != null && value.toString().isNotEmpty) {
-          _profileData[key] = value;
-        }
-      });
-
-      _profileData['timeStamp'] = DateTime.now().toString();
-      createOrUpdateUser(_profileData['name'], _profileData['username'],
-          _profileData['userId']);
-
-      // Upload the modified _profileData to the database
-      await updateProfileDataInDatabase(_profileData, userType);
-
-      notifyListeners();
-    } catch (e) {
-      print('Error updating profile: $e');
-      // Handle error (e.g., show error message to user)
-    } finally {
-      EasyLoading.dismiss();
-    }
-  }
-
-  void changeProfiledata(Map<String, dynamic> newData, String userType) async {
-    EasyLoading.show();
-
-    // Check if there's an image to upload
-    if (_profileData['imagePath'] != null) {
-      // Upload image to storage and update the imagePath
-      _profileData['imagePath'] =
-          await uploadProfileImageToStorage(File(_profileData['imagePath']));
     }
 
-    // Iterate over newData and update only non-null fields in _profileData
-    newData.forEach((key, value) {
-      if (value != null && value.toString().isNotEmpty) {
-        _profileData[key] = value; // Update if new data is non-empty
+    // Generate combinations of adjacent words
+    for (int windowSize = 2; windowSize <= words.length; windowSize++) {
+      for (int i = 0; i <= words.length - windowSize; i++) {
+        variations.add(words.sublist(i, i + windowSize).join(' '));
       }
-      // Otherwise, keep the existing _profileData[key] unchanged
-    });
-    _profileData['timeStamp'] = DateTime.now().toString();
-    _profileData['userType'] = userType;
+    }
 
-    // Upload the modified _profileData to the database
-    await uploadProfileDataToDatabase(_profileData, userType).whenComplete(() {
-      EasyLoading.dismiss();
-    });
-    createOrUpdateUser(
-        _profileData['name'], _profileData['username'], _profileData['userId']);
+    // Generate variations with word removal
+    if (words.length > 1) {
+      for (int i = 0; i < words.length; i++) {
+        List<String> wordsWithoutOne = List.from(words);
+        wordsWithoutOne.removeAt(i);
+        variations.add(wordsWithoutOne.join(' '));
+      }
+    }
 
-    notifyListeners(); // Notify listeners of changes
-  }
-
-  String getProfileValue(String key) {
-    return _profileData[key] ?? '';
-  }
-
-  void setProfileImage(File image) async {
-    _profileData['imagePath'] = image.path;
-    notifyListeners();
-  }
-
-  File? getProfileImage() {
-    return _profileData['imagePath'] != null
-        ? File(_profileData['imagePath'])
-        : null;
-  }
-
-  uploadProfileImageToStorage(File image) async {
-    Reference ref = _firebaseStorage
-        .ref()
-        .child('ProfilePictures')
-        .child(path.basename(image.path));
-    UploadTask uploadTask = ref.putData(image.readAsBytesSync());
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
-  }
-
-  Future<void> updateProfileDataInDatabase(
-      Map<String, dynamic> data, String userType) async {
-    await _fireStore
-        .collection(userType)
-        .doc(_auth.currentUser!.uid)
-        .update(data);
-  }
-
-  // This method remains unchanged for new user signups
-  Future<void> uploadProfileDataToDatabase(
-      Map<String, dynamic> data, String userType) async {
-    await _fireStore.collection(userType).doc(_auth.currentUser!.uid).set(data);
-  }
-
-  ///Working with featured products
-  final Map<String, dynamic> _highlight = {
-    'packageName': '',
-    'rate': '',
-    'description': '',
-    'mainPicPath': '',
-    'views': '',
-    'likes': '',
-  };
-
-  //updating featured products
-  void updateHighlight(Map<String, dynamic> newData) async {
-    EasyLoading.show();
-    try {
-      // Handle file uploads first
-      if (newData['videoPath'] != null) {
-        newData['videoPath'] =
-            await uploadHighlightVideoToStorage(File(newData['videoPath']));
+    // Handle common word variations, plurals, and misspellings
+    Set<String> enhancedVariations = Set<String>();
+    for (String variation in variations) {
+      // Handle plurals
+      if (variation.endsWith('s')) {
+        enhancedVariations
+            .add(variation.substring(0, variation.length - 1)); // singular
       } else {
-        // If no video is provided, remove the videoPath field if it exists
-        _highlight.remove('videoPath');
+        enhancedVariations.add('${variation}s'); // plural
       }
 
-      if (newData['mainPicPath'] != null) {
-        newData['mainPicPath'] = await uploadHighlightMainImageToStorage(
-            File(newData['mainPicPath']));
+      // Handle common endings
+      if (variation.endsWith('ing')) {
+        String base = variation.substring(0, variation.length - 3);
+        enhancedVariations.addAll([
+          base,
+          '${base}ed',
+          '${base}er',
+        ]);
       }
 
-      // Update fields in _highlight
-      newData.forEach((key, value) {
-        if (value != null) {
-          _highlight[key] = value; // Update if new data is non-null
+      // Handle 'y' to 'ies' conversion
+      if (variation.endsWith('y')) {
+        enhancedVariations
+            .add('${variation.substring(0, variation.length - 1)}ies');
+      }
+      if (variation.endsWith('ies')) {
+        enhancedVariations
+            .add('${variation.substring(0, variation.length - 3)}y');
+      }
+
+      // Handle common misspellings and alternate spellings
+      final commonReplacements = {
+        'christmas': ['xmas', 'christmass', 'cristmas'],
+        'birthday': ['bday', 'b-day'],
+        'gift': ['present', 'presents', 'gifting'],
+        'special': ['speciel', 'speciall'],
+        'occasion': ['ocasion', 'occassion'],
+        'wedding': ['weding', 'wed'],
+        'anniversary': ['anniversery', 'aniversary'],
+        'celebration': ['celebration', 'celeb'],
+        'party': ['partie', 'partey'],
+        'holiday': ['holliday', 'hoilday'],
+        'valentine': ['valentines', 'valentine\'s'],
+        'halloween': ['haloween', 'hallowen'],
+        'thanksgiving': ['thanks giving', 'thanks-giving'],
+        'graduation': ['grad', 'graduation'],
+        'restaurant': ['resto', 'restraunt'],
+        'photography': ['foto', 'photografy'],
+        'catering': ['katering', 'catering'],
+        'decoration': ['decor', 'deco'],
+      };
+
+      // Add common variations
+      for (var entry in commonReplacements.entries) {
+        if (variation.contains(entry.key)) {
+          enhancedVariations.addAll(entry.value);
+          // Also add combinations with the variations
+          for (String alternate in entry.value) {
+            enhancedVariations.add(variation.replaceAll(entry.key, alternate));
+          }
         }
-      });
+      }
 
-      _highlight['userId'] = _auth.currentUser!.uid.toString();
-      _highlight['timeStamp'] = DateTime.now().toString();
+      // Add fuzzy variations using character substitutions
+      final commonSubstitutions = {
+        'a': ['@'],
+        'e': ['3'],
+        'i': ['1'],
+        'o': ['0'],
+        's': ['5', 'z'],
+        'z': ['s'],
+      };
 
-      // Remove any null or empty string values from _highlight
-      _highlight.removeWhere((key, value) => value == null || value == '');
-
-      // Upload the updated _highlight to the database
-      await uploadHightlightDataToDatabase(_highlight);
-      notifyListeners();
-    } catch (e) {
-      // ignore: duplicate_ignore
-      // ignore: avoid_print
-      print('Error updating highlight: $e');
-      // Handle error (e.g., show error message to user)
-    } finally {
-      EasyLoading.dismiss();
+      // Generate variations with character substitutions
+      for (var char in commonSubstitutions.entries) {
+        if (variation.contains(char.key)) {
+          for (String substitute in char.value) {
+            enhancedVariations.add(variation.replaceAll(char.key, substitute));
+          }
+        }
+      }
     }
-  }
 
-  uploadHighlightMainImageToStorage(File image) async {
-    Reference ref = _firebaseStorage
-        .ref()
-        .child('HighlightsmainImages')
-        .child(path.basename(image.path));
-    UploadTask uploadTask = ref.putData(image.readAsBytesSync());
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
-  }
+    // Add all enhanced variations to the original set
+    variations.addAll(enhancedVariations);
 
-  uploadOtherHighlightImagesToStorage(List<File> images) async {
-    List<String> highlights = [];
-    for (int i = 0; i < images.length; i++) {
-      Reference ref = _firebaseStorage
-          .ref()
-          .child('HighlightsmainImages')
-          .child(path.basename(images[i].path));
-      UploadTask uploadTask = ref.putData(images[i].readAsBytesSync());
-      TaskSnapshot taskSnapshot = await uploadTask;
-      String downloadLink = await taskSnapshot.ref.getDownloadURL();
-      highlights.add(downloadLink);
+    // Calculate Levenshtein distance for similar words
+    Set<String> fuzzyMatches = {};
+    List<String> variationsList = variations.toList();
+
+    for (int i = 0; i < variationsList.length; i++) {
+      for (int j = i + 1; j < variationsList.length; j++) {
+        if (_calculateSimilarity(variationsList[i], variationsList[j]) >= 0.8) {
+          fuzzyMatches.add(variationsList[i]);
+          fuzzyMatches.add(variationsList[j]);
+        }
+      }
     }
-    return highlights;
+
+    variations.addAll(fuzzyMatches);
+
+    // Sort by length and return as list
+    return variations.toList()..sort((a, b) => a.length.compareTo(b.length));
   }
 
-  uploadHighlightVideoToStorage(File video) async {
-    Reference ref = _firebaseStorage
-        .ref()
-        .child('HighlightsmainImages')
-        .child(path.basename(video.path));
-    UploadTask uploadTask = ref.putData(video.readAsBytesSync());
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
+// Helper function to calculate string similarity
+  double _calculateSimilarity(String s1, String s2) {
+    if (s1 == s2) return 1.0;
+    if (s1.isEmpty || s2.isEmpty) return 0.0;
+
+    int maxLength = s1.length > s2.length ? s1.length : s2.length;
+    int distance = _calculateLevenshteinDistance(s1, s2);
+
+    return 1 - (distance / maxLength);
   }
 
-  uploadHightlightDataToDatabase(Map<String, dynamic> data) async {
-    await _fireStore
-        .collection('Highlights')
-        .doc()
-        .set(data); //use a userid instead of email adress, more ethical
-  }
+// Helper function to calculate Levenshtein distance
+  int _calculateLevenshteinDistance(String s1, String s2) {
+    if (s1 == s2) return 0;
+    if (s1.isEmpty) return s2.length;
+    if (s2.isEmpty) return s1.length;
 
-  void setHighlightImage(File image) async {
-    _highlight['mainPicPath'] = image.path;
-    notifyListeners();
-  }
+    List<int> v0 = List<int>.generate(s2.length + 1, (i) => i);
+    List<int> v1 = List<int>.filled(s2.length + 1, 0);
 
-  void setHighlightVideo(File image) async {
-    _highlight['videoPath'] = image.path;
-    notifyListeners();
-  }
+    for (int i = 0; i < s1.length; i++) {
+      v1[0] = i + 1;
 
-  void setOtherHighlightImages(List<File> images) async {
-    List<String> imgs = images.map((file) => file.path).toList();
-    _highlight['otherPicspath'] = imgs;
-    notifyListeners();
-  }
+      for (int j = 0; j < s2.length; j++) {
+        int cost = (s1[i] == s2[j]) ? 0 : 1;
+        v1[j + 1] = [v1[j] + 1, v0[j + 1] + 1, v0[j] + cost].reduce(min);
+      }
 
-  File? getHighlightImage() {
-    return _highlight['mainPicPath'] != null
-        ? File(_highlight['mainPicPath'])
-        : null;
-  }
-
-  File? getHighlightVideo() {
-    return _highlight['videoPath'] != null
-        ? File(_highlight['videoPath'])
-        : null;
-  }
-
-  File? getOtherHighlightImages() {
-    final paths = _highlight['otherPicspath'] as List<String>?;
-    if (paths != null && paths.isNotEmpty) {
-      return File(paths[0]);
-    } else {
-      return null;
+      for (int j = 0; j <= s2.length; j++) {
+        v0[j] = v1[j];
+      }
     }
+
+    return v1[s2.length];
   }
 
-  //Package handling
-  final Map<String, dynamic> _package = {
-    'packageName': '',
-    'rate': '',
-    'description': '',
-    'mainPicPath': '',
-    'views': '',
-    'likes': '',
-  };
-  // Add this to your ChangeManager class in state_management.dart
+  // User management
+  Future<void> createOrUpdateUser(
+      String name, String username, String userId) async {
+    final nameSearchVariations = generateSearchVariations(name);
+    final usernameSearchVariations = generateSearchVariations(username);
 
-/*Future<void> loadServiceTypes() async {
-  try {
-    final snapshot = await _fireStore.collection('Services').get();
-    _serviceTypes = snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
-    notifyListeners();
-  } catch (e) {
-    print('Error loading service types: $e');
-  }
-}*/
-
-  Future<Map<String, dynamic>?> getServiceFields(String serviceType) async {
-    try {
-      final doc =
-          await _fireStore.collection('Services').doc(serviceType).get();
-      return doc.data();
-    } catch (e) {
-      print('Error loading service fields: $e');
-      return null;
-    }
+    await handleData(
+      dataType: 'profile',
+      newData: {
+        'name': name,
+        'username': username,
+        'searchName': nameSearchVariations,
+        'searchUsername': usernameSearchVariations,
+      },
+      collection: 'Customers',
+      operation: OperationType.update,
+      documentId: userId,
+    );
   }
 
-  // Initialize service types from Firebase
+  // Service management
   Future<void> initializeServiceTypes() async {
     try {
       _isLoadingServices = true;
       notifyListeners();
 
-      // Get the Services collection
-      final QuerySnapshot servicesSnapshot =
-          await _fireStore.collection('Services').get();
-
-      // Clear existing service types
-      _serviceTypes.clear();
-
-      // Add each service type from the documents
-      for (var doc in servicesSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final serviceType = data['name'] as String?;
-        if (serviceType != null && serviceType.isNotEmpty) {
-          _serviceTypes.add(serviceType);
-        }
-      }
-
-      // Sort alphabetically for consistent display
-      _serviceTypes.sort();
+      final snapshot = await _fireStore.collection('Services').get();
+      _serviceTypes = snapshot.docs
+          .map((doc) => (doc.data()['name'] as String?) ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList()
+        ..sort();
     } catch (e) {
       print('Error initializing service types: $e');
-      // In case of error, add some default service types
       _serviceTypes = [
         'Accommodation',
         'Event Planning',
         'Photography',
-        'Catering',
-        // Add a few essential defaults
+        'Catering'
       ];
     } finally {
       _isLoadingServices = false;
@@ -390,402 +524,121 @@ class ChangeManager extends ChangeNotifier {
     }
   }
 
-  Future<void> loadServiceTypes() async {
-    if (_serviceTypes.isEmpty && !_isLoadingServices) {
-      await initializeServiceTypes();
-    }
-  }
-
-  /*Future<Map<String, dynamic>?> getServiceFields(String serviceType) async {
-    try {
-      // Query the specific service type document
-      final DocumentSnapshot serviceDoc = await _fireStore
-          .collection('Services')
-          .doc(serviceType)
-          .get();
-
-      if (serviceDoc.exists) {
-        final data = serviceDoc.data() as Map<String, dynamic>;
-        
-        // Get the fields configuration for this service type
-        final fields = data['fields'] as Map<String, dynamic>?;
-        
-        if (fields != null) {
-          return {
-            'fields': fields,
-            'validations': data['validations'] ?? {},
-            'required': data['required'] ?? [],
-            'defaults': data['defaults'] ?? {},
-          };
-        }
-      }
-      
-      return null;
-    } catch (e) {
-      print('Error loading service fields: $e');
-      return null;
-    }
-  }*/
-
-  // Method to check if a service type exists
-  Future<bool> serviceTypeExists(String serviceType) async {
-    try {
-      final doc =
-          await _fireStore.collection('Services').doc(serviceType).get();
-      return doc.exists;
-    } catch (e) {
-      print('Error checking service type: $e');
-      return false;
-    }
-  }
-
-  // Method to get service type display name (in case it's different from the ID)
-  Future<String?> getServiceTypeDisplayName(String serviceType) async {
-    try {
-      final doc =
-          await _fireStore.collection('Services').doc(serviceType).get();
-      if (doc.exists) {
-        return (doc.data() as Map<String, dynamic>)['displayName'] as String?;
-      }
-      return null;
-    } catch (e) {
-      print('Error getting service type display name: $e');
-      return null;
-    }
-  }
-// In your ChangeManager class, update these methods:
-
-  void updatePackage(Map<String, dynamic> newData) async {
-    EasyLoading.show();
-    try {
-      if (newData['mainPicPath'] != null) {
-        final imagePath = newData['mainPicPath'];
-        if (imagePath is String && File(imagePath).existsSync()) {
-          newData['mainPicPath'] =
-              await uploadPackageImageToStorage(File(imagePath));
-        }
-      }
-
-      // Copy non-null values
-      newData.forEach((key, value) {
-        if (value != null) {
-          _package[key] = value;
-        }
-      });
-
-      _package['userId'] = _auth.currentUser!.uid.toString();
-      _package['timeStamp'] = DateTime.now().toString();
-
-      // Fetch user profile data
-      DocumentSnapshot userProfileDoc = await _fireStore
-          .collection('Vendors')
-          .doc(_auth.currentUser?.uid)
-          .get();
-
-      if (userProfileDoc.exists) {
-        var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
-        if (userProfile?['category'] != null) {
-          _package['category'] = userProfile!['category'];
-        }
-      }
-
-      _package.removeWhere((key, value) => value == null || value == '');
-
-      // Upload to database
-      await uploadPackageDataToDatabase(_package);
-
-      notifyListeners();
-    } catch (e, stackTrace) {
-      print('Error updating package: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
-    } finally {
-      EasyLoading.dismiss();
-    }
-  }
-
-  Future<String> uploadPackageImageToStorage(File image) async {
-    final String fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
-    Reference ref =
-        _firebaseStorage.ref().child('Package Images').child(fileName);
-
-    UploadTask uploadTask = ref.putFile(image);
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
-  }
-
-  Future<void> uploadPackageDataToDatabase(Map<String, dynamic> data) async {
-    try {
-      print('Attempting to upload package data: $data');
-      await _fireStore.collection('Packages').doc().set(data);
-      print('Package data uploaded successfully');
-    } catch (e, stackTrace) {
-      print('Error in uploadPackageDataToDatabase: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
-    }
-  }
-
-  void setPackageImage(File image) async {
-    _package['mainPicPath'] = image.path;
-    notifyListeners();
-  }
-
-  File? getPackageImage() {
-    return _package['mainPicPath'] != null
-        ? File(_package['mainPicPath'])
-        : null;
-  }
-
-  //Package handling
-  final Map<String, dynamic> _flashAd = {};
-
-  //updating featured products
-  void updateFlashAd(Map<String, dynamic> newData) async {
-    EasyLoading.show();
-    try {
-      print('Starting package update with data: $newData');
-
-      if (newData['mainPicPath'] != null) {
-        print('Uploading package image');
-        newData['mainPicPath'] =
-            await uploadFlashImageToStorage(File(newData['mainPicPath']));
-        print('Image uploaded successfully: ${newData['mainPicPath']}');
-      }
-
-      newData.forEach((key, value) {
-        if (value != null) {
-          _flashAd[key] = value;
-        }
-      });
-
-      _flashAd['userId'] = _auth.currentUser!.uid.toString();
-      _flashAd['timeStamp'] = DateTime.now().toString();
-
-      // Fetch user profile data
-      DocumentSnapshot userProfileDoc = await _fireStore
-          .collection('Vendors')
-          .doc(_auth.currentUser?.uid)
-          .get();
-
-      if (userProfileDoc.exists) {
-        var userProfile = userProfileDoc.data() as Map<String, dynamic>?;
-        String? category = userProfile?['category'] as String?;
-
-        if (category != null) {
-          _flashAd['category'] = category;
-          print('Category set from user profile: $category');
-        } else {
-          print('Category not found in user profile');
-        }
-      } else {
-        print('User profile document does not exist');
-      }
-      _flashAd.removeWhere((key, value) => value == null || value == '');
-
-      print('Prepared package data for upload: $_flashAd');
-
-      // Upload to database
-      await uploadFlashDataToDatabase(_flashAd);
-      print('Package data uploaded successfully');
-
-      notifyListeners();
-      print('Notified listeners of changes');
-    } catch (e, stackTrace) {
-      print('Error updating package: $e');
-      print('Stack trace: $stackTrace');
-      // Rethrow the error so it can be caught in the UI
-      rethrow;
-    } finally {
-      EasyLoading.dismiss();
-    }
-  }
-
-  uploadFlashImageToStorage(File image) async {
-    Reference ref = _firebaseStorage
-        .ref()
-        .child('FlashAdImages')
-        .child(path.basename(image.path));
-    UploadTask uploadTask = ref.putData(image.readAsBytesSync());
-    TaskSnapshot taskSnapshot = await uploadTask;
-    String downloadLink = await taskSnapshot.ref.getDownloadURL();
-    return downloadLink;
-  }
-
-  Future<void> uploadFlashDataToDatabase(Map<String, dynamic> data) async {
-    try {
-      print('Attempting to upload package data: $data');
-      await _fireStore.collection('FlashAds').doc().set(data);
-      print('Package data uploaded successfully');
-    } catch (e, stackTrace) {
-      print('Error in uploadPackageDataToDatabase: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
-    }
-  }
-
-  void setFlashImage(File image) async {
-    _flashAd['mainPicPath'] = image.path;
-    notifyListeners();
-  }
-
-  File? getFlashImage() {
-    return _flashAd['mainPicPath'] != null
-        ? File(_flashAd['mainPicPath'])
-        : null;
-  }
-
-  final List<Map<String, dynamic>> _bookings = [];
-  List<Map<String, dynamic>> get bookings => _bookings;
-
-  // Update the addToCart functionality
-  Future<bool> updateForm(Map<String, dynamic> data,
+  // Cart management
+  Future<bool> updateCartItem(Map<String, dynamic> data,
       {bool isEditing = false}) async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return false;
-
-      // Add user ID and timestamp
-      data['userId'] = user.uid;
-      data['timeStamp'] = DateTime.now();
-
-      if (isEditing) {
-        // Update existing order
-        final String orderId = data['orderId'];
-        await _fireStore.collection('Cart').doc(orderId).update(data);
-      } else {
-        // Create new order
-        final docRef = await _fireStore.collection('Cart').add(data);
-        data['orderId'] = docRef.id;
-        await docRef.update({'orderId': docRef.id});
-      }
-
-      notifyListeners();
+      await handleData(
+        dataType: 'cart',
+        newData: data,
+        collection: 'Cart',
+        operation: isEditing ? OperationType.update : OperationType.create,
+        documentId: isEditing ? data['orderId'] : uuid.v4(),
+      );
       return true;
     } catch (e) {
-      print('Error updating form: $e');
+      print('Error updating cart item: $e');
       return false;
     }
   }
-  // Improve the removeFromCart functionality
-  // In state_management.dart, update the removeFromCart method
 
-  void removeFromCart(String orderId) async {
-    print('Removing item with orderId: $orderId');
-
+  Future<void> removeFromCart(String orderId) async {
     try {
       final user = _auth.currentUser;
-      if (user != null) {
-        // Query for the document with the matching orderId and userId
+      if (user == null) return;
+
+      final collections = ['Cart', 'Confirmations', 'Pending', 'Shared Carts'];
+
+      for (final collection in collections) {
         final querySnapshot = await _fireStore
-            .collection('Cart')
+            .collection(collection)
             .where('orderId', isEqualTo: orderId)
             .where('userId', isEqualTo: user.uid)
             .get();
-        final confirmationsQuery = await _fireStore
-            .collection('Confirmations')
-            .where('orderId', isEqualTo: orderId)
-            // .where('userId', isEqualTo: user.uid)
-            .get();
-        final pendingQuery = await _fireStore
-            .collection('Pending')
-            .where('orderId', isEqualTo: orderId)
-            // .where('userId', isEqualTo: user.uid)
-            .get();
-        final sharedCartQuery = await _fireStore
-            .collection('Shared Carts')
-            .where('orderId', isEqualTo: orderId)
-            // .where('userId', isEqualTo: user.uid)
-            .get();
 
         if (querySnapshot.docs.isNotEmpty) {
-          // Delete the document
           await querySnapshot.docs.first.reference.delete();
-          try {
-            await confirmationsQuery.docs.first.reference.delete();
-          } catch (e) {
-            print(e);
-          }
-          try {
-            await pendingQuery.docs.first.reference.delete();
-          } catch (e) {
-            print(e);
-          }
-          try {
-            print('Trying to delete from shared carts');
-            await sharedCartQuery.docs.first.reference.delete();
-          } catch (e) {
-            print(e);
-          }
-          print('Item removed successfully from Firestore');
-
-          notifyListeners(); // Trigger a rebuild of the Cart widget
-        } else {
-          print('Item not found in cart');
+          print('Item removed from $collection');
         }
-      } else {
-        print('User not authenticated');
       }
+
+      notifyListeners();
     } catch (e) {
       print('Error removing item from cart: $e');
     }
   }
 
-  // Helper method to extract numeric rate value
+  // Helper methods
   double extractNumericRate(String rateStr) {
-    // Remove currency symbols and everything after '/'
-    String cleanedRate = rateStr.split('/').first; // Get everything before '/'
-
-    // Remove all non-numeric characters except decimal point
-    cleanedRate = cleanedRate.replaceAll(RegExp(r'[^\d.]'), '');
-
-    // Convert to double, default to 0 if parsing fails
+    final cleanedRate =
+        rateStr.split('/').first.replaceAll(RegExp(r'[^\d.]'), '');
     return double.tryParse(cleanedRate) ?? 0.0;
   }
 
-  // Updated method to calculate cart total
   Future<double> calculateCartTotal() async {
     double total = 0.0;
+    final packagesCollection = _fireStore.collection('Packages');
 
-    // Reference to the Firestore collection
-    final packagesCollection =
-        FirebaseFirestore.instance.collection('Packages');
+    for (var item in _dataStore['bookings'] as List<Map<String, dynamic>>) {
+      try {
+        final packageDoc =
+            await packagesCollection.doc(item['package_id']).get();
+        if (!packageDoc.exists) continue;
 
-    for (var item in _bookings) {
-      // Get the package_id from the item
-      String packageId = item['package_id'];
+        final packageData = packageDoc.data();
+        if (packageData?.containsKey('rate') != true) continue;
 
-      // Fetch the package document from Firestore
-      DocumentSnapshot packageDoc =
-          await packagesCollection.doc(packageId).get();
-
-      if (packageDoc.exists) {
-        // Safely access the data
-        var packageData = packageDoc.data() as Map<String, dynamic>?;
-
-        // Check if packageData is not null and has a 'rate' field
-        if (packageData != null && packageData.containsKey('rate')) {
-          // Get the rate string
-          String rateStr = packageData['rate']?.toString() ?? '0';
-
-          // Use your existing method to extract the numeric value
-          double rate = extractNumericRate(rateStr);
-
-          // Multiply by quantity if it exists, otherwise use 1
-          int quantity = item['quantity'] ?? 1;
-          total += rate * quantity;
-        } else {
-          // Handle the case where the rate field doesn't exist
-          print('Rate field does not exist for package with id $packageId.');
-        }
-      } else {
-        // Handle the case where the package doesn't exist
-        print('Package with id $packageId does not exist.');
+        final rate = extractNumericRate(packageData!['rate'].toString());
+        final quantity = item['quantity'] ?? 1;
+        total += rate * quantity;
+      } catch (e) {
+        print('Error calculating total for package ${item['package_id']}: $e');
       }
     }
 
     return total;
+  }
+
+  void setImage(String dataType, String fieldName, File? image) {
+    if (!_dataStore.containsKey(dataType)) {
+      _dataStore[dataType] = {};
+    }
+
+    if (image == null) {
+      _dataStore[dataType]?.remove(fieldName);
+    } else {
+      _dataStore[dataType]![fieldName] = image.path;
+    }
+    notifyListeners();
+  }
+
+  File? getImage(String dataType, String fieldName) {
+    try {
+      final path = _dataStore[dataType]?[fieldName];
+      if (path == null || path.isEmpty) {
+        return null;
+      }
+
+      final file = File(path);
+      return file.existsSync() ? file : null;
+    } catch (e) {
+      print('Error getting image for $dataType.$fieldName: $e');
+      return null;
+    }
+  }
+
+  // Helper method to check if an image exists
+  bool hasImage(String dataType, String fieldName) {
+    final path = _dataStore[dataType]?[fieldName];
+    if (path == null || path.isEmpty) {
+      return false;
+    }
+    return File(path).existsSync();
+  }
+
+  // Helper method to clear an image
+  void clearImage(String dataType, String fieldName) {
+    _dataStore[dataType]?.remove(fieldName);
+    notifyListeners();
   }
 }

@@ -1,40 +1,41 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_service.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/search_widget.dart';
 import 'package:maroro/pages/package_browser.dart';
 
 ///App bar template
 class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String userType;
-  const EventAppBar({super.key, required this.title, required this.userType});
+   EventAppBar({super.key, required this.title, required this.userType});
 
-  final String title;
+  final Widget title;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  void _showSearchDialog(BuildContext context) {
+    String user = _auth.currentUser!.uid;
+    showDialog(
+      context: context,
+      builder: (context) => SearchWidget(currentUserId: user),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      
-      /*leading: Padding(
-          padding: const EdgeInsets.all(5),
-          child: GestureDetector(onTap: (){
-            Navigator.pushNamed(context, '/');//retrun to the Landing Page if logog is rtapped.
-          }, child: const CircleAvatar(backgroundImage: AssetImage('assets\\img\\logo.png'),)),),*/
-      /*actions: [
-        IconButton.outlined(
-          color: primaryColor,
-          onPressed: () {
-            Navigator.pushNamed(context, '/notifications');
-          },
-          icon: const Icon(
-            color: primaryColor,
-            Icons.notifications,
-            // color: Colors.white,
+     // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () => _showSearchDialog(context),
           ),
-        )
-      ],*/
+        ],
+      
+      
     );
   }
 

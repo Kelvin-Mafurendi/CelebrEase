@@ -57,7 +57,7 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
     try {
       final vendorId = _auth.currentUser!.uid;
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
-      
+
       // Update Firestore
       await _firestore
           .collection('vendor_availability')
@@ -83,57 +83,53 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
   }
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
-  // Normalize the date to avoid time component issues
-  DateTime normalizedDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    // Normalize the date to avoid time component issues
+    DateTime normalizedDate =
+        DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
 
-  // Check if time slots exist or generate them asynchronously
-  List<TimeSlot> defaultTimeSlots = _availabilityMap[normalizedDate] ?? await _generateDefaultTimeSlots();
+    // Check if time slots exist or generate them asynchronously
+    List<TimeSlot> defaultTimeSlots =
+        _availabilityMap[normalizedDate] ?? await _generateDefaultTimeSlots();
 
-  setState(() {
-    _selectedDay = selectedDay;
-    _focusedDay = focusedDay;
-    _selectedDaySlots = defaultTimeSlots;
-  });
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+      _selectedDaySlots = defaultTimeSlots;
+    });
 
-  _showTimeSlotsDialog();
-}
-
+    _showTimeSlotsDialog();
+  }
 
   Future<List<TimeSlot>> _generateDefaultTimeSlots() async {
-    
     List<TimeSlot> slots = [];
     TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
     TimeOfDay endTime = const TimeOfDay(hour: 20, minute: 0);
-    
+
     try {
       // Fetch vendor data from Firebase
       final vendorId = _auth.currentUser!.uid;
-      DocumentSnapshot vendorSnapshot = await FirebaseFirestore.instance
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('Vendors')
-          .doc(vendorId)
+          .where('userId',isEqualTo: vendorId).limit(1)
           .get();
-
-      if (vendorSnapshot.exists) {
-        // Retrieve start and end time strings
-        String? startTimeString = vendorSnapshot['startTime'];
-        String? endTimeString = vendorSnapshot['endTime'];
+        var vendorSnapshot = snapshot.docs.first.data() as Map;
+        String startTimeString = vendorSnapshot['startTime'];
+        String endTimeString = vendorSnapshot['endTime'];
 
         // If both start and end times are available, parse them
-        if (endTimeString != null) {
-          List<String> startParts = startTimeString!.split(':');
-          List<String> endParts = endTimeString.split(':');
+        List<String> startParts = startTimeString.split(':');
+        List<String> endParts = endTimeString.split(':');
 
-          startTime = TimeOfDay(
-            hour: int.parse(startParts[0]),
-            minute: int.parse(startParts[1]),
-          );
+        startTime = TimeOfDay(
+          hour: int.parse(startParts[0]),
+          minute: int.parse(startParts[1]),
+        );
 
-          endTime = TimeOfDay(
-            hour: int.parse(endParts[0]),
-            minute: int.parse(endParts[1]),
-          );
-        }
-      }
+        endTime = TimeOfDay(
+          hour: int.parse(endParts[0]),
+          minute: int.parse(endParts[1]),
+        );
+            
     } catch (e) {
       // Print error and fall back to default times if any issues occur
       print('Error fetching vendor times: $e');
@@ -165,7 +161,8 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
               itemBuilder: (context, index) {
                 final slot = _selectedDaySlots[index];
                 return ListTile(
-                  title: Text('${slot.start.format(context)} - ${slot.end.format(context)}'),
+                  title: Text(
+                      '${slot.start.format(context)} - ${slot.end.format(context)}'),
                   trailing: DropdownButton<SlotStatus>(
                     value: slot.status,
                     items: SlotStatus.values.map((status) {
@@ -177,7 +174,8 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
                     onChanged: (newStatus) {
                       if (newStatus != null) {
                         setDialogState(() {
-                          _selectedDaySlots[index] = slot.copyWith(status: newStatus);
+                          _selectedDaySlots[index] =
+                              slot.copyWith(status: newStatus);
                         });
                       }
                     },
@@ -205,43 +203,71 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Manage Calendar',
-          textScaler: TextScaler.linear(1.5),
-          style: GoogleFonts.lateef(),
+      backgroundColor:
+          Colors.transparent, // Make scaffold background transparent
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(40),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            'Manage Calendar',
+            style: GoogleFonts.lateef(
+              fontSize: 24,
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
         ),
       ),
-      body: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.now(),
-            lastDay: DateTime.now().add(const Duration(days: 365)),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: _onDaySelected,
-            calendarFormat: CalendarFormat.month,
-            calendarStyle: const CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TableCalendar(
+              firstDay: DateTime.now(),
+              lastDay: DateTime.now().add(const Duration(days: 365)),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              onDaySelected: _onDaySelected,
+              calendarFormat: CalendarFormat.month,
+              availableCalendarFormats: const {
+                CalendarFormat.month: 'Month',
+              },
+              calendarStyle: const CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: BoxDecoration(
+                  color: primaryColor,
+                  shape: BoxShape.circle,
+                ),
               ),
-              selectedDecoration: BoxDecoration(
-                color: primaryColor,
-                shape: BoxShape.circle,
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: GoogleFonts.lateef(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: GoogleFonts.lateef(fontSize: 14),
+                weekendStyle: GoogleFonts.lateef(fontSize: 14),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Tap on any date to manage time slots',
-              style: GoogleFonts.lateef(fontSize: 20),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Tap on any date to manage time slots',
+                style: GoogleFonts.lateef(fontSize: 16),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -297,8 +323,4 @@ class TimeSlot {
   }
 }
 
-enum SlotStatus {
-  available,
-  unavailable,
-  booked
-}
+enum SlotStatus { available, unavailable, booked }

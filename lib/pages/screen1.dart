@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/search_widget.dart';
 import 'package:maroro/pages/bundles.dart';
 import 'package:maroro/pages/cart.dart';
 import 'package:maroro/pages/chats.dart';
@@ -18,6 +19,7 @@ import 'package:maroro/pages/pending.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/shared_cart.dart';
 import 'package:maroro/pages/trends.dart';
+import 'package:maroro/pages/user_search.dart';
 import 'package:provider/provider.dart';
 
 class Screen1 extends StatefulWidget {
@@ -64,9 +66,11 @@ class _Screen1State extends State<Screen1> {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
+  
 
   @override
   Widget build(BuildContext context) {
+    String user = _auth.currentUser!.uid;
     print('the value of userType:${widget.userType}');
 
     // ignore: deprecated_member_use
@@ -170,7 +174,7 @@ class _Screen1State extends State<Screen1> {
             : null,
         appBar: selectedIndex == 0
             ? EventAppBar(
-                title: '',
+                title: SearchWidget(currentUserId: user),
                 userType: widget.userType,
               )
             : null,

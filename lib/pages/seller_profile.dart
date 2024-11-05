@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
@@ -10,8 +11,10 @@ import 'package:maroro/main.dart';
 import 'package:maroro/modules/about_section.dart';
 import 'package:maroro/modules/featured_card.dart';
 import 'package:maroro/modules/product_card.dart';
-import 'package:maroro/pages/add_flash_ad.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
+import 'package:maroro/pages/flash_ad_view.dart';
+import 'package:maroro/pages/project_management.dart';
+import 'package:maroro/pages/upload_post.dart';
 import 'package:maroro/pages/vendor_calender.dart';
 import 'package:provider/provider.dart';
 
@@ -44,34 +47,34 @@ class _ProfileState extends State<Profile> {
           textAlign: TextAlign.start,
           style: GoogleFonts.merienda(),
         ),
-        StreamBuilder<DocumentSnapshot>(
-            stream:
-                _firestore.collection(widget.userType).doc(userId).snapshots(),
-            builder: (context, snapshot1) {
-              if (snapshot1.hasError) {
+        StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection(widget.userType)
+                .where('userId', isEqualTo: userId)
+                .limit(1)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
                 return const Text('Something went wrong');
               }
 
-              if (snapshot1.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
                   child: CircularProgressIndicator(
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 );
               }
-              if (!snapshot1.hasData || snapshot1.data == null) {
-                //print('No data available');
-                return const Text('No data available');
-              }
 
-              if (!snapshot1.data!.exists) {
-                //print('Document does not exist');
+              if (!snapshot.hasData ||
+                  snapshot.data == null ||
+                  snapshot.data!.docs.isEmpty) {
                 return ShaderMask(
                   shaderCallback: (bounds) {
                     return LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.primary, // Primary Color
-                        accentColor, // Accent Color
+                        Theme.of(context).colorScheme.primary,
+                        accentColor,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -83,25 +86,28 @@ class _ProfileState extends State<Profile> {
                     'CelebrEaser',
                     style: GoogleFonts.merienda(
                       fontSize: 40,
-                      color: Colors.white, // Use white or any contrasting color
+                      color: Colors.white,
                     ),
                   ),
                 );
               }
-              var userProfile = snapshot1.data!.data() as Map<String, dynamic>?;
-              // Use null-aware operators and provide default values
-              String? imagePath = userProfile?['imagePath'] as String?;
+
+              // Assuming there is only one document returned (limit(1))
+              Map<String, dynamic> userProfile =
+                  snapshot.data!.docs.first.data() as Map<String, dynamic>;
+
+              String? imagePath = userProfile['profilePic'] as String?;
               String brandName =
-                  userProfile?['business name'] as String? ?? 'Brand Name';
+                  userProfile['business name'] as String? ?? 'Brand Name';
               String userType =
-                  userProfile?['userType'] as String? ?? 'Customer';
+                  userProfile['userType'] as String? ?? 'Customer';
               String location =
-                  userProfile?['location'] as String? ?? 'Location';
+                  userProfile['location'] as String? ?? 'Location';
               String category =
-                  userProfile?['category'] as String? ?? 'Category';
+                  userProfile['category'] as String? ?? 'Category';
               String startTime =
-                  userProfile?['startTime'] as String? ?? 'Start Time';
-              String endTime = userProfile?['endTime'] as String? ?? 'End Time';
+                  userProfile['startTime'] as String? ?? 'Start Time';
+              String endTime = userProfile['endTime'] as String? ?? 'End Time';
               //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
               return Column(
                 children: [
@@ -125,9 +131,7 @@ class _ProfileState extends State<Profile> {
                         },
                         child: Text(
                           brandName != ''
-                              ? userProfile!['username']
-                                  .toString()
-                                  .split(' ')[0]
+                              ? userProfile['username'].toString().split(' ')[0]
                               : 'CelebrEaser', // Display first name
                           textScaler: const TextScaler.linear(1.5),
                           textAlign: TextAlign.start,
@@ -174,7 +178,7 @@ class _ProfileState extends State<Profile> {
                                 Text(
                                   userType == 'Vendors'
                                       ? brandName
-                                      : userProfile!['username'],
+                                      : userProfile['username'],
                                   textScaler: const TextScaler.linear(1.2),
                                   style: GoogleFonts.merienda(),
                                   overflow: TextOverflow.ellipsis,
@@ -339,6 +343,108 @@ class _ProfileState extends State<Profile> {
         ),
         if (widget.userType == 'Vendors')
           Row(
+            children: [
+              Text(
+                'FlashAds',
+                textScaler: const TextScaler.linear(1.2),
+                style: GoogleFonts.merienda(),
+              ),
+              const Spacer(),
+              const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: InkWell(
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w100,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        if (widget.userType == 'Vendors')
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('FlashAds').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text('Something went wrong');
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Text('No FlashAds\u2122 available');
+                }
+
+                final now = DateTime.now();
+                final activeAds = snapshot.data!.docs.where((doc) {
+                  final adData = doc.data() as Map<String, dynamic>;
+                  final Timestamp? timestamp = adData['timeStamp'];
+
+                  if (timestamp == null) {
+                    return false; // Skip if there's no timestamp
+                  }
+
+                  final DateTime adDateTime = timestamp.toDate();
+                  return now.difference(adDateTime).inHours < 24 &&
+                      adData['userId'] == userId; // Check if hidden is 'false'
+                }).toList();
+
+                if (activeAds.isEmpty) {
+                  return const Text('No active FlashAds\u2122 at the moment');
+                }
+
+                return SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: activeAds.length,
+                    itemBuilder: (context, index) {
+                      var adData =
+                          activeAds[index].data() as Map<String, dynamic>;
+                      return Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FlashAdView(
+                                  ads: activeAds,
+                                  initialIndex: index,
+                                ),
+                              ),
+                            );
+                          },
+                          child: CircleAvatar(
+                            minRadius: 100,
+                            backgroundColor:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? stickerColor
+                                    : stickerColorDark,
+                            backgroundImage:
+                                CachedNetworkImageProvider(adData['adPic']),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        if (widget.userType == 'Vendors')
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ElevatedButton(
@@ -346,7 +452,9 @@ class _ProfileState extends State<Profile> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const AddFlashAd()));
+                          builder: (context) => const DynamicForm(
+                                formType: FormType.flashAd,
+                              )));
                 },
                 style: const ButtonStyle(),
                 child: const Text(
@@ -440,7 +548,11 @@ class _ProfileState extends State<Profile> {
             children: [
               ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/addhighlight');
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                DynamicForm(formType: FormType.highlight)));
                   },
                   style: const ButtonStyle(),
                   child: const Text('Add New Highlight ')),
@@ -527,7 +639,11 @@ class _ProfileState extends State<Profile> {
             children: [
               ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/addPackage');
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                DynamicForm(formType: FormType.package)));
                   },
                   style: const ButtonStyle(),
                   child: const Text('Add New Package')),
@@ -535,22 +651,21 @@ class _ProfileState extends State<Profile> {
           ),
         if (widget.userType == 'Vendors')
           const Padding(
-                padding: EdgeInsets.only(top: 5, bottom: 5),
-                child: Divider(
-                  color: Color.fromARGB(255, 224, 210, 210),
-                ),
-              ),
+            padding: EdgeInsets.only(top: 5, bottom: 5),
+            child: Divider(
+              color: Color.fromARGB(255, 224, 210, 210),
+            ),
+          ),
         if (widget.userType == 'Vendors')
           Text(
-                'Bookings',
-                textScaler: const TextScaler.linear(1.2),
-                style: GoogleFonts.merienda(),
-              ),
+            'Project Management',
+            textScaler: const TextScaler.linear(1.2),
+            style: GoogleFonts.merienda(),
+          ),
         if (widget.userType == 'Vendors')
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -562,6 +677,18 @@ class _ProfileState extends State<Profile> {
                 },
                 style: const ButtonStyle(),
                 child: const Text('Update Calendar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VendorProjectManagement(),
+                    ),
+                  );
+                },
+                style: const ButtonStyle(),
+                child: const Text('Projects'),
               ),
             ],
           ),

@@ -10,6 +10,8 @@ import 'package:maroro/main.dart';
 import 'package:maroro/modules/form_field_maps.dart';
 //import 'package:maroro/pages/vendor_calender.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+import 'package:uuid/v4.dart';
 
 class BookingForm extends StatefulWidget {
   final String package_id;
@@ -36,6 +38,7 @@ class _BookingFormState extends State<BookingForm> {
   String? _vendorId;
   String? _serviceType;
   DateTime? selectedDate;
+  final  uuid = Uuid();
 
   // Constants for booking duration limits
   static const int MIN_BOOKING_HOURS = 1;
@@ -771,11 +774,11 @@ class _BookingFormState extends State<BookingForm> {
         // If editing, preserve the original orderId and update instead of creating new
         if (widget.isEditing && widget.existingBookingData != null) {
           data['orderId'] = widget.existingBookingData!['orderId'];
-        }
+        }else{data['orderId'] =uuid.v4() ;}
 
         // Update form data using state management
         bool success = await Provider.of<ChangeManager>(context, listen: false)
-            .updateForm(data, isEditing: widget.isEditing);
+            .updateCartItem(data, isEditing: widget.isEditing);
 
         if (!mounted) return;
         showDialog(

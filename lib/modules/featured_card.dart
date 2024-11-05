@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/pages/highlight_view.dart';
 
 class FeaturedCard extends StatelessWidget {
@@ -10,6 +12,8 @@ class FeaturedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String userId = auth.currentUser!.uid;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -20,7 +24,7 @@ class FeaturedCard extends StatelessWidget {
               rate: data['rate'],
               description: data['description'],
               userId: data['userId'],
-              imagePath: data['mainPicPath'],
+              imagePath: data['highlightPic'],
             ),
           ),
         );
@@ -45,7 +49,7 @@ class FeaturedCard extends StatelessWidget {
                     ),
                     child: CachedNetworkImage
                     (
-                      imageUrl:data['mainPicPath'] ?? '',
+                      imageUrl:data['highlightPic'] ?? '',
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
@@ -91,6 +95,16 @@ class FeaturedCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                if(userId == data['userId'])
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: ThreeDotMenu(
+                    items: const ['Edit Highlight', 'Hide Highlight', 'Delete Highlight'],
+                    type: 'Highlights',
+                    id: data['highlightId'],
                   ),
                 ),
               ],

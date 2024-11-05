@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:maroro/modules/add_image.dart';
 import 'package:maroro/modules/dynamic_options.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
-
 import 'package:maroro/Provider/state_management.dart';
-import 'package:maroro/modules/add_package_image.dart';
 import 'package:maroro/modules/form_field_maps.dart';
 
 class DynamicPackageForm extends StatefulWidget {
@@ -668,9 +667,10 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
   }
 
   // Update the _submitForm method to include dynamic options:
-  Future _submitForm() async {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       try {
+        final changeManager = context.read<ChangeManager>();
         Map<String, dynamic> data = {};
 
         // Add all form field values
@@ -687,20 +687,15 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
 
         // Add dynamic options
         if (_dynamicOptions.isNotEmpty) {
-          data['dynamicOptions'] = _dynamicOptions.map((field) {
-            return {
-              'fieldName': field['fieldName'],
-              'name': field['name'],
-              'type': field['type'],
-              'options': field['options'],
-            };
-          }).toList();
+          data['dynamicOptions'] = _dynamicOptions;
         }
 
         // Add image path if exists
-        final packageImage = context.read<ChangeManager>().getPackageImage();
-        if (packageImage != null) {
-          data['mainPicPath'] = packageImage.path;
+        final packageImage = changeManager.getImage('package', 'packagePic');
+        if (packageImage != null && packageImage.path.isNotEmpty) {
+          data['packagePic'] = packageImage.path;
+        } else {
+          throw Exception('Please select an image for the package');
         }
 
         // Add selected dates if applicable
@@ -711,14 +706,23 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
         }
 
         // Update package using state management
-        context.read<ChangeManager>().updatePackage(data);
+        await changeManager.handleData(
+          newData: data,
+          dataType: 'package',
+          collection: 'Packages',
+          operation: OperationType.create,
+          fileFields: {
+              'packagePic':
+                  'Packages', // This will now properly upload to this path in Firebase Storage
+            },
+        );
 
         if (mounted) {
           Navigator.pop(context);
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving package: $e')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     }
@@ -741,7 +745,12 @@ class _DynamicPackageFormState extends State<DynamicPackageForm> {
               children: [
                 _buildServiceTypeSelector(),
                 const SizedBox(height: 16),
-                AddPackageImage(),
+                Center(
+                  child: AddImage(
+                    dataType: 'package',
+                    fieldName: 'packagePic',
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ...defaultFields.map((field) {
                   if (field == 'rate') {

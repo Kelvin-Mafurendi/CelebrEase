@@ -12,12 +12,10 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/Provider/theme_notifier.dart';
 import 'package:maroro/firebase_options.dart';
 import 'package:maroro/modules/notification_service.dart';
-import 'package:maroro/pages/add_package.dart';
 import 'package:maroro/pages/bundles.dart';
 import 'package:maroro/pages/cart.dart';
 import 'package:maroro/pages/chart_screen.dart';
 import 'package:maroro/pages/chats.dart';
-import 'package:maroro/pages/add_highlight.dart';
 import 'package:maroro/pages/edit_profile_page.dart';
 import 'package:maroro/pages/event.dart';
 import 'package:maroro/pages/landing_page.dart';
@@ -99,20 +97,24 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
+  final themeNotifier = ThemeNotifier();
+  await themeNotifier.initialize();
+  
   // Preload the Lateef font
   await GoogleFonts.pendingFonts([
     GoogleFonts.lateef(),
   ]);
+  
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ChangeManager()),
-        ChangeNotifierProvider(create: (context) => ThemeNotifier()),
+        ChangeNotifierProvider.value(value: themeNotifier), // Use value provider
       ],
       child: const MyApp(),
     ),
   );
-}
+}    
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -171,8 +173,6 @@ class MyApp extends StatelessWidget {
             '/Membership': (context) => const Membership(),
             '/notifications': (context) => const Notifications(),
             '/cart': (context) =>  Cart(cartType: CartType.self,),
-            '/addPackage': (context) => const AddPackage(initialData: {}),
-            '/addhighlight': (context) => const AddHighlight(initialData: {}),
             '/editProfile': (context) => EditProfile(
                   isFirstSetup:
                       Provider.of<ChangeManager>(context, listen: false)

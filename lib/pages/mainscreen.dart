@@ -46,7 +46,6 @@ class _MainscreenState extends State<Mainscreen> {
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
-        
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -178,9 +177,15 @@ class _MainscreenState extends State<Mainscreen> {
               final now = DateTime.now();
               final activeAds = snapshot.data!.docs.where((doc) {
                 final adData = doc.data() as Map<String, dynamic>;
-                final timestamp = adData['timeStamp'] as String;
-                final adDateTime = DateTime.parse(timestamp);
-                return now.difference(adDateTime).inHours < 24;
+                final Timestamp? timestamp = adData['timeStamp'];
+
+                if (timestamp == null) {
+                  return false; // Skip if there's no timestamp
+                }
+
+                final DateTime adDateTime = timestamp.toDate();
+                return now.difference(adDateTime).inHours < 24 &&
+                    adData['hidden'] == 'false'; // Check if hidden is 'false'
               }).toList();
 
               if (activeAds.isEmpty) {
@@ -216,7 +221,7 @@ class _MainscreenState extends State<Mainscreen> {
                                   ? stickerColor
                                   : stickerColorDark,
                           backgroundImage:
-                              CachedNetworkImageProvider(adData['mainPicPath']),
+                              CachedNetworkImageProvider(adData['adPic']),
                         ),
                       ),
                     );
@@ -230,9 +235,3 @@ class _MainscreenState extends State<Mainscreen> {
     );
   }
 }
-
-/*ListTile(
-                      title: Text(adData['title'] ?? 'No Title'),
-                      subtitle: Text(adData['description'] ?? 'No Description'),
-                      leading: const Icon(Icons.ad_units),
-                    ), */

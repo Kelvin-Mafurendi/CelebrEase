@@ -26,7 +26,8 @@ class CartView extends StatefulWidget {
     super.key,
     required this.data,
     required this.rate,
-    required this.onItemDeleted, required this.cartType,
+    required this.onItemDeleted,
+    required this.cartType,
   });
 
   @override
@@ -145,42 +146,41 @@ class _CartViewState extends State<CartView> {
                 .set(sharedBookingData);
           }
           DelightToastBar(
-          builder: (context) => ToastCard(
-            title: Text(
-              'Booking Shared',
-              style: GoogleFonts.lateef(),
+            builder: (context) => ToastCard(
+              title: Text(
+                'Booking Shared',
+                style: GoogleFonts.lateef(),
+              ),
+              subtitle: Text(
+                "Booking shared with ${selectedUser['name']}",
+                style: GoogleFonts.lateef(),
+              ),
+              leading: Icon(Icons.check_circle_outline),
             ),
-            subtitle: Text(
-              "Booking shared with ${selectedUser['name']}",
-              style: GoogleFonts.lateef(),
-            ),
-            leading: Icon(Icons.check_circle_outline),
-          ),
-        ).show(context);
+          ).show(context);
         } catch (e) {
           print('Error handling shared cart: $e');
-           DelightToastBar(
-          builder: (context) => ToastCard(
-            title: Text(
-              'Share Failed',
-              style: GoogleFonts.lateef(),
+          DelightToastBar(
+            builder: (context) => ToastCard(
+              title: Text(
+                'Share Failed',
+                style: GoogleFonts.lateef(),
+              ),
+              subtitle: Text(
+                "Unable to share booking: $e",
+                style: GoogleFonts.lateef(),
+              ),
+              leading: Icon(Icons.error_outline),
             ),
-            subtitle: Text(
-              "Unable to share booking: $e",
-              style: GoogleFonts.lateef(),
-            ),
-            leading: Icon(Icons.error_outline),
-          ),
-        ).show(context);
+          ).show(context);
           // Optional: Handle the error appropriately
         }
 
         // Show success toast
-        
       } catch (e) {
         // Handle any errors
         print('Error sharing booking: $e');
-         DelightToastBar(
+        DelightToastBar(
           builder: (context) => ToastCard(
             title: Text(
               'Share Failed',
@@ -193,8 +193,6 @@ class _CartViewState extends State<CartView> {
             leading: Icon(Icons.error_outline),
           ),
         ).show(context);
-        
-       
       }
     }
   }
@@ -438,7 +436,7 @@ class _CartViewState extends State<CartView> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(10),
                                     child: CachedNetworkImage(
-                                      imageUrl: packageData['mainPicPath'],
+                                      imageUrl: packageData['packagePic'],
                                       fit: BoxFit.cover,
                                       width: MediaQuery.of(context).size.width *
                                           0.275,
@@ -508,9 +506,11 @@ class _CartViewState extends State<CartView> {
                                             fontWeight: FontWeight.w400),
                                       ),
                                       Text(
-                                        DateFormat('EEEE, MMMM d, y').format(widget
-                                            .data['event date']
-                                            .toDate()), // Convert to DateTime and format
+                                        DateFormat('EEEE, MMMM d, y').format(
+                                            (widget.data['event date']
+                                                    as Timestamp)
+                                                .toDate() // Convert Timestamp to DateTime
+                                            ), // Convert to DateTime and format
                                         style: GoogleFonts.lateef(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w300),
@@ -565,6 +565,7 @@ class _CartViewState extends State<CartView> {
                                         key != 'selected_slots' &&
                                         key != 'guestCount' &&
                                         key != 'vendorId' &&
+                                        key != 'createdAt' &&
                                         key != 'timeStamp')
                                       _buildDetailRow(
                                         key,
@@ -611,37 +612,42 @@ class _CartViewState extends State<CartView> {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
-                    //value: SampleItem.itemOne,
-                    child: Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(FluentSystemIcons.ic_fluent_chat_regular),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('Chat With Vendor',
-                            style: GoogleFonts.lateef(fontSize: 20)),
-                      ],
+                  PopupMenuDivider(),
+                  if (widget.cartType == CartType.self)
+                    PopupMenuItem(
+                      //value: SampleItem.itemOne,
+                      child: Row(
+                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(FluentSystemIcons.ic_fluent_chat_regular),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text('Chat With Vendor',
+                              style: GoogleFonts.lateef(fontSize: 20)),
+                        ],
+                      ),
                     ),
-                  ),
-                  PopupMenuItem(
-                    onTap: _shareBooking,
-                    //value: SampleItem.itemOne,
-                    child: Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(FluentSystemIcons.ic_fluent_share_regular),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'Share Booking',
-                          style: GoogleFonts.lateef(fontSize: 20),
-                        ),
-                      ],
+                    PopupMenuDivider(),
+                  if (widget.cartType == CartType.self)
+                    PopupMenuItem(
+                      onTap: _shareBooking,
+                      //value: SampleItem.itemOne,
+                      child: Row(
+                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(FluentSystemIcons.ic_fluent_share_regular),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Share Booking',
+                            style: GoogleFonts.lateef(fontSize: 20),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    PopupMenuDivider(),
                   PopupMenuItem(
                     //value: SampleItem.itemOne,
                     child: Row(
@@ -656,31 +662,33 @@ class _CartViewState extends State<CartView> {
                       ],
                     ),
                   ),
-                  if(widget.cartType == CartType.self)
-                  PopupMenuItem(
-                    onTap: () {
-                      String? orderId = widget.data['orderId'];
-                      _showDeleteConfirmation(context, orderId!);
-                    },
-                    //value: SampleItem.itemOne,
-                    child: Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(
-                          FluentSystemIcons.ic_fluent_delete_regular,
-                          color: primaryColor,
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          'Delete Booking',
-                          style: GoogleFonts.lateef(
-                              color: primaryColor, fontSize: 20),
-                        ),
-                      ],
+                  PopupMenuDivider(),
+                  if (widget.cartType == CartType.self)
+
+                    PopupMenuItem(
+                      onTap: () {
+                        String? orderId = widget.data['orderId'];
+                        _showDeleteConfirmation(context, orderId!);
+                      },
+                      //value: SampleItem.itemOne,
+                      child: Row(
+                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(
+                            FluentSystemIcons.ic_fluent_delete_regular,
+                            color: primaryColor,
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Delete Booking',
+                            style: GoogleFonts.lateef(
+                                color: primaryColor, fontSize: 20),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
