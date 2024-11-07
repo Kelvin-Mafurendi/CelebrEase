@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 class FilesTab extends StatelessWidget {
   final String groupId;
 
-  const FilesTab({Key? key, required this.groupId}) : super(key: key);
+  const FilesTab({super.key, required this.groupId});
 
   Future<void> _uploadFile() async {
     final result = await FilePicker.platform.pickFiles();
@@ -94,8 +94,8 @@ class FilesTab extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _uploadFile,
-        child: Icon(Icons.add),
         tooltip: 'Upload File',
+        child: Icon(Icons.add),
       ),
     );
   }

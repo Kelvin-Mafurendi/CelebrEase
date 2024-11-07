@@ -337,7 +337,7 @@ class ChangeManager extends ChangeNotifier {
     }
 
     // Handle common word variations, plurals, and misspellings
-    Set<String> enhancedVariations = Set<String>();
+    Set<String> enhancedVariations = <String>{};
     for (String variation in variations) {
       // Handle plurals
       if (variation.endsWith('s')) {

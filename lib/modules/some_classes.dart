@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jitsi_meet_wrapper/jitsi_meet_wrapper.dart';
 import 'package:maroro/pages/chart_screen.dart';
@@ -106,11 +105,11 @@ class TimelineTile extends StatelessWidget {
   final bool isLast;
 
   const TimelineTile({
-    Key? key,
+    super.key,
     required this.milestone,
     this.isFirst = false,
     this.isLast = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +147,7 @@ class TimelineTile extends StatelessWidget {
   }
 
   Widget _buildTimeline(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 40,
       child: Column(
         children: [
@@ -178,6 +177,8 @@ class TimelineTile extends StatelessWidget {
 
 // Add ChecklistDialog widget
 class ChecklistDialog extends StatefulWidget {
+  const ChecklistDialog({super.key});
+
   @override
   _ChecklistDialogState createState() => _ChecklistDialogState();
 }
@@ -208,7 +209,7 @@ class _ChecklistDialogState extends State<ChecklistDialog> {
                         ),
                       ],
                     ))
-                .toList(),
+                ,
             TextButton(
               onPressed: _addItem,
               child: Text('Add Item'),
@@ -258,6 +259,8 @@ class _ChecklistDialogState extends State<ChecklistDialog> {
   }
 }
 class MilestoneDialog extends StatefulWidget {
+  const MilestoneDialog({super.key});
+
   @override
   _MilestoneDialogState createState() => _MilestoneDialogState();
 }
@@ -344,11 +347,11 @@ class CallScreen extends StatefulWidget {
   final CallType callType;
 
   const CallScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userName,
     required this.callType,
-  }) : super(key: key);
+  });
 
   @override
   _CallScreenState createState() => _CallScreenState();

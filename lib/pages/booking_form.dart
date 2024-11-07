@@ -235,21 +235,19 @@ class _BookingFormState extends State<BookingForm> {
         String? startTimeString = vendorSnapshot['startTime'];
         String? endTimeString = vendorSnapshot['endTime'];
 
-        if (endTimeString != null) {
-          List<String> startParts = startTimeString!.split(':');
-          List<String> endParts = endTimeString.split(':');
+        List<String> startParts = startTimeString!.split(':');
+        List<String> endParts = endTimeString!.split(':');
 
-          startTime = TimeOfDay(
-            hour: int.parse(startParts[0]),
-            minute: int.parse(startParts[1]),
-          );
+        startTime = TimeOfDay(
+          hour: int.parse(startParts[0]),
+          minute: int.parse(startParts[1]),
+        );
 
-          endTime = TimeOfDay(
-            hour: int.parse(endParts[0]),
-            minute: int.parse(endParts[1]),
-          );
-        }
-      }
+        endTime = TimeOfDay(
+          hour: int.parse(endParts[0]),
+          minute: int.parse(endParts[1]),
+        );
+            }
     } catch (e) {
       print('Error fetching vendor times: $e');
     }

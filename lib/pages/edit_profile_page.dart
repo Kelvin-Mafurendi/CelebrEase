@@ -76,15 +76,13 @@ class _EditProfileState extends State<EditProfile> {
         selectedCloseTime = data['endTime'];
 
         String? location = data['location'];
-        if (location != null) {
-          List<String> locationParts = location.split(', ');
-          if (locationParts.length == 3) {
-            cityValue = locationParts[0];
-            stateValue = locationParts[1];
-            countryValue = locationParts[2];
-          }
+        List<String> locationParts = location!.split(', ');
+        if (locationParts.length == 3) {
+          cityValue = locationParts[0];
+          stateValue = locationParts[1];
+          countryValue = locationParts[2];
         }
-      });
+            });
     }
   }
 
@@ -258,8 +256,8 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   void updateProfile(BuildContext context) {
-    final FirebaseAuth _auth = FirebaseAuth.instance;
-    String user = _auth.currentUser!.uid;
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String user = auth.currentUser!.uid;
     if (_formKey.currentState!.validate()) {
       Map<String, dynamic> updatedData = {};
 

@@ -76,7 +76,7 @@ class PackageBrowser extends StatefulWidget {
 class _PackageBrowserState extends State<PackageBrowser> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, String>> packageList = [];
-  bool _disposed = false;
+  final bool _disposed = false;
 
   @override
   void initState() {

@@ -49,8 +49,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
   MaterialPageRoute(
     builder: (context) => ChatScreen(
       chatId: chatId,
-      vendorId: vendorId,
-      vendorName: vendorName,
+      otherUserId: vendorId,
+      otherUserName: vendorName,
     ),
   ),
 );

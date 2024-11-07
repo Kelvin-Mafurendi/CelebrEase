@@ -28,6 +28,7 @@ import 'package:maroro/pages/screen1.dart';
 import 'package:maroro/pages/settings.dart';
 import 'package:maroro/pages/shared_cart.dart';
 import 'package:maroro/pages/trends.dart';
+import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
 
 const textColor = Color(0xFF0d0506);
@@ -157,8 +158,8 @@ class MyApp extends StatelessWidget {
                   as Map<String, dynamic>;
               return ChatScreen(
                 chatId: args['chatId'],
-                vendorId: args['vendorId'],
-                vendorName: '',
+                otherUserId: args['vendorId'],
+                otherUserName: '',
               );
             },
             '/Trending': (context) => const Trending(),

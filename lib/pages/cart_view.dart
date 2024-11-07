@@ -448,41 +448,57 @@ class _CartViewState extends State<CartView> {
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  StreamBuilder<DocumentSnapshot>(
+                                  StreamBuilder<QuerySnapshot>(
                                     stream: _firestore
                                         .collection('Vendors')
-                                        .doc(packageData['userId'])
+                                        .where('userId',
+                                            isEqualTo: packageData['userId'])
+                                        .limit(1)
                                         .snapshots(),
                                     builder: (context, snapshot) {
                                       if (!snapshot.hasData) {
                                         return const CircularProgressIndicator();
                                       }
-                                      return SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.275,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              snapshot.data!
-                                                  .get('business name'),
-                                              style: GoogleFonts.lateef(
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                            Text(
-                                              widget.data['address'] !=
-                                                      'Vendor Location'
-                                                  ? widget.data['address']
-                                                  : snapshot.data!
-                                                      .get('address'),
-                                              style: GoogleFonts.lateef(
-                                                  fontWeight: FontWeight.w100),
-                                            ),
-                                          ],
-                                        ),
-                                      );
+
+                                      if (snapshot.data!.docs.isNotEmpty) {
+                                        final vendorData =
+                                            snapshot.data!.docs.first.data() as Map<String,dynamic>;
+                                        final businessName =
+                                            vendorData['business name']
+                                                as String;
+                                        final address =
+                                            vendorData['address'] as String;
+
+                                        return SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.275,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                businessName,
+                                                style: GoogleFonts.lateef(
+                                                    fontWeight:
+                                                        FontWeight.w400),
+                                              ),
+                                              Text(
+                                                widget.data['address'] !=
+                                                        'Vendor Location'
+                                                    ? widget.data['address']
+                                                    : address,
+                                                style: GoogleFonts.lateef(
+                                                    fontWeight:
+                                                        FontWeight.w100),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+
+                                      return const SizedBox.shrink();
                                     },
                                   ),
                                   const SizedBox(
@@ -566,6 +582,10 @@ class _CartViewState extends State<CartView> {
                                         key != 'guestCount' &&
                                         key != 'vendorId' &&
                                         key != 'createdAt' &&
+                                        key != 'cartId' &&
+                                        key != 'hidden' &&
+                                        key != 'sharedAt' &&
+                                        key != 'partnerIds' &&
                                         key != 'timeStamp')
                                       _buildDetailRow(
                                         key,
@@ -612,7 +632,7 @@ class _CartViewState extends State<CartView> {
                       ],
                     ),
                   ),
-                  PopupMenuDivider(),
+                   
                   if (widget.cartType == CartType.self)
                     PopupMenuItem(
                       //value: SampleItem.itemOne,
@@ -628,7 +648,7 @@ class _CartViewState extends State<CartView> {
                         ],
                       ),
                     ),
-                    PopupMenuDivider(),
+                   
                   if (widget.cartType == CartType.self)
                     PopupMenuItem(
                       onTap: _shareBooking,
@@ -647,7 +667,7 @@ class _CartViewState extends State<CartView> {
                         ],
                       ),
                     ),
-                    PopupMenuDivider(),
+                   
                   PopupMenuItem(
                     //value: SampleItem.itemOne,
                     child: Row(
@@ -662,9 +682,8 @@ class _CartViewState extends State<CartView> {
                       ],
                     ),
                   ),
-                  PopupMenuDivider(),
+                   
                   if (widget.cartType == CartType.self)
-
                     PopupMenuItem(
                       onTap: () {
                         String? orderId = widget.data['orderId'];

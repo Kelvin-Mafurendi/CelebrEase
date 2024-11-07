@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:chewie/chewie.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:video_player/video_player.dart';
@@ -12,10 +11,10 @@ class MediaViewerScreen extends StatelessWidget {
   final MediaType mediaType;
 
   const MediaViewerScreen({
-    Key? key,
+    super.key,
     required this.url,
     required this.mediaType,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +40,7 @@ class MediaViewerScreen extends StatelessWidget {
 class VideoPlayerWidget extends StatefulWidget {
   final String url;
 
-  const VideoPlayerWidget({Key? key, required this.url}) : super(key: key);
+  const VideoPlayerWidget({super.key, required this.url});
 
   @override
   _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();

@@ -16,73 +16,66 @@ class _UserSearchDialogState extends State<UserSearchDialog> {
   bool _isLoading = false;
 
   void _searchUsers(String query) async {
-    if (query.isEmpty) return;
+  if (query.isEmpty) return;
+
+  setState(() {
+    _isLoading = true;
+    _searchResults = [];
+  });
+
+  try {
+    // Convert query to lowercase for case-insensitive search
+    String lowercaseQuery = query.toLowerCase().trim();
+    print('Searching for: $lowercaseQuery');
+
+    // Search by name
+    final nameQuery = await FirebaseFirestore.instance
+        .collection('Customers')
+        .where('searchName', arrayContainsAny: [
+          lowercaseQuery,
+          ...List.generate(lowercaseQuery.length,
+              (i) => lowercaseQuery.substring(0, i + 1))
+        ])
+        .where('userId', isNotEqualTo: widget.currentUserId)
+        .limit(10)
+        .get();
+    print('Name query results: ${nameQuery.docs.length}');
+
+    final usernameQuery = await FirebaseFirestore.instance
+        .collection('Customers')
+        .where('searchUsername', arrayContainsAny: [
+          lowercaseQuery,
+          ...List.generate(lowercaseQuery.length,
+              (i) => lowercaseQuery.substring(0, i + 1))
+        ])
+        .where('userId', isNotEqualTo: widget.currentUserId)
+        .limit(10)
+        .get();
+    print('Username query results: ${usernameQuery.docs.length}');
+
+    // Combine and deduplicate results
+    Set<String> uniqueUserIds = {};
+    List<Map<String, dynamic>> results = [];
+
+    for (var doc in [...nameQuery.docs, ...usernameQuery.docs]) {
+      if (!uniqueUserIds.contains(doc['userId'])) {
+        var userData = doc.data();
+        results.add(userData);
+        uniqueUserIds.add(doc['userId']);
+      }
+    }
 
     setState(() {
-      _isLoading = true;
-      _searchResults = [];
+      _searchResults = results;
+      _isLoading = false;
     });
-
-    try {
-      // Convert query to lowercase for case-insensitive search
-      String lowercaseQuery = query.toLowerCase().trim();
-      print('Searching for: $lowercaseQuery');
-
-      // Search by name
-      final nameQuery = await FirebaseFirestore.instance
-          .collection('Customers')
-          .where('searchName', arrayContainsAny: [
-            lowercaseQuery,
-            ...List.generate(lowercaseQuery.length,
-                (i) => lowercaseQuery.substring(0, i + 1))
-          ])
-          .where('userId', isNotEqualTo: widget.currentUserId)
-          .limit(10)
-          .get();
-      print('Name query results: ${nameQuery.docs.length}');
-      for (var doc in nameQuery.docs) {
-        print('Found name: ${doc.data()}');
-      }
-
-      final usernameQuery = await FirebaseFirestore.instance
-          .collection('Customers')
-          .where('searchUsername', arrayContainsAny: [
-            lowercaseQuery,
-            ...List.generate(lowercaseQuery.length,
-                (i) => lowercaseQuery.substring(0, i + 1))
-          ])
-          .where('userId', isNotEqualTo: widget.currentUserId)
-          .limit(10)
-          .get();
-      print('Username query results: ${usernameQuery.docs.length}');
-      for (var doc in usernameQuery.docs) {
-        print('Found name: ${doc.data()}');
-      }
-
-      // Combine and deduplicate results
-      Set<String> uniqueUserIds = {};
-      List<Map<String, dynamic>> results = [];
-
-      for (var doc in [...nameQuery.docs, ...usernameQuery.docs]) {
-        if (!uniqueUserIds.contains(doc.id)) {
-          var userData = doc.data();
-          userData['userId'] = doc.id;
-          results.add(userData);
-          uniqueUserIds.add(doc.id);
-        }
-      }
-
-      setState(() {
-        _searchResults = results;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Search error: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  } catch (e) {
+    print('Search error: $e');
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

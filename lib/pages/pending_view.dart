@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/modules/rate_editor.dart';
 import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/cart.dart';
@@ -102,8 +103,8 @@ class _PendingViewState extends State<PendingView> {
       MaterialPageRoute(
         builder: (context) => ChatScreen(
           chatId: chatId,
-          vendorId: vendorId,
-          vendorName: vendorName,
+          otherUserId: vendorId,
+          otherUserName: vendorName,
         ),
       ),
     );
@@ -119,40 +120,73 @@ class _PendingViewState extends State<PendingView> {
     String name = '';
     final doc = await _firestore
         .collection('Packages')
-        .doc(widget.data['package id'])
+        .where('packageId', isEqualTo: widget.data['package id'])
+        .limit(1)
         .get();
 
-    if (doc.exists) {
-      final packageData = doc.data() as Map<String, dynamic>;
+    if (doc.docs.isNotEmpty) {
+      final packageData = doc.docs.first as Map<String, dynamic>;
       name = packageData['packageName'];
     }
 
     // Update the rate in Firebase if it was edited
     if (_isEditingRate) {
-      await _firestore
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Cart')
-          .doc(widget.data['orderId'])
-          .update({'rate': '${_rateController.text} per person'});
-      setState(() {
-        _isEditingRate = false;
-      });
-    }else if(!_isEditingRate){
-      await _firestore
-          .collection('Cart')
-          .doc(widget.data['orderId'])
-          .update({'rate': '${widget.data['rate']} per person'});
+          .where('orderId', isEqualTo: widget.data['orderId'])
+          .limit(1)
+          .get();
 
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentReference documentRef = querySnapshot.docs.first.reference;
+
+        // Update the 'rate' field
+        await documentRef
+            .update({'rate': '${_rateController.text} per person'});
+        setState(() {
+          _isEditingRate = false;
+        });
+      }
+    } else if (!_isEditingRate) {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Cart')
+          .where('orderId', isEqualTo: widget.data['orderId'])
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentReference documentRef = querySnapshot.docs.first.reference;
+
+        // Update the 'rate' field
+        await documentRef.update({'rate': '${widget.data['rate']} per person'});
+      }
     }
 
     if (pending && !confirmed) {
-      await _firestore
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Confirmations')
-          .doc(widget.data['orderId'])
-          .set(widget.data);
-      await _firestore
-          .collection('Pending')
-          .doc(widget.data['orderId'])
-          .delete();
+          .where('orderId', isEqualTo: widget.data['orderId'])
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentReference documentRef = querySnapshot.docs.first.reference;
+
+        // Update the 'rate' field
+        await documentRef.set(widget.data);
+      }
+      QuerySnapshot pending = await FirebaseFirestore.instance
+          .collection('Confirmations')
+          .where('orderId', isEqualTo: widget.data['orderId'])
+          .limit(1)
+          .get();
+
+      if (pending.docs.isNotEmpty) {
+        DocumentReference documentRef = pending.docs.first.reference;
+
+        // Update the 'rate' field
+        await documentRef.delete();
+      }
       DelightToastBar(
         builder: (context) => ToastCard(
           title: Text(
@@ -210,11 +244,12 @@ class _PendingViewState extends State<PendingView> {
     print('Loading rate for package ${widget.data['package id']}');
     final doc = await _firestore
         .collection('Packages')
-        .doc(widget.data['package id'])
+        .where('packageId', isEqualTo: widget.data['package id'])
+        .limit(1)
         .get();
 
-    if (doc.exists && !_rateLoaded) {
-      final packageData = doc.data() as Map<String, dynamic>;
+    if (doc.docs.isNotEmpty && !_rateLoaded) {
+      final packageData = doc.docs.first as Map<String, dynamic>;
       final rateStr = packageData['rate'].toString().split('per')[0];
       final String numericPart = rateStr.replaceAll(RegExp(r'[^\d.]'), '');
       final rate = double.tryParse(numericPart) ?? 0.0;
@@ -286,7 +321,7 @@ class _PendingViewState extends State<PendingView> {
     );
   }
 
-   void _showRateEditor(BuildContext context, String currentRate) {
+  void _showRateEditor(BuildContext context, String currentRate) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -295,10 +330,19 @@ class _PendingViewState extends State<PendingView> {
         initialRate: currentRate,
         onSave: (newRate) async {
           // Update Firestore
-          await _firestore
+          QuerySnapshot querySnapshot = await FirebaseFirestore.instance
               .collection('Cart')
-              .doc(widget.data['orderId'])
-              .update({'rate': '$newRate per item'});
+              .where('orderId', isEqualTo: widget.data['orderId'])
+              .limit(1)
+              .get();
+
+          if (querySnapshot.docs.isNotEmpty) {
+            DocumentReference documentRef = querySnapshot.docs.first.reference;
+
+            // Update the 'rate' field
+            await documentRef.update({'rate': '$newRate per item'});
+          }
+
           Navigator.pop(context);
         },
         onCancel: () => Navigator.pop(context),
@@ -306,15 +350,15 @@ class _PendingViewState extends State<PendingView> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: StreamBuilder<DocumentSnapshot>(
+      child: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('Packages')
-            .doc(widget.data['package id'])
+            .where('packageId', isEqualTo: widget.data['package id'])
+            .limit(1)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -325,12 +369,12 @@ class _PendingViewState extends State<PendingView> {
             return const CircularProgressIndicator();
           }
 
-          if (!snapshot.hasData || !snapshot.data!.exists) {
+          if (!snapshot.hasData) {
             return const Text('Package not found');
           }
 
           Map<String, dynamic> packageData =
-              snapshot.data!.data() as Map<String, dynamic>;
+              snapshot.data!.docs.first.data() as Map<String, dynamic>;
 
           // Set initial rate value if editing starts
           if (!_isEditingRate) {
@@ -349,7 +393,7 @@ class _PendingViewState extends State<PendingView> {
                   scrollDirection: Axis.horizontal,
                   child: Stack(
                     children: [
-                     Positioned(
+                      Positioned(
                         bottom: 0,
                         left: 0,
                         child: Text(
@@ -396,7 +440,7 @@ class _PendingViewState extends State<PendingView> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(10),
                                     child: CachedNetworkImage(
-                                      imageUrl: packageData['mainPicPath'],
+                                      imageUrl: packageData['packagePic'],
                                       fit: BoxFit.cover,
                                       width: MediaQuery.of(context).size.width *
                                           0.275,
@@ -408,10 +452,11 @@ class _PendingViewState extends State<PendingView> {
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  StreamBuilder<DocumentSnapshot>(
+                                  StreamBuilder<QuerySnapshot>(
                                     stream: _firestore
                                         .collection('Customers')
-                                        .doc(widget.data['userId'])
+                                        .where('userId',
+                                            isEqualTo: widget.data['userId'])
                                         .snapshots(),
                                     builder: (context, snapshot) {
                                       if (!snapshot.hasData) {
@@ -426,12 +471,14 @@ class _PendingViewState extends State<PendingView> {
                                               CrossAxisAlignment.center,
                                           children: [
                                             Text(
-                                              snapshot.data!.get('username'),
+                                              snapshot.data!.docs.first
+                                                  .get('username'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w400),
                                             ),
                                             Text(
-                                              snapshot.data!.get('location'),
+                                              snapshot.data!.docs.first
+                                                  .get('location'),
                                               style: GoogleFonts.lateef(
                                                   fontWeight: FontWeight.w100),
                                             ),
@@ -518,6 +565,9 @@ class _PendingViewState extends State<PendingView> {
                                         key != 'selected_slots' &&
                                         key != 'guestCount' &&
                                         key != 'vendorId' &&
+                                        key != 'cartId' &&
+                                        key != 'hidden' &&
+                                        key != 'createdAt' &&
                                         key != 'timeStamp')
                                       _buildDetailRow(
                                         key,
@@ -542,6 +592,42 @@ class _PendingViewState extends State<PendingView> {
               ),
             ),
             Positioned(
+              bottom: 10,
+              right: 20,
+              child: PopupMenuButton(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    onTap: () => _showRateEditor(
+                      context,
+                      formatRate(packageData['rate'].toString()),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Modify Price',
+                        ),
+                        Icon(FluentSystemIcons.ic_fluent_edit_regular),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    onTap: () =>
+                        _startChat(context, widget.data['userId'], 'Customer'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Chat With Customer',
+                        ),
+                        Icon(FluentSystemIcons.ic_fluent_chat_regular),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+            /*Positioned(
               right: 10,
               //top: 0,
               bottom: 5,
@@ -567,45 +653,47 @@ class _PendingViewState extends State<PendingView> {
                   ),
                 ],
               ),
-            ),
-           
+            ), */
+
+            ,
             Positioned(
-                top: 20,
-                right: 20,
-                child: InkWell(
-                  onTap: _confirmOrder,
-                  child: Column(
-                    children: [
-                      Icon(
-                        FluentSystemIcons.ic_fluent_checkmark_circle_regular,
+              top: 20,
+              right: 20,
+              child: InkWell(
+                onTap: _confirmOrder,
+                child: Column(
+                  children: [
+                    Icon(
+                      FluentSystemIcons.ic_fluent_checkmark_circle_regular,
+                      color: pending && !confirmed
+                          ? Colors.grey
+                          : !pending && !confirmed
+                              ? primaryColor
+                              : accentColor,
+                    ),
+                    //const SizedBox(height: 10),
+                    Text(
+                      pending && !confirmed
+                          ? 'Pending'
+                          : !pending && !confirmed
+                              ? 'Confirm'
+                              : 'Confirmed',
+                      style: GoogleFonts.lateef(
                         color: pending && !confirmed
                             ? Colors.grey
                             : !pending && !confirmed
                                 ? primaryColor
                                 : accentColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                      //const SizedBox(height: 10),
-                      Text(
-                        pending && !confirmed
-                            ? 'Pending'
-                            : !pending && !confirmed
-                                ? 'Confirm'
-                                : 'Confirmed',
-                        style: GoogleFonts.lateef(
-                          color: pending && !confirmed
-                              ? Colors.grey
-                              : !pending && !confirmed
-                                  ? primaryColor
-                                  : accentColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                 Positioned(
+            /* Positioned(
                 right: 90,
                 bottom: 5,
                 child: InkWell(
@@ -632,7 +720,7 @@ class _PendingViewState extends State<PendingView> {
                     ],
                   ),
                 ),
-              ),
+              ),*/
           ]);
         },
       ),
@@ -654,7 +742,6 @@ class _PendingViewState extends State<PendingView> {
     );
   }
 }
-
 
 class RateEditOverlay extends StatefulWidget {
   final String initialRate;

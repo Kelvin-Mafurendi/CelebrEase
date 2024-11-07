@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_rx/src/rx_typedefs/rx_typedefs.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/upload_post.dart';
@@ -10,12 +10,16 @@ class ThreeDotMenu extends StatefulWidget {
   final List<String> items;
   final String type;
   final String id;
+
   
-  const ThreeDotMenu({
+   const ThreeDotMenu({
     super.key, 
+    
     required this.items, 
     required this.type, 
-    required this.id
+    required this.id,
+    
+    
   });
 
   @override

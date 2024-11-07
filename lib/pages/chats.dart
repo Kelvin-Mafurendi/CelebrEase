@@ -1,6 +1,3 @@
-
-// Updated Chats class in chats.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -39,36 +36,54 @@ class Chats extends StatelessWidget {
             itemBuilder: (context, index) {
               final chat = chats[index].data() as Map<String, dynamic>;
               final chatId = chats[index].id;
-              final participants = chat['participants'] as List<dynamic>;
+              final participants = List<String>.from(chat['participants'] ?? []);
 
-              final otherUserId = participants.firstWhere(
-                (id) => id != auth.currentUser!.uid,
-                orElse: () => null,
-              );
+              // Safe way to find other user ID
+              String? otherUserId;
+              try {
+                otherUserId = participants.firstWhere(
+                  (id) => id != auth.currentUser!.uid,
+                );
+              } catch (e) {
+                // Handle the case where no other user is found
+                return const ListTile(
+                  title: Text('Chat unavailable'),
+                  subtitle: Text('No other participant found'),
+                );
+              }
 
-              if (otherUserId == null) {
-                return const ListTile(title: Text('Unknown Participant'));
+              if (otherUserId.isEmpty) {
+                return const ListTile(
+                  title: Text('Invalid chat'),
+                  subtitle: Text('Missing participant information'),
+                );
               }
 
               final future = userType == 'Vendors'
-                  ? firestore.collection('Customers').doc(otherUserId).get()
-                  : firestore.collection('Vendors').doc(otherUserId).get();
+                  ? firestore.collection('Customers').where('userId', isEqualTo: otherUserId).limit(1).get()
+                  : firestore.collection('Vendors').where('userId', isEqualTo: otherUserId).limit(1).get();
 
-              return FutureBuilder<DocumentSnapshot>(
+              return FutureBuilder<QuerySnapshot>(
                 future: future,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const ListTile(title: Text('Loading...'));
+                    return const ListTile(
+                      title: Text('Loading...'),
+                      leading: CircularProgressIndicator(),
+                    );
                   }
 
-                  if (!snapshot.hasData || snapshot.data == null || !snapshot.data!.exists) {
-                    return const ListTile(title: Text('User not found'));
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return ListTile(
+                      title: Text('User not found'),
+                      subtitle: Text('ID: $otherUserId'),
+                    );
                   }
 
-                  final otherUserData = snapshot.data!.data() as Map<String, dynamic>;
+                  final otherUserData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
                   final otherUserName = userType == 'Customers'
-                      ? otherUserData['business name'] ?? 'Unknown'
-                      : otherUserData['username'] ?? 'Unknown';
+                      ? otherUserData['business name'] ?? 'Unknown Business'
+                      : otherUserData['username'] ?? 'Unknown User';
 
                   return ListTile(
                     title: Text(otherUserName),
@@ -79,8 +94,8 @@ class Chats extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => ChatScreen(
                             chatId: chatId,
-                            vendorId: otherUserId,
-                            vendorName: otherUserName,
+                            otherUserId: otherUserId.toString(),
+                            otherUserName: otherUserName,
                           ),
                         ),
                       );
