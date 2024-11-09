@@ -1,20 +1,31 @@
 // Define your serviceFields here, each key representing a service and its custom fields
 Map<String, List<Map<String, dynamic>>> serviceFields = {
   'Accomodation': [
-    {'name': 'checkInDate', 'label': 'Check-in Date', 'type': 'date'},
-    {'name': 'checkOutDate', 'label': 'Check-out Date', 'type': 'date'},
-    {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
-    {
-      'name': 'numberOfRooms',
-      'label': 'Number of Rooms Required',
-      'type': 'number'
-    },
     {
       'name': 'roomType',
       'label': 'Room Type',
       'type': 'select',
       'options': ['Single', 'Double', 'Suite', 'Villa']
     },
+    {
+      'name': 'amenities',
+      'label': 'Amenities',
+      'type': 'multiselect',
+      'options': [
+        'Parking',
+        'Air Conditioning',
+        'Kitchen',
+        'Stage',
+        'Sound System',
+        'Lighting',
+        'Furniture',
+        'Restrooms',
+        'Wheelchair Access',
+        'WI-FI'
+      ]
+    },
+    {'name': 'capacity', 'label': 'Capacity', 'type': 'number'},
+    {'name': 'availability', 'label': 'Availability', 'type': 'date'},
     {
       'name': 'roomPreferences',
       'label': 'Room Preferences',
@@ -45,21 +56,22 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'VIP Treatment'
       ]
     },
-    {
-      'name': 'specialRequests',
-      'label': 'Special Requests',
-      'type': 'multiline'
-    },
   ],
   'Bakery': [
+    {
+      'name': 'itemTypes',
+      'label': 'Item Types',
+      'type': 'multiselect',
+      'options': ['Cake', 'Cupcakes', 'Cookies', 'Bread', 'Pastries']
+    },
+    {'name': 'customOrders', 'label': 'Custom Orders', 'type': 'select'},
+    {'name': 'quantityOptions', 'label': 'Quantity Options', 'type': 'select'},
     {
       'name': 'bakedGoodsType',
       'label': 'Type of Baked Goods',
       'type': 'select',
       'options': ['Cake', 'Cupcakes', 'Cookies', 'Bread', 'Pastries']
     },
-    {'name': 'guestCount', 'label': 'Number of Servings', 'type': 'number'},
-    {'name': 'flavor', 'label': 'Flavor Preferences', 'type': 'text'},
     {
       'name': 'occasion',
       'label': 'Occasion',
@@ -74,7 +86,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Other'
       ]
     },
-    {'name': 'design', 'label': 'Design Preferences', 'type': 'multiline'},
     {
       'name': 'dietary',
       'label': 'Dietary Restrictions',
@@ -96,11 +107,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'type': 'select',
       'options': ['Delivery', 'Pick-up']
     },
-    {
-      'name': 'deliveryTime',
-      'label': 'Preferred Delivery/Pickup Time',
-      'type': 'text'
-    },
   ],
   'Clothing': [
     {
@@ -115,11 +121,15 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Casual Wear'
       ]
     },
-    {'name': 'size', 'label': 'Size/Measurements', 'type': 'multiline'},
-    {'name': 'style', 'label': 'Style Preferences', 'type': 'text'},
+    {'name': 'sizes', 'label': 'Available Sizes', 'type': 'multiselect'},
     {
-      'name': 'materialPreferences',
-      'label': 'Material Preferences',
+      'name': 'customDesign',
+      'label': 'Custom Design Options',
+      'type': 'select'
+    },
+    {
+      'name': 'materials',
+      'label': 'Materials Used',
       'type': 'multiselect',
       'options': [
         'Silk',
@@ -144,12 +154,26 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'type': 'select',
       'options': ['Home Delivery', 'Store Pickup']
     },
-    {'name': 'returnDate', 'label': 'Return Date (if rental)', 'type': 'date'},
+    {
+      'name': 'materialPreferences',
+      'label': 'Material Preferences',
+      'type': 'multiselect',
+      'options': [
+        'Silk',
+        'Cotton',
+        'Linen',
+        'Velvet',
+        'Satin',
+        'Chiffon',
+        'Lace',
+        'Polyester'
+      ]
+    },
   ],
   'Flowers': [
     {
-      'name': 'flowerType',
-      'label': 'Type of Flowers',
+      'name': 'flowerTypes',
+      'label': 'Types of Flowers',
       'type': 'multiselect',
       'options': [
         'Bouquets',
@@ -162,12 +186,8 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Loose Flowers'
       ]
     },
-    {'name': 'colors', 'label': 'Color Preferences', 'type': 'text'},
-    {
-      'name': 'arrangements',
-      'label': 'Number of Arrangements',
-      'type': 'number'
-    },
+    {'name': 'bouquetStyles', 'label': 'Bouquet Styles', 'type': 'select'},
+    {'name': 'delivery', 'label': 'Delivery Options', 'type': 'select'},
     {
       'name': 'eventType',
       'label': 'Event Type',
@@ -183,6 +203,21 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       ]
     },
     {
+      'name': 'flowerType',
+      'label': 'Type of Flowers',
+      'type': 'multiselect',
+      'options': [
+        'Bouquets',
+        'Centerpieces',
+        'Floral Arches',
+        'Corsages',
+        'Boutonnieres',
+        'Flower Crown',
+        'Table Arrangements',
+        'Loose Flowers'
+      ]
+    },
+    {
       'name': 'delivery',
       'label': 'Delivery Required',
       'type': 'select',
@@ -194,17 +229,11 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'type': 'select',
       'options': ['Yes', 'No']
     },
-    {
-      'name': 'specificFlowers',
-      'label': 'Specific Flowers Requested',
-      'type': 'multiline'
-    },
   ],
   'Food & Catering': [
-    {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
     {
       'name': 'cuisineType',
-      'label': 'Cuisine Preferences',
+      'label': 'Cuisine Type',
       'type': 'multiselect',
       'options': [
         'Italian',
@@ -219,10 +248,26 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'French'
       ]
     },
+    {'name': 'menuItems', 'label': 'Menu Items', 'type': 'select'},
     {
-      'name': 'cuisineDetails',
-      'label': 'Additional Cuisine Details',
-      'type': 'multiline'
+      'name': 'dietaryOptions',
+      'label': 'Dietary Options',
+      'type': 'multiselect',
+      'options': [
+        'Vegetarian',
+        'Vegan',
+        'Halal',
+        'Kosher',
+        'Gluten-free',
+        'Dairy-free',
+        'Nut-free',
+        'Shellfish-free'
+      ]
+    },
+    {
+      'name': 'servingCapacity',
+      'label': 'Number of People Served',
+      'type': 'number'
     },
     {
       'name': 'serviceStyle',
@@ -273,6 +318,26 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'options': ['Rings', 'Necklaces', 'Bracelets', 'Earrings', 'Full Set']
     },
     {
+      'name': 'materials',
+      'label': 'Materials Used',
+      'type': 'multiselect',
+      'options': [
+        'Gold',
+        'Silver',
+        'Platinum',
+        'Diamond',
+        'Pearl',
+        'Rose Gold',
+        'White Gold',
+        'Titanium'
+      ]
+    },
+    {
+      'name': 'customization',
+      'label': 'Customization Options',
+      'type': 'select'
+    },
+    {
       'name': 'material',
       'label': 'Material Preferences',
       'type': 'multiselect',
@@ -302,15 +367,56 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Topaz'
       ]
     },
-    {
-      'name': 'customization',
-      'label': 'Customization Options',
-      'type': 'select'
-    },
-    {'name': 'sizing', 'label': 'Sizing Requirements', 'type': 'text'},
-    {'name': 'returnDate', 'label': 'Return Date (if rental)', 'type': 'date'},
   ],
   'Photography': [
+    {
+      'name': 'shootType',
+      'label': 'Type of Photography',
+      'type': 'select',
+      'options': [
+        'Wedding',
+        'Corporate',
+        'Family',
+        'Portrait',
+        'Product',
+        'Birthday Party',
+        'Corporate Event',
+        'Anniversary Celebration',
+        'Engagement Party',
+        'Baby Shower',
+        'Graduation Ceremony',
+        'Religious Event',
+        'Concert',
+        'Festival',
+        'Family Reunion',
+        'Holiday Party',
+        'Charity Event',
+        'Workshop',
+        'Exhibition',
+        'Sporting Event',
+        'School Event',
+        'Retirement Party',
+        'Private Party',
+        'Other'
+      ]
+    },
+    {'name': 'duration', 'label': 'Duration', 'type': 'number'},
+    {'name': 'deliverables', 'label': 'Deliverables', 'type': 'select'},
+    {
+      'name': 'equipment',
+      'label': 'Equipment Included',
+      'type': 'multiselect',
+      'options': [
+        'Drone Photography',
+        'Prints',
+        'Photo Album',
+        'Digital Files',
+        'Same-day Edit',
+        'Engagement Shoot',
+        'Photo Booth',
+        'Live Streaming'
+      ]
+    },
     {
       'name': 'eventType',
       'label': 'Type of Event',
@@ -343,12 +449,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       ]
     },
     {
-      'name': 'photographers',
-      'label': 'Number of Photographers',
-      'type': 'number'
-    },
-    {'name': 'location', 'label': 'Shooting Location', 'type': 'text'},
-    {
       'name': 'editingPreferences',
       'label': 'Editing Preferences',
       'type': 'multiselect',
@@ -361,11 +461,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'HDR Processing',
         'Background Editing'
       ]
-    },
-    {
-      'name': 'specialRequests',
-      'label': 'Special Requests',
-      'type': 'multiline'
     },
     {
       'name': 'extras',
@@ -384,6 +479,22 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
     },
   ],
   'Videography': [
+    {'name': 'duration', 'label': 'Duration', 'type': 'number'},
+    {
+      'name': 'editingOptions',
+      'label': 'Editing Options',
+      'type': 'multiselect',
+      'options': [
+        'Drone Footage',
+        'Slow Motion',
+        'Time-lapse',
+        'Animation',
+        'Color Grading',
+        'Special Transitions',
+        'Green Screen'
+      ]
+    },
+    {'name': 'addOns', 'label': 'Additional Services', 'type': 'multiselect'},
     {
       'name': 'eventType',
       'label': 'Type of Event',
@@ -416,13 +527,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       ]
     },
     {
-      'name': 'videographers',
-      'label': 'Number of Videographers',
-      'type': 'number'
-    },
-    {'name': 'location', 'label': 'Filming Location', 'type': 'text'},
-    {'name': 'script', 'label': 'Script/Storyboard', 'type': 'multiline'},
-    {
       'name': 'specialEffects',
       'label': 'Special Effects Required',
       'type': 'multiselect',
@@ -452,6 +556,31 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
   ],
   'Venues': [
     {
+      'name': 'venueType',
+      'label': 'Venue Type',
+      'type': 'select',
+      'options': ['Indoor', 'Outdoor', 'Both']
+    },
+    {'name': 'capacity', 'label': 'Capacity', 'type': 'number'},
+    {
+      'name': 'amenities',
+      'label': 'Amenities',
+      'type': 'multiselect',
+      'options': [
+        'Parking',
+        'Air Conditioning',
+        'Kitchen',
+        'Stage',
+        'Sound System',
+        'Lighting',
+        'Furniture',
+        'Restrooms',
+        'Wheelchair Access',
+        'WI-FI'
+      ]
+    },
+    {'name': 'availability', 'label': 'Availability', 'type': 'date'},
+    {
       'name': 'eventType',
       'label': 'Type of Event',
       'type': 'select',
@@ -479,11 +608,6 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Private Party',
         'Other',
       ]
-    },
-    {
-      'name': 'venueCapacity',
-      'label': 'Venue Capacity (number of guests)',
-      'type': 'number'
     },
     {
       'name': 'venueType',
@@ -518,19 +642,42 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         '3 hours before',
         '4+ hours before'
       ]
-    }
+    },
   ],
   'Music': [
+    {
+      'name': 'musicType',
+      'label': 'Type of Music',
+      'type': 'select',
+      'options': [
+        'Pop',
+        'Rock',
+        'Jazz',
+        'Classical',
+        'R&B',
+        'Hip-Hop',
+        'Traditional'
+      ]
+    },
+    {'name': 'duration', 'label': 'Duration', 'type': 'number'},
+    {
+      'name': 'equipment',
+      'label': 'Equipment Included',
+      'type': 'multiselect',
+      'options': [
+        'Sound System',
+        'Microphones',
+        'Speakers',
+        'Lighting',
+        'Instruments',
+        'Stage'
+      ]
+    },
     {
       'name': 'musicType',
       'label': 'Type of Music Service',
       'type': 'select',
       'options': ['Live Band', 'DJ', 'Solo Performer', 'Orchestra', 'Choir']
-    },
-    {
-      'name': 'numberOfPerformers',
-      'label': 'Number of Performers',
-      'type': 'number'
     },
     {
       'name': 'musicGenre',
@@ -558,14 +705,9 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Instruments',
         'Stage'
       ]
-    }
+    },
   ],
   'Choreography': [
-    {
-      'name': 'performerCount',
-      'label': 'Number of Performers',
-      'type': 'number'
-    },
     {
       'name': 'danceStyle',
       'label': 'Dance Style',
@@ -580,12 +722,48 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       ]
     },
     {
-      'name': 'costumeRequirements',
-      'label': 'Costume Requirements',
-      'type': 'multiline'
-    }
+      'name': 'rehearsalDuration',
+      'label': 'Rehearsal Duration',
+      'type': 'number'
+    },
+    {'name': 'numberOfDancers', 'label': 'Number of Dancers', 'type': 'number'},
+    {
+      'name': 'danceStyle',
+      'label': 'Dance Style',
+      'type': 'multiselect',
+      'options': [
+        'Contemporary',
+        'Traditional',
+        'Ballet',
+        'Hip-Hop',
+        'Ballroom',
+        'Cultural'
+      ]
+    },
   ],
   'MC': [
+    {
+      'name': 'eventTypes',
+      'label': 'Event Types',
+      'type': 'select',
+      'options': [
+        'Wedding',
+        'Corporate Event',
+        'Award Ceremony',
+        'Conference',
+        'Gala',
+        'Festival',
+        'Other'
+      ]
+    },
+    {'name': 'duration', 'label': 'Duration', 'type': 'number'},
+    {
+      'name': 'languages',
+      'label': 'Languages',
+      'type': 'multiselect',
+      'options': ['English', 'Afrikaans', 'Zulu', 'Xhosa', 'Other']
+    },
+    {'name': 'experience', 'label': 'Years of Experience', 'type': 'number'},
     {
       'name': 'eventType',
       'label': 'Type of Event',
@@ -606,20 +784,22 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'type': 'multiselect',
       'options': ['English', 'Afrikaans', 'Zulu', 'Xhosa', 'Other']
     },
-    {
-      'name': 'specialRequirements',
-      'label': 'Special Requirements',
-      'type': 'multiline'
-    }
   ],
   'Beauty': [
+    {
+      'name': 'makeupTypes',
+      'label': 'Types of Makeup',
+      'type': 'multiselect',
+      'options': ['Makeup', 'Hair', 'Nails', 'Skincare', 'Full Package']
+    },
+    {'name': 'products', 'label': 'Products Used', 'type': 'text'},
+    {'name': 'trialSessions', 'label': 'Trial Sessions', 'type': 'text'},
     {
       'name': 'serviceType',
       'label': 'Type of Beauty Service',
       'type': 'multiselect',
       'options': ['Makeup', 'Hair', 'Nails', 'Skincare', 'Full Package']
     },
-    {'name': 'guestCount', 'label': 'Number of Clients', 'type': 'number'},
     {
       'name': 'style',
       'label': 'Style Preference',
@@ -638,16 +818,26 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'label': 'Service Location',
       'type': 'select',
       'options': ['At Venue', 'At Salon', 'At Home']
-    }
+    },
   ],
   'Decor': [
+    {'name': 'decorStyle', 'label': 'Decoration Style', 'type': 'select'},
+    {'name': 'colorSchemes', 'label': 'Color Schemes', 'type': 'select'},
     {
-      'name': 'venueSize',
-      'label': 'Venue Size (square meters)',
-      'type': 'number'
+      'name': 'decorTypes',
+      'label': 'Types of Decorations',
+      'type': 'multiselect',
+      'options': [
+        'Flowers',
+        'Lighting',
+        'Furniture',
+        'Backdrops',
+        'Table Settings',
+        'Draping',
+        'Centerpieces'
+      ]
     },
-    {'name': 'theme', 'label': 'Theme', 'type': 'text'},
-    {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
+    {'name': 'setupTime', 'label': 'Setup Time', 'type': 'number'},
     {
       'name': 'decorItems',
       'label': 'Decor Items Required',
@@ -662,12 +852,11 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Centerpieces'
       ]
     },
-    {'name': 'colorScheme', 'label': 'Color Scheme', 'type': 'text'}
   ],
   'Event Planning': [
     {
-      'name': 'eventType',
-      'label': 'Type of Event',
+      'name': 'eventTypes',
+      'label': 'Event Types',
       'type': 'select',
       'options': [
         'Wedding',
@@ -679,7 +868,7 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Other'
       ]
     },
-    {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
+    {'name': 'teamSize', 'label': 'Team Size', 'type': 'number'},
     {
       'name': 'planningServices',
       'label': 'Planning Services Required',
@@ -702,16 +891,88 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'R25,000 - R50,000',
         'R50,000+'
       ]
-    }
+    },
+  ],
+  'Event Security': [
+    {
+      'name': 'eventTypes',
+      'label': 'Event Types',
+      'type': 'select',
+      'options': [
+        'Wedding',
+        'Birthday Party',
+        'Private Party',
+        'Corporate Event',
+        'Anniversary Celebration',
+        'Engagement Party',
+        'Baby Shower',
+        'Graduation Ceremony',
+        'Religious Event',
+        'Concert',
+        'Festival',
+        'Family Reunion',
+        'Holiday Party',
+        'Charity Event',
+        'Workshop',
+        'Exhibition',
+        'Photo/Video Shoot',
+        'Sporting Event',
+        'School Event',
+        'Retirement Party',
+        'Funeral',
+        'Other'
+      ]
+    },
+    {
+      'name': 'planningServices',
+      'label': 'Planning Services',
+      'type': 'multiselect'
+    },
+    {'name': 'teamSize', 'label': 'Team Size', 'type': 'number'},
+    {
+      'name': 'securityType',
+      'label': 'Type of Security',
+      'type': 'select',
+      'options': [
+        'Armed Security',
+        'Unarmed Security',
+        'Bodyguards',
+        'Crowd Control',
+        'Entrance and Exit Control',
+        'Surveillance Monitoring'
+      ]
+    },
+    {
+      'name': 'budget',
+      'label': 'Budget Range',
+      'type': 'select',
+      'options': [
+        'Under ZAR 5,000',
+        'ZAR 5,000-ZAR 10,000',
+        'ZAR 10,000-ZAR 20,000',
+        'ZAR 20,000+'
+      ]
+    },
   ],
   'Gifts': [
+    {
+      'name': 'giftTypes',
+      'label': 'Types of Gifts',
+      'type': 'select',
+      'options': ['Customized', 'Standard', 'Corporate', 'Wedding Favors']
+    },
+    {
+      'name': 'customization',
+      'label': 'Customization Options',
+      'type': 'select'
+    },
+    {'name': 'delivery', 'label': 'Delivery Options', 'type': 'select'},
     {
       'name': 'giftType',
       'label': 'Type of Gift',
       'type': 'select',
       'options': ['Customized', 'Standard', 'Corporate', 'Wedding Favors']
     },
-    {'name': 'quantity', 'label': 'Number of Items', 'type': 'number'},
     {
       'name': 'deliveryOption',
       'label': 'Delivery Option',
@@ -719,19 +980,29 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
       'options': ['Pick-up', 'Standard Delivery', 'Express Delivery']
     },
     {
-      'name': 'giftPreferences',
-      'label': 'Gift Preferences',
-      'type': 'multiline'
-    },
-    {
       'name': 'packaging',
       'label': 'Packaging Requirements',
       'type': 'select',
       'options': ['Standard', 'Premium', 'Luxury', 'Eco-Friendly']
-    }
+    },
   ],
   'Hair Dressing': [
-    {'name': 'guestCount', 'label': 'Number of Clients', 'type': 'number'},
+    {
+      'name': 'hairServices',
+      'label': 'Hair Services',
+      'type': 'multiselect',
+      'options': [
+        'Braids',
+        'Weaves',
+        'Natural Styling',
+        'Cuts',
+        'Color',
+        'Bridal',
+        'Formal'
+      ]
+    },
+    {'name': 'duration', 'label': 'Duration', 'type': 'number'},
+    {'name': 'products', 'label': 'Products Used', 'type': 'text'},
     {
       'name': 'style',
       'label': 'Hairstyle Type',
@@ -762,112 +1033,18 @@ Map<String, List<Map<String, dynamic>>> serviceFields = {
         'Hair Extensions',
         'Hair Products'
       ]
-    }
+    },
   ],
-  'Event Security': [
+  'Other': [
+    {'name': 'serviceType', 'label': 'Type of Service', 'type': 'text'},
     {
-      'name': 'eventType',
-      'label': 'Type of Event',
-      'type': 'select',
-      'options': [
-        'Wedding',
-        'Birthday Party',
-        'Private Party',
-        'Corporate Event',
-        'Anniversary Celebration',
-        'Engagement Party',
-        'Baby Shower',
-        'Graduation Ceremony',
-        'Religious Event',
-        'Concert',
-        'Festival',
-        'Family Reunion',
-        'Holiday Party',
-        'Charity Event',
-        'Workshop',
-        'Exhibition',
-        'Photo/Video Shoot',
-        'Sporting Event',
-        'School Event',
-        'Retirement Party',
-        'Funeral',
-        'Other'
-      ]
+      'name': 'customization',
+      'label': 'Customization Options',
+      'type': 'select'
     },
-    {'name': 'guestCount', 'label': 'Number of Guests', 'type': 'number'},
-    {
-      'name': 'securityPersonnel',
-      'label': 'Number of Security Personnel Required',
-      'type': 'number'
-    },
-    {
-      'name': 'securityType',
-      'label': 'Type of Security',
-      'type': 'select',
-      'options': [
-        'Armed Security',
-        'Unarmed Security',
-        'Bodyguards',
-        'Crowd Control',
-        'Entrance and Exit Control',
-        'Surveillance Monitoring'
-      ]
-    },
-    {
-      'name': 'budget',
-      'label': 'Budget Range',
-      'type': 'select',
-      'options': [
-        'Under ZAR 5,000',
-        'ZAR 5,000-ZAR 10,000',
-        'ZAR 10,000-ZAR 20,000',
-        'ZAR 20,000+'
-      ]
-    },
-    {
-      'name': 'preferences',
-      'label': 'Special Instructions or Requirements',
-      'type': 'multiline'
-    }
-  ],
-  'Transport': [
-    {
-      'name': 'vehicleType',
-      'label': 'Type of Vehicle',
-      'type': 'select',
-      'options': ['Sedan', 'SUV', 'Van', 'Bus', 'Limousine', 'Luxury Car']
-    },
-    {
-      'name': 'numberOfVehicles',
-      'label': 'Number of Vehicles Required',
-      'type': 'number'
-    },
-    {
-      'name': 'estimatedDistance',
-      'label': 'Estimated Distance (km)',
-      'type': 'number'
-    },
-    {
-      'name': 'passengerCount',
-      'label': 'Number of Passengers',
-      'type': 'number'
-    },
-    {
-      'name': 'specialRequirements',
-      'label': 'Special Requirements',
-      'type': 'multiselect',
-      'options': [
-        'Child Seats',
-        'Wheelchair Access',
-        'Luggage Space',
-        'Professional Driver',
-        'GPS Navigation'
-      ]
-    }
+    {'name': 'availability', 'label': 'Availability', 'type': 'date'},
   ],
 };
-
-
 // Updated rate units map with service-specific units
 Map<String, List<String>> rateUnits = {
   'Accomodation': ['per night', 'per week', 'per month'],
@@ -998,7 +1175,7 @@ Map<String, String> vendorFieldHints = {
   'serviceType': 'Specify the type of service offered',
 };
 Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
-  'Accomodation': [
+  'Accommodation': [
     {
       'fieldName': 'roomType',
       'label': 'Room Type',
@@ -1007,51 +1184,51 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'amenities',
-      'label': 'Amenities',
+      'label': 'Amenities', 
       'type': 'multiselect',
       'hint': 'List all available amenities,'
     },
     {
       'fieldName': 'capacity',
-      'label': 'Capacity',
+      'label': 'Capacity', 
       'type': 'number',
       'hint': 'Maximum number of people'
     },
     {
       'fieldName': 'availability',
-      'label': 'Availability',
+      'label': 'Availability', 
       'type': 'date',
       'hint': 'Specify available dates or periods'
     },
     {
       'fieldName': 'roomPreferences',
-      'label': 'Room Preferences',
+      'label': 'Room Preferences', 
       'type': 'multiselect',
       'hint': 'Specify room preferences, e.g., Non-smoking, High Floor'
     },
     {
       'fieldName': 'addOns',
-      'label': 'Add-ons',
+      'label': 'Additional Services', 
       'type': 'multiselect',
       'hint': 'Specify additional services, e.g., Breakfast, Airport Shuttle'
-    },
+    }
   ],
   'Bakery': [
     {
       'fieldName': 'itemTypes',
-      'label': 'Item Types',
-      'type': 'multiselect', 
+      'label': 'Item Types', 
+      'type': 'multiselect',
       'hint': 'Types of items available,'
     },
     {
       'fieldName': 'customOrders',
-      'label': 'Custom Orders',
-      'type': 'select', 
+      'label': 'Custom Orders', 
+      'type': 'select',
       'hint': 'Describe custom order options'
     },
     {
       'fieldName': 'quantityOptions',
-      'label': 'Quantity Options',
+      'label': 'Quantity Options', 
       'type': 'select',
       'hint': 'Specify possible order quantities'
     },
@@ -1063,66 +1240,71 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'occasion',
-      'label': 'Occasion',
+      'label': 'Occasion', 
       'type': 'select',
       'hint': 'E.g., Birthday, Wedding, Anniversary'
     },
     {
       'fieldName': 'dietary',
-      'label': 'Dietary Restrictions',
+      'label': 'Dietary Options', 
       'type': 'multiselect',
       'hint': 'Specify dietary restrictions, e.g., Gluten-free, Vegan'
     },
     {
       'fieldName': 'delivery',
-      'label': 'Delivery Method',
+      'label': 'Delivery Options', 
       'type': 'select',
       'hint': 'Specify delivery method, e.g., Delivery, Pick-up'
-    },
+    }
   ],
   'Clothing': [
     {
       'fieldName': 'clothingType',
-      'label': 'Type of Clothing',
+      'label': 'Type of Clothing', 
       'type': 'select',
       'hint': 'E.g., Formal, Casual, Traditional'
     },
     {
       'fieldName': 'sizes',
-      'label': 'Available Sizes',
+      'label': 'Available Sizes', 
       'type': 'multiselect',
       'hint': 'Available sizes'
     },
     {
       'fieldName': 'customDesign',
-      'label': 'Custom Design Options',
+      'label': 'Custom Design Options', 
       'type': 'select',
       'hint': 'Describe custom design options'
     },
     {
       'fieldName': 'materials',
-      'label': 'Materials Used',
+      'label': 'Materials Used', 
       'type': 'multiselect',
       'hint': 'List materials used,'
     },
     {
       'fieldName': 'fittings',
-      'label': 'Fittings Required',
+      'label': 'Fittings Required', 
       'type': 'select',
       'hint': 'Specify whether fittings are required (Yes/No)'
     },
     {
       'fieldName': 'delivery',
-      'label': 'Delivery Method',
+      'label': 'Delivery Options',
       'type': 'select',
       'hint': 'Specify the delivery method, e.g., Home Delivery, Store Pickup'
     },
     {
       'fieldName': 'materialPreferences',
-      'label': 'Material Preferences',
+      'label': 'Material Preferences', 
       'type': 'multiselect',
       'hint': 'Specify preferred materials, e.g., Silk, Cotton, Linen'
     },
+    {
+      'fieldName': 'returnDate',
+      'label': 'Return Date (if rental)',
+      'type': 'date' 
+    }
   ],
   'Flowers': [
     {
@@ -1150,23 +1332,26 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Specify the event type, e.g., Wedding, Funeral, Birthday'
     },
     {
-      'fieldName': 'flowerType',
-      'label': 'Type of Flowers',
-      'type': 'multiselect',
-      'hint': 'Specify types of flowers, e.g., Bouquets, Centerpieces'
-    },
-    {
-      'fieldName': 'delivery',
-      'label': 'Delivery Required',
-      'type': 'select',
-      'hint': 'Specify whether delivery is required (Yes/No)'
+      'fieldName': 'arrangements',
+      'label': 'Number of Arrangements', 
+      'type': 'number' 
     },
     {
       'fieldName': 'setup',
-      'label': 'Setup Required',
+      'label': 'Setup Required', 
       'type': 'select',
       'hint': 'Specify whether setup is required (Yes/No)'
     },
+    {
+      'fieldName': 'specificFlowers',
+      'label': 'Specific Flowers Requested',
+      'type': 'multiline' 
+    },
+    {
+      'fieldName': 'colors',
+      'label': 'Color Preferences', 
+      'type': 'text'
+    }
   ],
   'Food & Catering': [
     {
@@ -1178,7 +1363,7 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     {
       'fieldName': 'menuItems',
       'label': 'Menu Items',
-      'type': 'select',
+      'type': 'multiline', 
       'hint': 'List main menu items'
     },
     {
@@ -1195,19 +1380,13 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'serviceStyle',
-      'label': 'Service Style',
+      'label': 'Service Style', 
       'type': 'select',
       'hint': 'Specify the service style, e.g., Buffet, Plated, Family Style'
     },
     {
-      'fieldName': 'dietary',
-      'label': 'Dietary Restrictions',
-      'type': 'multiselect',
-      'hint': 'Specify any dietary restrictions, e.g., Vegetarian, Vegan, Gluten-free'
-    },
-    {
       'fieldName': 'staffing',
-      'label': 'Wait Staff Required',
+      'label': 'Wait Staff Required', 
       'type': 'select',
       'hint': 'Specify whether wait staff is required (Yes/No)'
     },
@@ -1217,6 +1396,16 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'type': 'select',
       'hint': 'Specify the drinks package, e.g., Non-alcoholic, Beer & Wine, Full Bar'
     },
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Guests',
+      'type': 'number' 
+    },
+    {
+      'fieldName': 'cuisineDetails',
+      'label': 'Additional Cuisine Details',
+      'type': 'multiline' 
+    }
   ],
   'Jewelry': [
     {
@@ -1238,17 +1427,21 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Available customization options'
     },
     {
-      'fieldName': 'material',
-      'label': 'Material Preferences',
-      'type': 'multiselect',
-      'hint': 'Specify preferred materials, e.g., Gold, Silver, Platinum'
-    },
-    {
       'fieldName': 'gemstonePreferences',
-      'label': 'Gemstone Preferences',
+      'label': 'Gemstone Preferences', 
       'type': 'multiselect',
       'hint': 'Specify gemstone preferences, e.g., Diamond, Ruby, Emerald'
     },
+    {
+      'fieldName': 'sizing',
+      'label': 'Sizing Requirements', 
+      'type': 'text' 
+    },
+    {
+      'fieldName': 'returnDate',
+      'label': 'Return Date (if rental)', 
+      'type': 'date'
+    }
   ],
   'Photography': [
     {
@@ -1260,18 +1453,18 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     {
       'fieldName': 'duration',
       'label': 'Duration',
-      'type': 'number',
+      'type': 'number', 
       'hint': 'Length of service or event'
     },
     {
       'fieldName': 'deliverables',
-      'label': 'Deliverables',
+      'label': 'Deliverables', 
       'type': 'select',
       'hint': "What's included in the final delivery"
     },
     {
       'fieldName': 'equipment',
-      'label': 'Equipment Included',
+      'label': 'Equipment Included', 
       'type': 'multiselect',
       'hint': 'List of equipment provided'
     },
@@ -1282,10 +1475,20 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Specify event type, e.g., Wedding, Corporate, Family'
     },
     {
+      'fieldName': 'location',
+      'label': 'Shooting Location',
+      'type': 'text'
+    },
+    {
       'fieldName': 'editingPreferences',
-      'label': 'Editing Preferences',
+      'label': 'Editing Preferences', 
       'type': 'multiselect',
       'hint': 'Specify editing preferences, e.g., Basic Retouching, Color Correction'
+    },
+    {
+      'fieldName': 'specialRequests',
+      'label': 'Special Requests',
+      'type': 'multiline'
     },
     {
       'fieldName': 'extras',
@@ -1293,11 +1496,16 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'type': 'multiselect',
       'hint': 'Specify additional services, e.g., Drone Photography, Prints'
     },
+    {
+      'fieldName': 'photographers',
+      'label': 'Number of Photographers', 
+      'type': 'number'
+    }
   ],
   'Videography': [
     {
       'fieldName': 'duration',
-      'label': 'Duration',
+      'label': 'Duration', 
       'type': 'number',
       'hint': 'Length of service or event'
     },
@@ -1309,7 +1517,7 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'addOns',
-      'label': 'Additional Services',
+      'label': 'Additional Services', 
       'type': 'multiselect',
       'hint': 'Additional services available'
     },
@@ -1320,40 +1528,55 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Specify event type, e.g., Wedding, Music Video, Documentary'
     },
     {
+      'fieldName': 'location',
+      'label': 'Filming Location', 
+      'type': 'text'
+    },
+    {
+      'fieldName': 'script',
+      'label': 'Script/Storyboard',
+      'type': 'multiline' 
+    },
+    {
       'fieldName': 'specialEffects',
-      'label': 'Special Effects Required',
+      'label': 'Special Effects Required', 
       'type': 'multiselect',
       'hint': 'Specify special effects, e.g., Drone Footage, Slow Motion'
     },
     {
       'fieldName': 'deliveryFormat',
-      'label': 'Delivery Format',
+      'label': 'Delivery Format', 
       'type': 'multiselect',
       'hint': 'Specify delivery format, e.g., Digital Download, USB Drive'
     },
+    {
+      'fieldName': 'videographers',
+      'label': 'Number of Videographers', 
+      'type': 'number' 
+    }
   ],
   'Venues': [
     {
       'fieldName': 'venueType',
-      'label': 'Venue Type',
+      'label': 'Venue Type', 
       'type': 'select',
       'hint': 'Type of venue and setting'
     },
     {
       'fieldName': 'capacity',
-      'label': 'Capacity',
+      'label': 'Capacity', 
       'type': 'number',
       'hint': 'Maximum number of people'
     },
     {
       'fieldName': 'amenities',
-      'label': 'Amenities',
+      'label': 'Amenities', 
       'type': 'multiselect',
       'hint': 'List all available amenities,'
     },
     {
       'fieldName': 'availability',
-      'label': 'Availability',
+      'label': 'Availability', 
       'type': 'date',
       'hint': 'Specify available dates or periods'
     },
@@ -1364,23 +1587,16 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Specify event type, e.g., Wedding, Corporate Event, Birthday Party'
     },
     {
-      'fieldName': 'venueType',
-      'label': 'Venue Type',
-      'type': 'select',
-      'hint': 'Specify venue type, e.g., Indoor, Outdoor, Both'
-    },
-    {
-      'fieldName': 'amenities',
-      'label': 'Required Amenities',
-      'type': 'multiselect',
-      'hint': 'Specify amenities, e.g., Parking, Air Conditioning, Kitchen'
+      'fieldName': 'venueCapacity',
+      'label': 'Venue Capacity (number of guests)', 
+      'type': 'number' 
     },
     {
       'fieldName': 'setupTime',
-      'label': 'Setup Time Required',
+      'label': 'Setup Time Required', 
       'type': 'select',
       'hint': 'Specify setup time, e.g., 1 hour before, 2 hours before'
-    },
+    }
   ],
   'Transport': [
     {
@@ -1397,22 +1613,37 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'capacity',
-      'label': 'Capacity',
+      'label': 'Capacity', 
       'type': 'number',
       'hint': 'Maximum number of passengers'
     },
     {
       'fieldName': 'addOns',
-      'label': 'Additional Services',
+      'label': 'Additional Services', 
       'type': 'multiselect',
       'hint': 'Additional services available'
+    },
+    {
+      'fieldName': 'numberOfVehicles',
+      'label': 'Number of Vehicles Required', 
+      'type': 'number'
+    },
+    {
+      'fieldName': 'estimatedDistance',
+      'label': 'Estimated Distance (km)', 
+      'type': 'number'
+    },
+    {
+      'fieldName': 'passengerCount',
+      'label': 'Number of Passengers',
+      'type': 'number' 
     },
     {
       'fieldName': 'specialRequirements',
       'label': 'Special Requirements',
       'type': 'multiselect',
       'hint': 'Specify special requirements, e.g., Child Seats, Wheelchair Access'
-    },
+    }
   ],
   'Music': [
     {
@@ -1423,60 +1654,57 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'duration',
-      'label': 'Duration',
+      'label': 'Duration', 
       'type': 'number',
       'hint': 'Length of performance'
     },
     {
       'fieldName': 'equipment',
-      'label': 'Equipment Included',
+      'label': 'Equipment Included', 
       'type': 'multiselect',
       'hint': 'List of equipment provided'
     },
     {
-      'fieldName': 'musicType',
-      'label': 'Type of Music Service',
-      'type': 'select',
-      'hint': 'Specify music service, e.g., Live Band, DJ, Solo Performer'
+      'fieldName': 'numberOfPerformers',
+      'label': 'Number of Performers', 
+      'type': 'number' 
     },
     {
       'fieldName': 'musicGenre',
-      'label': 'Music Genre Preferences',
+      'label': 'Music Genre Preferences', 
       'type': 'multiselect',
       'hint': 'Specify music genre preferences, e.g., Pop, Rock, Jazz'
-    },
-    {
-      'fieldName': 'equipment',
-      'label': 'Equipment Required',
-      'type': 'multiselect',
-      'hint': 'Specify equipment required, e.g., Sound System, Microphones'
-    },
+    }
   ],
   'Choreography': [
     {
       'fieldName': 'danceStyle',
-      'label': 'Dance Style',
+      'label': 'Dance Style', 
       'type': 'multiselect',
       'hint': 'Types of dance styles taught'
     },
     {
       'fieldName': 'rehearsalDuration',
-      'label': 'Rehearsal Duration',
+      'label': 'Rehearsal Duration', 
       'type': 'number',
       'hint': 'Length of rehearsal sessions'
     },
     {
       'fieldName': 'numberOfDancers',
-      'label': 'Number of Dancers',
+      'label': 'Number of Dancers', 
       'type': 'number',
       'hint': 'Number of dancers included'
     },
     {
-      'fieldName': 'danceStyle',
-      'label': 'Dance Style',
-      'type': 'multiselect',
-      'hint': 'Specify dance style, e.g., Contemporary, Traditional, Ballet'
+      'fieldName': 'performerCount',
+      'label': 'Number of Performers',
+      'type': 'number'
     },
+    {
+      'fieldName': 'costumeRequirements',
+      'label': 'Costume Requirements', 
+      'type': 'multiline' 
+    }
   ],
   'MC': [
     {
@@ -1487,34 +1715,33 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'duration',
-      'label': 'Duration',
+      'label': 'Duration', 
       'type': 'number',
       'hint': 'Length of service'
     },
     {
       'fieldName': 'languages',
-      'label': 'Languages',
+      'label': 'Languages', 
       'type': 'multiselect',
       'hint': 'Languages spoken,'
     },
     {
       'fieldName': 'experience',
-      'label': 'Years of Experience',
+      'label': 'Years of Experience', 
       'type': 'number',
       'hint': 'Years of experience in the field'
     },
     {
-      'fieldName': 'eventType',
-      'label': 'Type of Event',
-      'type': 'select',
-      'hint': 'Specify event type, e.g., Wedding, Corporate Event, Award Ceremony'
-    },
-    {
       'fieldName': 'languagePreference',
-      'label': 'Language Preference',
+      'label': 'Language Preference', 
       'type': 'multiselect',
       'hint': 'Specify language preferences, e.g., English, Afrikaans, Zulu'
     },
+    {
+      'fieldName': 'specialRequirements',
+      'label': 'Special Requirements', 
+      'type': 'multiline' 
+    }
   ],
   'Beauty': [
     {
@@ -1537,9 +1764,14 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'serviceType',
-      'label': 'Type of Beauty Service',
+      'label': 'Type of Beauty Service', 
       'type': 'multiselect',
       'hint': 'Specify beauty services, e.g., Makeup, Hair, Nails'
+    },
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Clients',
+      'type': 'number' 
     },
     {
       'fieldName': 'style',
@@ -1549,10 +1781,10 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'location',
-      'label': 'Service Location',
+      'label': 'Service Location', 
       'type': 'select',
       'hint': 'Specify service location, e.g., At Venue, At Salon, At Home'
-    },
+    }
   ],
   'Decor': [
     {
@@ -1580,11 +1812,31 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'hint': 'Time required for setup'
     },
     {
+      'fieldName': 'venueSize',
+      'label': 'Venue Size (square meters)',
+      'type': 'number'
+    },
+    {
+      'fieldName': 'theme',
+      'label': 'Theme', 
+      'type': 'text' 
+    },
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Guests',
+      'type': 'number' 
+    },
+    {
       'fieldName': 'decorItems',
-      'label': 'Decor Items Required',
+      'label': 'Decor Items Required', 
       'type': 'multiselect',
       'hint': 'Specify decor items required, e.g., Flowers, Lighting, Furniture'
     },
+    {
+      'fieldName': 'colorScheme',
+      'label': 'Color Scheme', 
+      'type': 'text' 
+    }
   ],
   'Event Planning': [
     {
@@ -1593,17 +1845,20 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'type': 'select',
       'hint': 'Types of events covered e.g., Wedding, Corporate Event, Birthday'
     },
-    
     {
       'fieldName': 'teamSize',
       'label': 'Team Size',
       'type': 'number',
       'hint': 'Number of team members'
     },
-   
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Guests',
+      'type': 'number' 
+    },
     {
       'fieldName': 'planningServices',
-      'label': 'Planning Services Required',
+      'label': 'Planning Services Required', 
       'type': 'multiselect',
       'hint': 'Specify planning services required, e.g., Full Planning, Vendor Management'
     },
@@ -1612,31 +1867,34 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'label': 'Budget Range',
       'type': 'select',
       'hint': 'Specify budget range, e.g., Under R10,000, R10,000-R25,000'
-    },
+    }
   ],
   'Event Security': [
     {
       'fieldName': 'eventTypes',
-      'label': 'Event Types',
+      'label': 'Event Types', 
       'type': 'select',
       'hint': 'Types of events covered'
     },
     {
-      'fieldName': 'planningServices',
-      'label': 'Planning Services',
-      'type': 'multiselect',
-      'hint': 'Planning services included'
-    },
-    {
       'fieldName': 'teamSize',
-      'label': 'Team Size',
+      'label': 'Team Size', 
       'type': 'number',
       'hint': 'Number of team members'
     },
-  
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Guests',
+      'type': 'number' 
+    },
+    {
+      'fieldName': 'securityPersonnel',
+      'label': 'Number of Security Personnel Required',
+      'type': 'number'
+    },
     {
       'fieldName': 'securityType',
-      'label': 'Type of Security',
+      'label': 'Type of Security', 
       'type': 'select',
       'hint': 'Specify security type, e.g., Armed Security, Unarmed Security, Bodyguards'
     },
@@ -1646,6 +1904,11 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
       'type': 'select',
       'hint': 'Specify budget range, e.g., Under ZAR 5,000, ZAR 5,000-ZAR 10,000'
     },
+    {
+      'fieldName': 'preferences',
+      'label': 'Special Instructions or Requirements', 
+      'type': 'multiline' 
+    }
   ],
   'Gifts': [
     {
@@ -1662,28 +1925,26 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'delivery',
-      'label': 'Delivery Options',
+      'label': 'Delivery Options', 
       'type': 'select',
       'hint': 'Describe delivery options and areas'
     },
     {
-      'fieldName': 'giftType',
-      'label': 'Type of Gift',
-      'type': 'select',
-      'hint': 'Specify gift type, e.g., Customized, Standard, Corporate'
+      'fieldName': 'quantity',
+      'label': 'Number of Items',
+      'type': 'number'
     },
     {
-      'fieldName': 'deliveryOption',
-      'label': 'Delivery Option',
-      'type': 'select',
-      'hint': 'Specify delivery option, e.g., Pick-up, Standard Delivery'
+      'fieldName': 'giftPreferences',
+      'label': 'Gift Preferences',
+      'type': 'multiline'
     },
     {
       'fieldName': 'packaging',
       'label': 'Packaging Requirements',
       'type': 'select',
       'hint': 'Specify packaging requirements, e.g., Standard, Premium, Luxury'
-    },
+    }
   ],
   'Hair Dressing': [
     {
@@ -1694,15 +1955,20 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'duration',
-      'label': 'Duration',
+      'label': 'Duration', 
       'type': 'number',
       'hint': 'Length of service'
     },
     {
       'fieldName': 'products',
-      'label': 'Products Used',
+      'label': 'Products Used', 
       'type': 'text',
       'hint': 'Products and brands used'
+    },
+    {
+      'fieldName': 'guestCount',
+      'label': 'Number of Clients', 
+      'type': 'number' 
     },
     {
       'fieldName': 'style',
@@ -1712,16 +1978,16 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'location',
-      'label': 'Service Location',
+      'label': 'Service Location', 
       'type': 'select',
       'hint': 'Specify service location, e.g., At Salon, At Home, At Venue'
     },
     {
       'fieldName': 'additionalServices',
-      'label': 'Additional Services',
+      'label': 'Additional Services', 
       'type': 'multiselect',
       'hint': 'Specify additional services, e.g., Hair Treatment, Hair Extensions'
-    },
+    }
   ],
   'Other': [
     {
@@ -1732,15 +1998,15 @@ Map<String, List<Map<String, dynamic>>> vendorServiceFields = {
     },
     {
       'fieldName': 'customization',
-      'label': 'Customization Options',
+      'label': 'Customization Options', 
       'type': 'select',
       'hint': 'Available customization options'
     },
     {
       'fieldName': 'availability',
-      'label': 'Availability',
+      'label': 'Availability', 
       'type': 'date',
       'hint': 'Specify available dates or periods'
-    },
-  ],
+    }
+  ]
 };

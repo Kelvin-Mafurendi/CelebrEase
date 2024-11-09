@@ -18,7 +18,6 @@ import 'package:maroro/modules/reusable_widgets.dart';
 import 'package:maroro/pages/pending.dart';
 import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/shared_cart.dart';
-import 'package:maroro/pages/trends.dart';
 import 'package:maroro/pages/user_search.dart';
 import 'package:provider/provider.dart';
 
@@ -41,18 +40,18 @@ class _Screen1State extends State<Screen1> {
         case 0:
           page = const Mainscreen();
           break;
-        case 1:
+       /* case 1:
           page = const Trending();
-          break;
-        case 2:
+          break;*/
+        case 1:
           page = const Bundles();
           break;
-        case 3:
+        case 2:
           page = Chats(
             userType: widget.userType,
           );
           break;
-        case 4:
+        case 3:
           page = Profile(
             userType: widget.userType,
           );
@@ -102,6 +101,7 @@ class _Screen1State extends State<Screen1> {
                 right: 10,
                 child: Stack(children: [
                   FloatingActionButton(
+                    backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.6),
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Cart(cartType: CartType.self)));
                     },
@@ -137,6 +137,7 @@ class _Screen1State extends State<Screen1> {
                 right: 10,
                 child: Stack(children: [
                   FloatingActionButton(
+                    backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.6),
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Pending()));
                     },
@@ -181,7 +182,7 @@ class _Screen1State extends State<Screen1> {
         bottomNavigationBar: BottomNavigationBar(
           elevation: 10,
           //backgroundColor: const Color(0xFFF1E1D5),
-          selectedItemColor: accentColor,
+          selectedItemColor: Theme.of(context).primaryColorDark.withOpacity(0.8),
           unselectedItemColor: primaryColor,
           selectedFontSize: 10,
           currentIndex: selectedIndex,
@@ -189,8 +190,8 @@ class _Screen1State extends State<Screen1> {
           items: const [
             BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.speaker_zzz), label: 'Trending'),
+            /*BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.speaker_zzz), label: 'Trending'),*/
             BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.gift), label: 'CeleBundles'),
             BottomNavigationBarItem(

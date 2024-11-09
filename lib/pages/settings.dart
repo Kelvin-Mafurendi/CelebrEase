@@ -15,9 +15,9 @@ class Settings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
-    final profileData =
-        Provider.of<ChangeManager>(context, listen: false).profileData;
-
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String userId = auth.currentUser!.uid;
     // Variables for theme modes
     ThemeMode currentThemeMode = themeNotifier.themeMode;
 
@@ -87,25 +87,79 @@ class Settings extends StatelessWidget {
             style: GoogleFonts.lateef(),
           ),
           SizedBox(height: 10),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditProfile(
-                    isFirstSetup: false,
-                    userType: userType,
-                    initialData: const {},
+          StreamBuilder<QuerySnapshot>(
+              stream: firestore
+                  .collection(userType)
+                  .where('userId', isEqualTo: userId)
+                  .limit(1)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text('Something went wrong');
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData ||
+                    snapshot.data == null ||
+                    snapshot.data!.docs.isEmpty) {
+                  return ShaderMask(
+                    shaderCallback: (bounds) {
+                      return LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          accentColor,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      );
+                    },
+                    child: Text(
+                      'CelebrEaser',
+                      style: GoogleFonts.merienda(
+                        fontSize: 40,
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                }
+
+                // Assuming there is only one document returned (limit(1))
+                Map<String, dynamic> userProfile =
+                    snapshot.data!.docs.first.data() as Map<String, dynamic>;
+
+                String brandName =
+                    userProfile['business name'] as String? ?? 'Brand Name';
+
+                //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditProfile(
+                          isFirstSetup: brandName.isEmpty,
+                          userType: userType,
+                          initialData: const {},
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Edit Profile',
+                    textScaler: const TextScaler.linear(1.5),
+                    style: GoogleFonts.lateef(),
                   ),
-                ),
-              );
-            },
-            child: Text(
-              'Edit Profile',
-              textScaler: const TextScaler.linear(1.5),
-              style: GoogleFonts.lateef(),
-            ),
-          ),
+                );
+              }),
           SizedBox(height: 10),
           Text(
             'Change Password',

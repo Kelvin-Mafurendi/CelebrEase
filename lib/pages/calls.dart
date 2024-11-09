@@ -1,4 +1,7 @@
 // Call notification widget
+import 'package:flutter/material.dart';
+import 'package:maroro/pages/chart_screen.dart';
+
 class CallNotification extends StatelessWidget {
   final String callerName;
   final String callId;
@@ -6,12 +9,12 @@ class CallNotification extends StatelessWidget {
   final Function(bool) onResponse;
 
   const CallNotification({
-    Key? key,
+    super.key,
     required this.callerName,
     required this.callId,
     required this.callType,
     required this.onResponse,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,3 +58,4 @@ class CallNotification extends StatelessWidget {
     );
   }
 }
+

@@ -24,7 +24,7 @@ class _MyAdBannerState extends State<MyAdBanner> {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
 
-    // Fetch images and start auto-sliding when the data is ready
+    // Fetch images and start auto-sliding when data is ready
     getBannerImages().then((_) {
       _startAutoSliding();
     });
@@ -50,12 +50,12 @@ class _MyAdBannerState extends State<MyAdBanner> {
         setState(() {
           _currentPage++;
           if (_currentPage == bannerImages.length) {
-            _currentPage = 0;  // Loop back to the first page
+            _currentPage = 0; // Loop back to the first page
           }
           _pageController.animateToPage(
             _currentPage,
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.decelerate,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
           );
         });
       }
@@ -64,7 +64,7 @@ class _MyAdBannerState extends State<MyAdBanner> {
 
   @override
   void dispose() {
-    _timer?.cancel();  // Cancel the timer when the widget is disposed
+    _timer?.cancel(); // Cancel the timer when the widget is disposed
     _pageController.dispose();
     super.dispose();
   }
@@ -75,25 +75,69 @@ class _MyAdBannerState extends State<MyAdBanner> {
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.width * 0.5,
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,
-        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context).brightness == Brightness.light
+            ? stickerColor
+            : stickerColorDark,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: bannerImages.isNotEmpty
-          ? PageView.builder(
-              controller: _pageController,
-              itemCount: bannerImages.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.light?stickerColor:stickerColorDark,borderRadius: BorderRadius.circular(10)),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CachedNetworkImage(imageUrl: bannerImages[index],
-                      fit: BoxFit.fitWidth,)
-                      
-                    
+          ? Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: bannerImages.length,
+                  itemBuilder: (context, index) {
+                    return AnimatedOpacity(
+                      opacity: _currentPage == index ? 1.0 : 0.5,
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeInOut,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: bannerImages[index],
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Optional dot indicator
+                Positioned(
+                  bottom: 10,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      bannerImages.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 8,
+                        width: _currentPage == index ? 16 : 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
                   ),
-                );
-              },
+                ),
+              ],
             )
           : const Center(
               child: CircularProgressIndicator(),

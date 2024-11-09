@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:maroro/main.dart';
 import 'package:maroro/pages/landing_page.dart';
 import 'package:maroro/pages/offline.dart';
 import 'package:maroro/pages/screen1.dart';
@@ -175,8 +176,8 @@ class _AnimatedSplashTextState extends State<AnimatedSplashText>
           shaderCallback: (bounds) {
             return LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
+                Theme.of(context).primaryColorDark.withOpacity(0.8),
+                      accentColor,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

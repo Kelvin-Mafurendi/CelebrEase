@@ -11,10 +11,21 @@ import 'package:maroro/Provider/state_management.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/cart.dart';
+import 'package:maroro/pages/chart_screen.dart';
 import 'package:maroro/pages/shared_cart.dart';
 import 'package:maroro/pages/user_search.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+
+class VendorCredentials {
+  final String vendorId;
+  final String vendorName;
+
+  VendorCredentials({
+    required this.vendorId,
+    required this.vendorName,
+  });
+}
 
 class CartView extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -34,12 +45,15 @@ class CartView extends StatefulWidget {
   State<CartView> createState() => _CartViewState();
 }
 
-class _CartViewState extends State<CartView> {
+class _CartViewState extends State<CartView>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _rateLoaded = false;
   bool pending = false;
   bool confirmed = false;
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
   late Stream<DocumentSnapshot> pendingStream;
   late Stream<DocumentSnapshot> confirmationStream;
 
@@ -47,52 +61,44 @@ class _CartViewState extends State<CartView> {
   void initState() {
     super.initState();
     _loadRate();
-    // Initialize the pending status stream
-    pendingStream = _firestore
-        .collection('Pending')
-        .doc(widget.data['orderId'])
-        .snapshots();
+    _setupAnimations();
+    _setupStreams();
+  }
 
-    // Listen to the stream and update state properly
-    pendingStream.listen((snapshot) {
-      if (mounted) {
-        setState(() {
-          pending = snapshot.exists;
-        });
-      }
-    });
-    confirmationStream = _firestore
-        .collection('Confirmations')
-        .doc(widget.data['orderId'])
-        .snapshots();
+  Future<VendorCredentials?> vendorCreds(String packageId) async {
+    try {
+      final stream1 = await _firestore
+          .collection('Packages')
+          .where('packageId', isEqualTo: packageId)
+          .limit(1)
+          .get();
 
-    // Listen to the stream and update state properly
-    confirmationStream.listen((snapshot) {
-      if (mounted) {
-        setState(() {
-          confirmed = snapshot.exists;
-        });
-        if (confirmed) {
-          DelightToastBar(
-            builder: (context) => ToastCard(
-              title: Text(
-                'Cart',
-                style: GoogleFonts.lateef(),
-              ),
-              subtitle: Text(
-                "Booking Confirmed, ready for check out!",
-                style: GoogleFonts.lateef(),
-              ),
-              leading: Icon(CupertinoIcons.info),
-              trailing: Text(
-                DateTime.now().toString(),
-                style: GoogleFonts.lateef(),
-              ),
-            ),
-          ).show(context);
-        }
+      if (stream1.docs.isEmpty) {
+        throw Exception('Package not found');
       }
-    });
+
+      String vendorId = stream1.docs.first.data()['userId'];
+
+      final stream2 = await _firestore
+          .collection('Vendors')
+          .where('userId', isEqualTo: vendorId)
+          .limit(1)
+          .get();
+
+      if (stream2.docs.isEmpty) {
+        throw Exception('Vendor not found');
+      }
+
+      String vendorName = stream2.docs.first.data()['business name'];
+
+      return VendorCredentials(
+        vendorId: vendorId,
+        vendorName: vendorName,
+      );
+    } catch (e) {
+      print('Error fetching vendor credentials: $e');
+      return null;
+    }
   }
 
   Future<void> _shareBooking() async {
@@ -348,407 +354,491 @@ class _CartViewState extends State<CartView> {
     );
   }
 
+  void _setupAnimations() {
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _controller.forward();
+  }
+
+  void _setupStreams() {
+    pendingStream = _firestore
+        .collection('Pending')
+        .doc(widget.data['orderId'])
+        .snapshots();
+
+    pendingStream.listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          pending = snapshot.exists;
+        });
+      }
+    });
+
+    confirmationStream = _firestore
+        .collection('Confirmations')
+        .doc(widget.data['orderId'])
+        .snapshots();
+
+    confirmationStream.listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          confirmed = snapshot.exists;
+        });
+        if (confirmed) {
+          _showConfirmationToast();
+        }
+      }
+    });
+  }
+
+  void _showConfirmationToast() {
+    DelightToastBar(
+      builder: (context) => ToastCard(
+        title: Text('Cart', style: GoogleFonts.lateef()),
+        subtitle: Text(
+          "Booking Confirmed, ready for check out!",
+          style: GoogleFonts.lateef(),
+        ),
+        leading:
+            const Icon(CupertinoIcons.check_mark_circled, color: Colors.green),
+        trailing: Text(
+          DateFormat('HH:mm').format(DateTime.now()),
+          style: GoogleFonts.lateef(),
+        ),
+      ),
+    ).show(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: StreamBuilder<DocumentSnapshot>(
-        stream: _firestore
-            .collection('Packages')
-            .doc(widget.data['package id'])
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Text('Something went wrong');
-          }
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: _firestore
+              .collection('Packages')
+              .doc(widget.data['package id'])
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error!'));
+            }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            }
 
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Text('Package not found');
-          }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return Center(child: Text('Not Found!'));
+            }
 
-          Map<String, dynamic> packageData =
-              snapshot.data!.data() as Map<String, dynamic>;
+            Map<String, dynamic> packageData =
+                snapshot.data!.data() as Map<String, dynamic>;
 
-          return Stack(children: [
-            Card(
-              elevation: 10,
-              shadowColor: secondaryColor,
-              surfaceTintColor: Theme.of(context).cardColor,
-              child: Container(
-                width: MediaQuery.of(context).size.width * 1.5,
-                padding: const EdgeInsets.all(15),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        //right: 0,
-                        bottom: 0,
-                        left: 0,
-                        child: confirmed
-                            ? RateWidget(data: widget.data)
-                            : Text(
-                                packageData['rate'].toString().split('per')[0],
-                                textScaler: const TextScaler.linear(4),
-                                style:
-                                    GoogleFonts.lateef(color: Colors.grey[500]),
-                              ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        left: MediaQuery.of(context).size.width * 0.3,
-                        //right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              packageData['serviceType'] ?? 'Unknown',
-                              style: GoogleFonts.lateef(
-                                  fontSize: 20, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const SizedBox(
-                            height: 30,
-                          ),
-                          Text(
-                            packageData['packageName'] ?? 'No name',
-                            style: GoogleFonts.lateef(fontSize: 18),
-                          ),
-                          const SizedBox(
-                            height: 6,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: CachedNetworkImage(
-                                      imageUrl: packageData['packagePic'],
-                                      fit: BoxFit.cover,
-                                      width: MediaQuery.of(context).size.width *
-                                          0.275,
-                                      height:
-                                          MediaQuery.of(context).size.width *
-                                              0.275,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  StreamBuilder<QuerySnapshot>(
-                                    stream: _firestore
-                                        .collection('Vendors')
-                                        .where('userId',
-                                            isEqualTo: packageData['userId'])
-                                        .limit(1)
-                                        .snapshots(),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData) {
-                                        return const CircularProgressIndicator();
-                                      }
+            return _buildMainCard(packageData);
+          },
+        ),
+      ),
+    );
+  }
 
-                                      if (snapshot.data!.docs.isNotEmpty) {
-                                        final vendorData =
-                                            snapshot.data!.docs.first.data() as Map<String,dynamic>;
-                                        final businessName =
-                                            vendorData['business name']
-                                                as String;
-                                        final address =
-                                            vendorData['address'] as String;
+  Widget _buildMainCard(Map<String, dynamic> packageData) {
+    return Card(
+      elevation: 8,
+      shadowColor: secondaryColor.withOpacity(0.4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).cardColor,
+              Theme.of(context).cardColor.withOpacity(0.95),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            _buildCardContent(packageData),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: _connectVendor,
+                child: _buildStatusBadge(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                                        return SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.275,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                businessName,
-                                                style: GoogleFonts.lateef(
-                                                    fontWeight:
-                                                        FontWeight.w400),
-                                              ),
-                                              Text(
-                                                widget.data['address'] !=
-                                                        'Vendor Location'
-                                                    ? widget.data['address']
-                                                    : address,
-                                                style: GoogleFonts.lateef(
-                                                    fontWeight:
-                                                        FontWeight.w100),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
+  Widget _buildCardContent(Map<String, dynamic> packageData) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(packageData),
+          const SizedBox(height: 20),
+          _buildMainInfo(packageData),
+          const SizedBox(height: 20),
+          _buildDetailsSection(),
+          const SizedBox(height: 16),
+          _buildFooter(packageData),
+        ],
+      ),
+    );
+  }
 
-                                      return const SizedBox.shrink();
-                                    },
-                                  ),
-                                  const SizedBox(
-                                    height: 80,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                width: 30,
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Date: ",
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400),
-                                      ),
-                                      Text(
-                                        DateFormat('EEEE, MMMM d, y').format(
-                                            (widget.data['event date']
-                                                    as Timestamp)
-                                                .toDate() // Convert Timestamp to DateTime
-                                            ), // Convert to DateTime and format
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w300),
-                                      ),
-                                    ],
-                                  ),
-
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Time: ",
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      Text(
-                                        "${widget.data['start']} to ${widget.data['end']}",
-                                        style: GoogleFonts.lateef(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w300),
-                                      ),
-                                    ],
-                                  ),
-                                  if (widget.data['guestCount'] != null)
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Guests: ",
-                                          style: GoogleFonts.lateef(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                        Text(
-                                          "${widget.data['guestCount']}",
-                                          style: GoogleFonts.lateef(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w300),
-                                        ),
-                                      ],
-                                    ),
-                                  // Add other details from booking form here
-                                  for (var key in widget.data.keys)
-                                    if (key != 'event date' &&
-                                        key != 'start' &&
-                                        key != 'end' &&
-                                        key != 'guests' &&
-                                        key != 'package id' &&
-                                        key != 'name' &&
-                                        key != 'address' &&
-                                        key != 'orderId' &&
-                                        key != 'userId' &&
-                                        key != 'selected_slots' &&
-                                        key != 'guestCount' &&
-                                        key != 'vendorId' &&
-                                        key != 'createdAt' &&
-                                        key != 'cartId' &&
-                                        key != 'hidden' &&
-                                        key != 'sharedAt' &&
-                                        key != 'partnerIds' &&
-                                        key != 'timeStamp')
-                                      _buildDetailRow(
-                                        key,
-                                        widget.data[key].toString().replaceAll(
-                                            RegExp(r'[\[\]]'),
-                                            ''), //strip all squre brackets
-                                      ),
-
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.width *
-                                        0.285,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+  Widget _buildHeader(Map<String, dynamic> packageData) {
+    return Row(
+      children: [
+        Hero(
+          tag: 'package-${widget.data['package id']}',
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: CachedNetworkImage(
+              imageUrl: packageData['packagePic'],
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(),
                 ),
               ),
             ),
-            Positioned(
-              right: 10,
-              //top: 0,
-              top: 10,
-              child: PopupMenuButton(
-                //color: secondaryColor,
-                iconSize: 30,
-                iconColor: Colors.grey[500],
-                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                  PopupMenuItem(
-                    //value: SampleItem.itemOne,
-                    child: Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(FluentSystemIcons.ic_fluent_edit_regular),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('Edit Booking',
-                            style: GoogleFonts.lateef(fontSize: 20)),
-                      ],
-                    ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                packageData['packageName'] ?? 'No name',
+                style: GoogleFonts.lateef(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                packageData['serviceType'] ?? 'Unknown',
+                style: GoogleFonts.lateef(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainInfo(Map<String, dynamic> packageData) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow(
+            Icons.calendar_today,
+            'Date',
+            DateFormat('EEEE, MMMM d, y')
+                .format((widget.data['event date'] as Timestamp).toDate()),
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            Icons.access_time,
+            'Time',
+            "${widget.data['start']} to ${widget.data['end']}",
+          ),
+          if (widget.data['guestCount'] != null) ...[
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              Icons.people,
+              'Guests',
+              "${widget.data['guestCount']}",
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: primaryColor),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: GoogleFonts.lateef(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.lateef(
+            fontSize: 16,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsSection() {
+    return Stack(children: [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Additional Details',
+              style: GoogleFonts.lateef(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildAdditionalDetails(),
+          ],
+        ),
+      ),
+      Positioned(
+        right: 5,
+        top: 5,
+        child: PopupMenuButton(
+          //color: secondaryColor,
+          iconSize: 30,
+          iconColor: Colors.grey[500],
+          itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+            PopupMenuItem(
+              //value: SampleItem.itemOne,
+              child: Row(
+                //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(FluentSystemIcons.ic_fluent_edit_regular),
+                  SizedBox(
+                    width: 10,
                   ),
-                   
-                  if (widget.cartType == CartType.self)
-                    PopupMenuItem(
-                      //value: SampleItem.itemOne,
-                      child: Row(
-                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(FluentSystemIcons.ic_fluent_chat_regular),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text('Chat With Vendor',
-                              style: GoogleFonts.lateef(fontSize: 20)),
-                        ],
-                      ),
-                    ),
-                   
-                  if (widget.cartType == CartType.self)
-                    PopupMenuItem(
-                      onTap: _shareBooking,
-                      //value: SampleItem.itemOne,
-                      child: Row(
-                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(FluentSystemIcons.ic_fluent_share_regular),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text(
-                            'Share Booking',
-                            style: GoogleFonts.lateef(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                    ),
-                   
-                  PopupMenuItem(
-                    //value: SampleItem.itemOne,
-                    child: Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(FluentSystemIcons.ic_fluent_bookmark_regular),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('Bookmark Package',
-                            style: GoogleFonts.lateef(fontSize: 20)),
-                      ],
-                    ),
-                  ),
-                   
-                  if (widget.cartType == CartType.self)
-                    PopupMenuItem(
-                      onTap: () {
-                        String? orderId = widget.data['orderId'];
-                        _showDeleteConfirmation(context, orderId!);
-                      },
-                      //value: SampleItem.itemOne,
-                      child: Row(
-                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            FluentSystemIcons.ic_fluent_delete_regular,
-                            color: primaryColor,
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text(
-                            'Delete Booking',
-                            style: GoogleFonts.lateef(
-                                color: primaryColor, fontSize: 20),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Text('Edit Booking', style: GoogleFonts.lateef(fontSize: 20)),
                 ],
               ),
             ),
-            Positioned(
-                bottom: 40,
-                right: 20,
-                child: InkWell(
-                  onTap: _connectVendor,
-                  child: Column(
-                    children: [
-                      Icon(
-                        FluentSystemIcons.ic_fluent_checkmark_circle_regular,
-                        color: pending && !confirmed
-                            ? Colors.grey
-                            : !pending && !confirmed
-                                ? primaryColor
-                                : accentColor,
-                      ),
-                      //const SizedBox(height: 10),
-                      Text(
-                        pending && !confirmed
-                            ? 'Pending'
-                            : !pending && !confirmed
-                                ? 'Confirm'
-                                : 'Confirmed',
-                        style: GoogleFonts.lateef(
-                          color: pending && !confirmed
-                              ? Colors.grey
-                              : !pending && !confirmed
-                                  ? primaryColor
-                                  : accentColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+            if (widget.cartType == CartType.self)
+              PopupMenuItem(
+                onTap: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    if (context.mounted) {
+                      // Show loading dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => Center(
+                          child: CircularProgressIndicator(),
                         ),
-                      ),
-                    ],
+                      );
+
+                      try {
+                        // Fetch vendor credentials
+                        VendorCredentials? credentials =
+                            await vendorCreds(widget.data['package id']);
+
+                        // Close loading dialog
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close loading dialog
+                        }
+
+                        if (credentials != null && context.mounted) {
+                          // Call your existing _startChat method
+                          await _startChat(
+                            context,
+                            credentials.vendorId,
+                            credentials.vendorName,
+                          );
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Unable to start chat. Please try again.'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        // Close loading dialog and show error
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('An error occurred. Please try again.'),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  });
+                },
+                child: Row(
+                  children: [
+                    Icon(FluentSystemIcons.ic_fluent_chat_regular),
+                    SizedBox(width: 10),
+                    Text(
+                      'Chat With Vendor',
+                      style: GoogleFonts.lateef(fontSize: 20),
+                    ),
+                  ],
+                ),
+              ),
+            if (widget.cartType == CartType.self)
+              PopupMenuItem(
+                onTap: _shareBooking,
+                //value: SampleItem.itemOne,
+                child: Row(
+                  //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(FluentSystemIcons.ic_fluent_share_regular),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      'Share Booking',
+                      style: GoogleFonts.lateef(fontSize: 20),
+                    ),
+                  ],
+                ),
+              ),
+            PopupMenuItem(
+              //value: SampleItem.itemOne,
+              child: Row(
+                //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(FluentSystemIcons.ic_fluent_bookmark_regular),
+                  SizedBox(
+                    width: 10,
                   ),
-                ))
-          ]);
-        },
+                  Text('Bookmark Package',
+                      style: GoogleFonts.lateef(fontSize: 20)),
+                ],
+              ),
+            ),
+            if (widget.cartType == CartType.self)
+              PopupMenuItem(
+                onTap: () {
+                  String? orderId = widget.data['orderId'];
+                  _showDeleteConfirmation(context, orderId!);
+                },
+                //value: SampleItem.itemOne,
+                child: Row(
+                  //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(
+                      FluentSystemIcons.ic_fluent_delete_regular,
+                      color: primaryColor,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      'Delete Booking',
+                      style:
+                          GoogleFonts.lateef(color: primaryColor, fontSize: 20),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      )
+    ]);
+  }
+
+ Future<void> _startChat(
+    BuildContext context, String vendorId, String vendorName) async {
+  final currentUserId = _auth.currentUser!.uid;
+  final chatId = currentUserId.compareTo(vendorId) < 0
+      ? '${currentUserId}_$vendorId'
+      : '${vendorId}_$currentUserId';
+
+  final chatDoc = await _firestore.collection('chats').doc(chatId).get();
+
+  if (!chatDoc.exists) {
+    // Create a new chat document if it doesn't exist
+    await _firestore.collection('chats').doc(chatId).set({
+      'participants': [currentUserId, vendorId],
+      'lastMessage': '',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Navigate to the ChatScreen
+  if (context.mounted) {  // Add this check for safety
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
+          chatId: chatId,
+          otherUserId: vendorId,
+          otherUserName: vendorName,
+        ),
       ),
+    );
+  }
+}
+  Widget _buildAdditionalDetails() {
+    return Column(
+      children: widget.data.entries
+          .where((entry) => ![
+                'event date',
+                'start',
+                'end',
+                'guests',
+                'package id',
+                'name',
+                'address',
+                'orderId',
+                'userId',
+                'selected_slots',
+                'guestCount',
+                'vendorId',
+                'createdAt',
+                'cartId',
+                'hidden',
+                'sharedAt',
+                'partnerIds',
+                'timeStamp'
+              ].contains(entry.key))
+          .map((entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: _buildDetailRow(
+                  entry.key,
+                  entry.value.toString().replaceAll(RegExp(r'[\[\]]'), ''),
+                ),
+              ))
+          .toList(),
     );
   }
 
@@ -759,55 +849,104 @@ class _CartViewState extends State<CartView> {
           "$label: ",
           style: GoogleFonts.lateef(fontSize: 15, fontWeight: FontWeight.w400),
         ),
-        Text(
-          value,
-          style: GoogleFonts.lateef(fontSize: 15, fontWeight: FontWeight.w300),
+        SizedBox(
+          width: 10,
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style:
+                GoogleFonts.lateef(fontSize: 15, fontWeight: FontWeight.w300),
+          ),
         ),
       ],
     );
   }
-}
 
-class RateWidget extends StatelessWidget {
-  final Map<String, dynamic> data;
-
-  const RateWidget({super.key, required this.data});
-
-  Future<String> getRate() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Cart')
-        .where('orderId', isEqualTo: data['orderId'])
-        .get();
-
-    if (snapshot.docs.isNotEmpty) {
-      String rate = snapshot.docs.first.data()['rate'];
-      return rate.split('per')[0].trim(); // Process as needed
-    } else {
-      return "Rate not found";
-    }
+  Widget _buildFooter(Map<String, dynamic> packageData) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            confirmed
+                ? 'Confirmed'
+                : pending
+                    ? 'Vendor Confirmation Pending'
+                    : 'Unconfirmed',
+            style: GoogleFonts.lateef(
+              fontSize: 18,
+              color: confirmed
+                  ? Colors.green
+                  : pending
+                      ? Colors.orange
+                      : Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Text(
+          packageData['rate'].toString().split('per')[0],
+          style: GoogleFonts.lateef(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+      ],
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: getRate(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text(
-            "Loading...",
-            textScaler: const TextScaler.linear(3),
-            style: GoogleFonts.lateef(color: Colors.grey[500]),
-          ); // Optional loading indicator
-        } else if (snapshot.hasError) {
-          return Text("Error: ${snapshot.error}");
-        } else {
-          return Text(
-            "${snapshot.data}",
-            textScaler: const TextScaler.linear(4),
-            style: GoogleFonts.lateef(color: Colors.grey[500]),
-          );
-        }
-      },
+  Widget _buildStatusBadge() {
+    return Positioned(
+      top: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: confirmed
+              ? Colors.green
+              : pending
+                  ? Colors.orange
+                  : Colors.grey,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              confirmed
+                  ? Icons.check_circle
+                  : pending
+                      ? Icons.pending
+                      : Icons.share,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              confirmed
+                  ? 'Confirmed'
+                  : pending
+                      ? 'Pending'
+                      : 'Confirm',
+              style: GoogleFonts.lateef(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  // ... (keep existing helper methods and functionality)
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

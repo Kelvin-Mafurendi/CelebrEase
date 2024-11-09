@@ -1,4 +1,5 @@
 // chat_types.dart
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -10,6 +11,7 @@ import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:jitsi_meet_wrapper/jitsi_meet_wrapper.dart';
 import 'package:maroro/main.dart';
 import 'package:maroro/modules/some_classes.dart';
+import 'package:maroro/pages/calls.dart';
 import 'package:maroro/pages/media_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_compress/video_compress.dart';
@@ -18,6 +20,9 @@ import 'package:path/path.dart' as path;
 enum MessageType { text, media, proposal, milestone, checklist }
 
 enum CallType { audio, video }
+
+// Call status enum
+enum CallStatus { pending, accepted, declined, ended }
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -38,9 +43,11 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, CallHandler {
   late TabController _tabController;
+  @override
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  @override
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late ChatUser _currentUser;
   late Stream<QuerySnapshot> _messagesStream;
@@ -50,6 +57,7 @@ class _ChatScreenState extends State<ChatScreen>
     "Here's our pricing package",
   ];
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
   List<ChatMessage> _processMessages(List<QueryDocumentSnapshot> docs) {
     return docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>;
@@ -195,7 +203,10 @@ class _ChatScreenState extends State<ChatScreen>
             children: [
               TextButton(
                 onPressed: () => _handleProposalResponse(details, true),
-                child: Text('Accept',style: TextStyle(color: Colors.green),),
+                child: Text(
+                  'Accept',
+                  style: TextStyle(color: Colors.green),
+                ),
               ),
               SizedBox(width: 8),
               TextButton(
@@ -699,6 +710,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
+    disposeCallListener(); // Add this line
     _tabController.dispose();
     super.dispose();
   }
@@ -709,6 +721,7 @@ class _ChatScreenState extends State<ChatScreen>
     _tabController = TabController(length: 3, vsync: this);
     _setupUsers();
     _setupMessageStream();
+    initializeCallListener(context); // Add this line
   }
 
   void _setupUsers() {
@@ -752,22 +765,18 @@ class _ChatScreenState extends State<ChatScreen>
                 _initiateCall(CallType.audio);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.link),
-              title: Text('Share Call Link'),
-              onTap: () {
-                Navigator.pop(context);
-                _shareCallLink();
-              },
-            ),
+            
           ],
         ),
       ),
     );
   }
 
-  Future<void> _initiateCall(CallType callType) async {
+  Future _initiateCall(CallType callType) async {
     try {
+      // Generate room name
+      final roomName = widget.chatId;
+
       // Create call record in Firestore
       final callDoc = await _firestore.collection('calls').add({
         'callerId': _currentUser.id,
@@ -777,6 +786,7 @@ class _ChatScreenState extends State<ChatScreen>
         'type': callType.toString(),
         'status': 'pending',
         'timestamp': FieldValue.serverTimestamp(),
+        'roomName': roomName, // Add room name to call data
       });
 
       // Send notification to receiver
@@ -786,6 +796,7 @@ class _ChatScreenState extends State<ChatScreen>
         'title': '${callType == CallType.video ? 'Video' : 'Audio'} Call',
         'message': '${_currentUser.firstName} is calling you',
         'callId': callDoc.id,
+        'roomName': roomName, // Add room name to notification
         'timestamp': FieldValue.serverTimestamp(),
         'read': false,
       });
@@ -807,6 +818,7 @@ class _ChatScreenState extends State<ChatScreen>
       );
     }
   }
+
 
   Future<void> _shareCallLink() async {
     final roomName =
@@ -837,7 +849,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   Future<void> _startVideoCall() async {
-    final roomName = 'room_${widget.chatId}';
+    final roomName = widget.chatId;
 
     var options = JitsiMeetingOptions(
       roomNameOrUrl: roomName,
@@ -1148,6 +1160,7 @@ class _ChatScreenState extends State<ChatScreen>
           bottom: 16,
           right: 16,
           child: FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.6),
             onPressed: _createMilestone,
             tooltip: 'Create Milestone',
             child: Icon(Icons.add),
@@ -1158,41 +1171,5 @@ class _ChatScreenState extends State<ChatScreen>
   }
 }
 
-// Add ProposalFeedback widget
-class ProposalFeedback extends StatelessWidget {
-  final Map<String, dynamic> proposal;
-  final bool accepted;
 
-  const ProposalFeedback({
-    super.key,
-    required this.proposal,
-    required this.accepted,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: accepted ? Colors.green[100] : Colors.red[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            accepted ? Icons.check_circle : Icons.cancel,
-            color: accepted ? Colors.green : Colors.red,
-          ),
-          SizedBox(width: 8),
-          Text(
-            accepted ? 'Proposal Accepted' : 'Proposal Declined',
-            style: TextStyle(
-              color: accepted ? Colors.green[900] : Colors.red[900],
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Call handler mixin

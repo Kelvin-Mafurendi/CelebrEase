@@ -1,6 +1,10 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:jitsi_meet_wrapper/jitsi_meet_wrapper.dart';
+import 'package:maroro/pages/calls.dart';
 import 'package:maroro/pages/chart_screen.dart';
 
 class PlanningGroup {
@@ -96,6 +100,148 @@ class _ProposalDialogState extends State<ProposalDialog> {
       ],
     );
   }
+}
+// Add ProposalFeedback widget
+class ProposalFeedback extends StatelessWidget {
+  final Map<String, dynamic> proposal;
+  final bool accepted;
+
+  const ProposalFeedback({
+    super.key,
+    required this.proposal,
+    required this.accepted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: accepted ? Colors.green[100] : Colors.red[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            accepted ? Icons.check_circle : Icons.cancel,
+            color: accepted ? Colors.green : Colors.red,
+          ),
+          SizedBox(width: 8),
+          Text(
+            accepted ? 'Proposal Accepted' : 'Proposal Declined',
+            style: TextStyle(
+              color: accepted ? Colors.green[900] : Colors.red[900],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+mixin CallHandler {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  StreamSubscription<QuerySnapshot>? _callSubscription;
+
+  void initializeCallListener(BuildContext context) {
+    final currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null) return;
+
+    _callSubscription = _firestore
+        .collection('calls')
+        .where('receiverId', isEqualTo: currentUserId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          _handleIncomingCall(context, change.doc);
+        }
+      }
+    });
+  }
+
+  void disposeCallListener() {
+    _callSubscription?.cancel();
+  }
+
+  void _handleIncomingCall(BuildContext context, DocumentSnapshot callDoc) {
+    final callData = callDoc.data() as Map<String, dynamic>;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CallNotification(
+        callerName: callData['callerName'],
+        callId: callDoc.id,
+        callType: callData['type'] == 'CallType.video'
+            ? CallType.video
+            : CallType.audio,
+        onResponse: (accepted) => _handleCallResponse(
+          context,
+          callDoc.id,
+          accepted,
+          callData,
+        ),
+      ),
+    );
+  }
+
+  Future _handleCallResponse(
+  BuildContext context,
+  String callId,
+  bool accepted,
+  Map callData,
+) async {
+  // Close the notification dialog
+  Navigator.of(context).pop();
+
+  try {
+    // Update call status
+    await _firestore.collection('calls').doc(callId).update({
+      'status': accepted ? 'accepted' : 'declined',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+
+    // If accepted, join the call
+    if (accepted) {
+      final roomName = callData['roomName']; // Get room name from call data
+
+      var options = JitsiMeetingOptions(
+        roomNameOrUrl: roomName,
+        userDisplayName: _auth.currentUser?.displayName ?? 'User',
+        userEmail: _auth.currentUser?.email,
+        isAudioMuted: false,
+        isVideoMuted: callData['type'] != 'CallType.video',
+      );
+
+      await JitsiMeetWrapper.joinMeeting(options: options);
+
+      // Update call status to ended after call
+      await _firestore.collection('calls').doc(callId).update({
+        'status': 'ended',
+        'endedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Notify caller of the response
+    await _firestore.collection('notifications').add({
+      'userId': callData['callerId'],
+      'type': 'call_response',
+      'title': accepted ? 'Call Accepted' : 'Call Declined',
+      'message':
+          '${_auth.currentUser?.displayName ?? 'User'} has ${accepted ? 'accepted' : 'declined'} your call',
+      'callId': callId,
+      'timestamp': FieldValue.serverTimestamp(),
+      'read': false,
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error handling call: $e')),
+    );
+  }
+}
 }
 
 // timeline_tile.dart
@@ -440,3 +586,4 @@ class _CallScreenState extends State<CallScreen> {
     );
   }
 }
+

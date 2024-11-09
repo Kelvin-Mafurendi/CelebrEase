@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/Auth/auth_gate.dart';
 import 'package:maroro/Auth/auth_service.dart';
-import 'package:maroro/Auth/login.dart';
-import 'package:maroro/Auth/signup.dart';
-import 'package:maroro/main.dart';
 import 'package:maroro/modules/mybutton.dart';
 
 class LogIn extends StatefulWidget {
@@ -24,79 +21,64 @@ class _LogInState extends State<LogIn> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<String> getUserType(String userId) async {
-    // Check if the user exists in the 'Customers' collection
-    final customerQuerySnapshot = await FirebaseFirestore.instance
-        .collection('Customers')
+    // Query 'Customers' collection
+    final customerQuery = await _firestore.collection('Customers')
         .where('userId', isEqualTo: userId)
-        .limit(1) // Limit to one result for efficiency
+        .limit(1)
         .get();
+    if (customerQuery.docs.isNotEmpty) return 'Customers';
 
-    if (customerQuerySnapshot.docs.isNotEmpty) {
-      return 'Customers';
-    }
-
-    // If not found in 'Customers', check the 'Vendors' collection
-    final vendorQuerySnapshot = await FirebaseFirestore.instance
-        .collection('Vendors')
+    // Fallback to 'Vendors' collection if not found in 'Customers'
+    final vendorQuery = await _firestore.collection('Vendors')
         .where('userId', isEqualTo: userId)
-        .limit(1) // Limit to one result for efficiency
+        .limit(1)
         .get();
+    if (vendorQuery.docs.isNotEmpty) return 'Vendors';
 
-    if (vendorQuerySnapshot.docs.isNotEmpty) {
-      return 'Vendors';
-    }
-
-    // Return a default value if not found in either collection
     return 'User not found';
   }
 
   Future<void> login(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Show loading indicator
+      // Display a loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Create instance of auth
-      final authService = AuthService();
-
       try {
-        // Try to sign in
+        // Authenticate user
+        final authService = AuthService();
         UserCredential cred = await authService.signInwithEmailPassword(
           emailController.text.trim(),
           passwordController.text.trim(),
         );
 
-        // Remove loading indicator
+        // Dismiss loading indicator
         if (context.mounted) Navigator.of(context).pop();
 
-        // Navigate to first page, replacing the login page
+        // Navigate user based on their type
         if (context.mounted) {
-          String userId = cred.user!.uid.toString();
+          String userId = cred.user!.uid;
           String userType = await getUserType(userId);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (context) => AuthGate(userType: userType)),
-            (route) => false,
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => AuthGate(userType: userType)),
           );
         }
       } catch (e) {
-        // Remove loading indicator
+        // Handle error scenario gracefully
         if (context.mounted) Navigator.of(context).pop();
-
-        // Show error dialog
         if (context.mounted) {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Login Error'),
+              title: const Text('Login Error', style: TextStyle(color: Colors.red)),
               content: Text(e.toString()),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: const Text('OK', style: TextStyle(color: Colors.blue)),
                 ),
               ],
             ),
@@ -108,136 +90,121 @@ class _LogInState extends State<LogIn> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      scrollDirection: Axis.vertical,
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          stretch: true,
-          floating: true,
-          expandedHeight: 300,
-          flexibleSpace: FlexibleSpaceBar(
-            centerTitle: true,
-            background: Container(
-              decoration: const BoxDecoration(
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            stretch: true,
+            expandedHeight: 300,
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              background: Container(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                      colors: [primaryColor, secondaryColor, accentColor])),
-            ),
-            title: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all()),
-                child: Text(
-                  'CelebrEase',
-                  style: GoogleFonts.merienda(fontSize: 30),
-                )),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 80),
-                const Text('Sign In', style: TextStyle(fontSize: 25)),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 15),
-                  child: CircleAvatar(
-                    radius: 100,
-                    backgroundImage: CachedNetworkImageProvider(
-                        'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'),
+                    colors: [Color(0xFF0093E9), Color(0xFF80D0C7)], // Improved gradient colors
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
+              ),
+              title: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Text(
+                  'CelebrEase',
+                  style: GoogleFonts.merienda(fontSize: 32, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 50),
+                    const Text('Sign In', textAlign: TextAlign.center, style: TextStyle(fontSize: 26)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: CircleAvatar(
+                        radius: 80,
+                        backgroundImage: CachedNetworkImageProvider(
+                          'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png',
+                        ),
                       ),
                     ),
-                    validator: (value) {
+                    _buildTextField('Email', emailController, false, (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
                       return null;
-                    },
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: TextFormField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                      ),
-                    ),
-                    validator: (value) {
+                    }),
+                    const SizedBox(height: 15),
+                    _buildTextField('Password', passwordController, true, (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
                       }
                       return null;
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
+                    }),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
                         onPressed: () {
                           // Add forgot password functionality here
                         },
-                        child: const Text('Forgot Password?'),
-                      )
-                    ],
-                  ),
+                        child: const Text('Forgot Password?', style: TextStyle(color: Colors.blue)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    MyButton(todo: 'Login', onTap: () => login(context)),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Have No Account? ', style: TextStyle(color: Colors.black87)),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/SignUp');
+                          },
+                          child: const Text('Sign Up', style: TextStyle(color: Colors.blue)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
+                  ],
                 ),
-                MyButton(todo: 'Login', onTap: () => login(context)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Have No Account?',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      const SizedBox(width: 20),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, '/SignUp');
-                        },
-                        child: const Text('Sign Up'),
-                      ),
-                    ],
-                  ),
-                )
-              ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Padding _buildTextField(
+      String hintText, TextEditingController controller, bool isObscure, String? Function(String?) validator) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isObscure,
+        decoration: InputDecoration(
+          hintText: hintText,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        const SliverToBoxAdapter(
-          child: SizedBox(
-            height: 100,
-          ),
-        ),
-      ],
+        validator: validator,
+      ),
     );
   }
 }

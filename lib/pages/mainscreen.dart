@@ -53,8 +53,8 @@ class _MainscreenState extends State<Mainscreen> {
               shaderCallback: (bounds) {
                 return LinearGradient(
                   colors: [
-                    Theme.of(context).colorScheme.primary, // Primary Color
-                    accentColor, // Accent Color
+                    Theme.of(context).primaryColorDark.withOpacity(0.8),
+                      accentColor,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -203,27 +203,48 @@ class _MainscreenState extends State<Mainscreen> {
                     return Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FlashAdView(
-                                ads: activeAds,
-                                initialIndex: index,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FlashAdView(
+                                  ads: activeAds,
+                                  initialIndex: index,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                      0.2), // Adjust the shadow color
+                                  blurRadius: 15,
+                                  spreadRadius: 5,
+                                  offset:
+                                      Offset(0, 8), // Positioning the shadow
+                                ),
+                              ],
+                              border: Border.all(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.white
+                                    : Colors.grey[700]!,
+                                width: 4, // Thickness of the border
                               ),
                             ),
-                          );
-                        },
-                        child: CircleAvatar(
-                          minRadius: 100,
-                          backgroundColor:
-                              Theme.of(context).brightness == Brightness.light
+                            child: CircleAvatar(
+                              minRadius: 100,
+                              backgroundColor: Theme.of(context).brightness ==
+                                      Brightness.light
                                   ? stickerColor
                                   : stickerColorDark,
-                          backgroundImage:
-                              CachedNetworkImageProvider(adData['adPic']),
-                        ),
-                      ),
+                              backgroundImage:
+                                  CachedNetworkImageProvider(adData['adPic']),
+                            ),
+                          )),
                     );
                   },
                 ),

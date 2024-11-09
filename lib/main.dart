@@ -27,10 +27,10 @@ import 'package:maroro/pages/seller_profile.dart';
 import 'package:maroro/pages/screen1.dart';
 import 'package:maroro/pages/settings.dart';
 import 'package:maroro/pages/shared_cart.dart';
-import 'package:maroro/pages/trends.dart';
+
 import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
-
+// Color constants remain the same for light mode
 const textColor = Color(0xFF0d0506);
 const backgroundColor = Color.fromARGB(255, 242, 255, 231);
 const primaryColor = Color(0xFFbb5355);
@@ -44,6 +44,7 @@ const profileCardColor = Color(0xFFEFD7D7);
 const stickerColorDark = Color(0xFF4A4743);
 const profileCardColorDark = Color(0xFF5D4B4B);
 
+// Enhanced light mode ColorScheme
 const colorScheme = ColorScheme(
   brightness: Brightness.light,
   background: backgroundColor,
@@ -58,40 +59,105 @@ const colorScheme = ColorScheme(
   onSurface: textColor,
   error: Color(0xffB3261E),
   onError: Color(0xffFFFFFF),
+  // Adding surface variations for depth
+  surfaceVariant: Color(0xFFE7F0D8),
+  onSurfaceVariant: Color(0xFF121212),
+  outline: Color(0xFF85876F),
 );
 
+// Enhanced dark theme
 ThemeData darkTheme = ThemeData(
+  useMaterial3: true,
   brightness: Brightness.dark,
   colorScheme: const ColorScheme(
     brightness: Brightness.dark,
-    background: Color(0xFF070303),
-    onBackground: Color(0xFFf9f0f1),
-    primary: Color(0xFFab4446),
-    onPrimary: Color(0xFFf9f0f1),
-    secondary: Color(0xFF636a29),
-    onSecondary: Color(0xFFf9f0f1),
-    tertiary: Color(0xFF5c8e39),
-    onTertiary: Color(0xFF070303),
-    surface: Color(0xFF070303),
-    onSurface: Color(0xFFf9f0f1),
-    error: Color(0xffF2B8B5),
-    onError: Color(0xff601410),
+    background: Color(0xFF1A1518), // Slightly warmer dark background
+    onBackground: Color(0xFFF9F0F1),
+    primary: Color(0xFFFF6B6D), // Brighter primary for dark mode
+    onPrimary: Color(0xFF1A1518),
+    secondary: Color(0xFFD4E5A5), // Lighter secondary for better contrast
+    onSecondary: Color(0xFF1A1518),
+    tertiary: Color(0xFFA8D67E), // Brighter accent
+    onTertiary: Color(0xFF1A1518),
+    surface: Color(0xFF231D20), // Slightly lighter than background
+    onSurface: Color(0xFFF9F0F1),
+    error: Color(0xFFF2B8B5),
+    onError: Color(0xFF601410),
+    // Adding surface variations for depth
+    surfaceVariant: Color(0xFF2D2426),
+    onSurfaceVariant: Color(0xFFE6E1E5),
+    outline: Color(0xFF958F94),
   ),
-  scaffoldBackgroundColor: const Color(0xFF070303),
-  cardColor: const Color(0xFF5D4B4B),
-  // Add these properties
-  cardTheme: const CardTheme(
-    elevation: 10,
-    shadowColor: secondaryColor, // Darker shadow for better contrast
+  // Enhanced card theme
+  cardTheme: CardTheme(
+    elevation: 8,
+    shadowColor: const Color(0xFF958F94).withOpacity(0.3),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    clipBehavior: Clip.antiAliasWithSaveLayer,
   ),
+  // Enhanced button theme
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      elevation: 5,
-      shadowColor: secondaryColor,
-      surfaceTintColor: Color(0xFF5D4B4B), // Adds a subtle tint to elevated surface
+      elevation: 4,
+      shadowColor: const Color(0xFFFF6B6D).withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
     ),
   ),
-
+  // Enhanced input decoration theme
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: const Color(0xFF231D20),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF958F94)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF958F94)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFFF6B6D), width: 2),
+    ),
+  ),
+  // Enhanced text theme
+  textTheme: GoogleFonts.lateefTextTheme(ThemeData.dark().textTheme).copyWith(
+    displayLarge: const TextStyle(
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    displayMedium: const TextStyle(
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+    ),
+    bodyLarge: const TextStyle(
+      fontSize: 16,
+      letterSpacing: 0.15,
+    ),
+  ),
+  // Enhanced dialog theme
+  dialogTheme: DialogTheme(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    elevation: 16,
+  ),
+  // Enhanced bottom sheet theme
+  bottomSheetTheme: const BottomSheetThemeData(
+    backgroundColor: Color(0xFF231D20),
+    modalBackgroundColor: Color(0xFF231D20),
+    elevation: 16,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+  ),
 );
 
 void main() async {
@@ -162,7 +228,7 @@ class MyApp extends StatelessWidget {
                 otherUserName: '',
               );
             },
-            '/Trending': (context) => const Trending(),
+        
             '/Profile': (context) => const Profile(userType: ''),
             '/Settings': (context) => const Settings(
                   userType: '',

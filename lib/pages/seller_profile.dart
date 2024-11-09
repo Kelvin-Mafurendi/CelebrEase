@@ -73,8 +73,8 @@ class _ProfileState extends State<Profile> {
                   shaderCallback: (bounds) {
                     return LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.primary,
-                        accentColor,
+                        Theme.of(context).primaryColorDark.withOpacity(0.8),
+                      accentColor,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -118,10 +118,8 @@ class _ProfileState extends State<Profile> {
                         shaderCallback: (bounds) {
                           return LinearGradient(
                             colors: [
-                              Theme.of(context)
-                                  .colorScheme
-                                  .primary, // Primary Color
-                              accentColor, // Accent Color
+                              Theme.of(context).primaryColorDark.withOpacity(0.8),
+                      accentColor, // Accent Color
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -144,109 +142,132 @@ class _ProfileState extends State<Profile> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    width: MediaQuery.of(context).size.width,
-                    padding: const EdgeInsets.only(left: 5),
+                    width: MediaQuery.of(context).size.width * 0.92,
+                    padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.light
-                          ? stickerColor
-                          : stickerColorDark,
-                      borderRadius: BorderRadius.circular(20),
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: CircleAvatar(
-                            backgroundImage: imagePath != null
-                                ? NetworkImage(imagePath)
-                                : null,
-                            backgroundColor: Colors.grey,
-                            radius: 60,
-                            child: imagePath == null
-                                ? const Icon(Icons.person)
-                                : null,
-                          ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: imagePath != null
+                              ? Image.network(
+                                  imagePath,
+                                  width: 120,
+                                  height: 130,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.person,
+                                      size: 40, color: Colors.grey),
+                                ),
                         ),
+                        const SizedBox(width: 12),
                         Expanded(
-                          // Allow the inner content to expand dynamically
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 5.0, left: 15),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  userType == 'Vendors'
-                                      ? brandName
-                                      : userProfile['username'],
-                                  textScaler: const TextScaler.linear(1.2),
-                                  style: GoogleFonts.merienda(),
-                                  overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userType == 'Vendors'
+                                    ? brandName
+                                    : userProfile['username'],
+                                style: GoogleFonts.merienda(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
                                 ),
-                                Text(
-                                  userType,
-                                  textScaler: const TextScaler.linear(0.9),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w200),
-                                  //overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                userType,
+                                style: GoogleFonts.roboto(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
                                 ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      FluentSystemIcons
-                                          .ic_fluent_location_regular,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Expanded(
-                                      child: Text(
-                                        location,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w400),
-                                        //overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(width: 20),
-                                if (userType == 'Vendors')
-                                  InkWell(
-                                    onTap: () {},
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    FluentSystemIcons
+                                        .ic_fluent_location_regular,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
                                     child: Text(
-                                      category,
-                                      style: const TextStyle(
+                                      location,
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w200,
-                                        decoration: TextDecoration.underline,
+                                        color: Colors.grey[600],
                                       ),
+                                      //maxLines: 1,
+                                      //overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                if (userType == 'Vendors')
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 5),
-                                    child: Row(
-                                      //mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Text(
-                                          startTime,
-                                          textScaler:
-                                              const TextScaler.linear(0.9),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w200),
-                                        ),
-                                        const Text(' - '),
-                                        Text(
-                                          endTime,
-                                          textScaler:
-                                              const TextScaler.linear(0.9),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w200),
-                                        ),
-                                      ],
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              if (userType == 'Vendors')
+                                InkWell(
+                                  onTap: () {},
+                                  child: Text(
+                                    category,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 14,
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.underline,
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                              if (userType == 'Vendors')
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 5),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        startTime,
+                                        style: GoogleFonts.roboto(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const Text(' - ',
+                                          style: TextStyle(color: Colors.grey)),
+                                      Text(
+                                        endTime,
+                                        style: GoogleFonts.roboto(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
@@ -415,27 +436,48 @@ class _ProfileState extends State<Profile> {
                       return Padding(
                         padding: const EdgeInsets.all(10.0),
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FlashAdView(
-                                  ads: activeAds,
-                                  initialIndex: index,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FlashAdView(
+                                    ads: activeAds,
+                                    initialIndex: index,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                        0.2), // Adjust the shadow color
+                                    blurRadius: 15,
+                                    spreadRadius: 5,
+                                    offset:
+                                        Offset(0, 8), // Positioning the shadow
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Colors.white
+                                      : Colors.grey[700]!,
+                                  width: 4, // Thickness of the border
                                 ),
                               ),
-                            );
-                          },
-                          child: CircleAvatar(
-                            minRadius: 100,
-                            backgroundColor:
-                                Theme.of(context).brightness == Brightness.light
+                              child: CircleAvatar(
+                                minRadius: 100,
+                                backgroundColor: Theme.of(context).brightness ==
+                                        Brightness.light
                                     ? stickerColor
                                     : stickerColorDark,
-                            backgroundImage:
-                                CachedNetworkImageProvider(adData['adPic']),
-                          ),
-                        ),
+                                backgroundImage:
+                                    CachedNetworkImageProvider(adData['adPic']),
+                              ),
+                            )),
                       );
                     },
                   ),

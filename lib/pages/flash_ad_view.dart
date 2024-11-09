@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/pages/seller_profile_view.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class FlashAdView extends StatefulWidget {
   final List<QueryDocumentSnapshot> ads;
@@ -76,110 +77,178 @@ class _FlashAdViewState extends State<FlashAdView> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     String userId = auth.currentUser!.uid;
 
-    return Stack(children: [
-      ListView(
-        padding: EdgeInsets.all(10),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
         children: [
-           SizedBox(height: MediaQuery.of(context).size.height *0.29,),
-          Container(
-            width: MediaQuery.of(context).size.width - 40,
-            height: MediaQuery.of(context).size.width - 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: Colors.white,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: CachedNetworkImage(
-                imageUrl: adData['adPic'],
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                dayOfWeek.toString(),
-                style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                timeOfDay.toString(),
-                style: GoogleFonts.lateef(fontWeight: FontWeight.w100),
-              ),
-            ],
-          ),
-          ListTile(
-            title: Text(
-              adData['title'] ?? 'No Title',
-              style: GoogleFonts.lateef(fontSize: 25),
-            ),
-            subtitle: Text(
-              adData['description'] ?? 'No Description',
-              style: GoogleFonts.lateef(fontSize: 18,fontWeight: FontWeight.w300),
-            ),
-            leading: const Icon(FluentSystemIcons.ic_fluent_flash_on_filled),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 20, bottom: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SellerProfileView(userId: adData['userId']),
-                      ),
-                    );
-                  },
-                  splashColor: Colors.grey,
-                  child: const Text('Visit vendor',style: TextStyle(fontWeight: FontWeight.w400),),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.grey.withOpacity(0.2),
+                    Colors.grey.withOpacity(0.4),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                 Icon(FluentSystemIcons.ic_fluent_arrow_forward_regular,weight: 0.00000001,),
-              ],
+              ),
+            ),
+          ),
+          Center(
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 8,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: adData['adPic'],
+                        fit: BoxFit.cover,
+                        height: 300,
+                        width: double.infinity,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                adData['title'] ?? 'No Title',
+                                style: GoogleFonts.lateef(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (adData['userId'] == userId)
+                                ThreeDotMenu(
+                                  items: const [
+                                    'Edit FlashAd',
+                                    'Hide FlashAd',
+                                    'Delete FlashAd'
+                                  ],
+                                  type: 'FlashAds',
+                                  id: packageId,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            adData['description'] ?? 'No Description',
+                            style: GoogleFonts.lateef(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    FluentSystemIcons.ic_fluent_flash_on_filled,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$dayOfWeek, $timeOfDay',
+                                    style: GoogleFonts.lateef(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SellerProfileView(
+                                          userId: adData['userId']),
+                                    ),
+                                  );
+                                },
+                                splashColor: Colors.grey,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Visit vendor',
+                                      style: GoogleFonts.lateef(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      FluentSystemIcons
+                                          .ic_fluent_arrow_forward_regular,
+                                      size: 18,
+                                      color: Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: AnimatedSmoothIndicator(
+                activeIndex: _currentIndex,
+                count: widget.ads.length,
+                effect: WormEffect(
+                  activeDotColor: Colors.blue,
+                  dotColor: Colors.grey.withOpacity(0.3),
+                  dotHeight: 10,
+                  dotWidth: 10,
+                ),
+              ),
             ),
           ),
         ],
       ),
-      if(adData['userId'] == userId)
-      Positioned(
-        right: 0,
-        //bottom: 0,
-        child: ThreeDotMenu(
-          items: const ['Edit FlashAd', 'Hide FlashAd', 'Delete FlashAd'],
-          type: 'FlashAds',
-          id: packageId,
-        ),
-      )
-    ]);
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'FlashAd\u2122 ${_currentIndex + 1}/${widget.ads.length}',
-          style: GoogleFonts.lateef(fontSize: 35),
-        ),
-      ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: widget.ads.length,
-        itemBuilder: (context, index) {
-          return _buildAdPage(widget.ads[index]);
-        },
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: widget.ads.length,
+      itemBuilder: (context, index) {
+        return _buildAdPage(widget.ads[index]);
+      },
+      onPageChanged: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
     );
   }
 }

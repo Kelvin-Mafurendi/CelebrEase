@@ -14,8 +14,7 @@ import 'package:maroro/pages/chart_screen.dart';
 
 class SellerProfileView extends StatefulWidget {
   final String userId;
-  //final String package_id;
-  const SellerProfileView({super.key, required this.userId,});
+  const SellerProfileView({super.key, required this.userId});
 
   @override
   State<SellerProfileView> createState() => _SellerProfileViewState();
@@ -35,7 +34,6 @@ class _SellerProfileViewState extends State<SellerProfileView> {
     final chatDoc = await _firestore.collection('chats').doc(chatId).get();
 
     if (!chatDoc.exists) {
-      // Create a new chat document if it doesn't exist
       await _firestore.collection('chats').doc(chatId).set({
         'participants': [currentUserId, vendorId],
         'lastMessage': '',
@@ -43,24 +41,94 @@ class _SellerProfileViewState extends State<SellerProfileView> {
       });
     }
 
-    // Navigate to the ChatScreen
     Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ChatScreen(
-      chatId: chatId,
-      otherUserId: vendorId,
-      otherUserName: vendorName,
-    ),
-  ),
-);
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
+          chatId: chatId,
+          otherUserId: vendorId,
+          otherUserName: vendorName,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    Color? iconColor,
+  }) {
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).brightness == Brightness.light
+          ? stickerColor.withOpacity(0.7)
+          : stickerColorDark.withOpacity(0.7),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor ?? Theme.of(context).primaryColor, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.lateef(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: GoogleFonts.lateef(fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: GoogleFonts.merienda(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    //final String userId = _auth.currentUser!.uid;
     return StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('Vendors').where('userId',isEqualTo: widget.userId).limit(1).snapshots(),
+        stream: _firestore
+            .collection('Vendors')
+            .where('userId', isEqualTo: widget.userId)
+            .limit(1)
+            .snapshots(),
         builder: (context, snapshot1) {
           if (snapshot1.hasError) {
             return const Text('Something went wrong');
@@ -74,375 +142,246 @@ class _SellerProfileViewState extends State<SellerProfileView> {
             );
           }
           if (!snapshot1.hasData || snapshot1.data == null) {
-            //print('No data available');
             return const Text('No data available');
           }
 
-         
           var userProfile = snapshot1.data!.docs.first;
-          // Use null-aware operators and provide default values
           String? imagePath = userProfile['profilePic'];
-          String brandName =
-              userProfile['business name'] as String? ?? 'Brand Name';
+          String brandName = userProfile['business name'] as String? ?? 'Brand Name';
           String location = userProfile['location'] as String? ?? 'Location';
           String category = userProfile['category'] as String? ?? 'Category';
-          String startTime =
-              userProfile['startTime'] as String? ?? 'Start Time';
+          String startTime = userProfile['startTime'] as String? ?? 'Start Time';
           String endTime = userProfile['endTime'] as String? ?? 'End Time';
-          String about =
-              userProfile['business description'] as String? ?? 'About';
-          //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
-          return CustomScrollView(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            slivers: [
-              SliverAppBar(
-                iconTheme: const IconThemeData(color: accentColor),
-                floating: true,
-                pinned: true,
-                stretch: true,
-                expandedHeight: 350, // Adjust this value as needed
-                flexibleSpace: FlexibleSpaceBar(
-                  background: CachedNetworkImage(
-                    imageUrl: imagePath!,
-                    fit: BoxFit.cover,
-                  ),
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          brandName,
-                          style: GoogleFonts.merienda(
-                              color: accentColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 30),
+          String about = userProfile['business description'] as String? ?? 'About';
+
+          return Scaffold(
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 300,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: Colors.transparent,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: imagePath!,
+                          fit: BoxFit.cover,
                         ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    title: Text(
+                      brandName,
+                      style: GoogleFonts.merienda(
+                        color: accentColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
                       ),
-                    ],
+                    ),
+                    centerTitle: true,
                   ),
-                  centerTitle: true,
                 ),
-              ),
-              const SliverToBoxAdapter(
-                  child: SizedBox(
-                height: 10,
-              )),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Card(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? stickerColor
-                        : stickerColorDark,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: const Offset(0, -20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Icon(
-                                  FluentSystemIcons.ic_fluent_location_regular),
-                              Flexible(
-                                child: Text(
-                                  location,
-                                  style: GoogleFonts.lateef(
-                                    fontSize: 25,
-                                  ),
-                                  //overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              children: [
+                                _buildInfoCard(
+                                  icon: FluentSystemIcons.ic_fluent_location_regular,
+                                  title: 'Location',
+                                  value: location,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                _buildInfoCard(
+                                  icon: Icons.access_time_rounded,
+                                  title: 'Business Hours',
+                                  value: '$startTime - $endTime',
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(
-                              height: 10), // Add some spacing between rows
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
+                          const SizedBox(height: 16),
+                          _buildSectionTitle('About'),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Card(
+                              elevation: 0,
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Colors.grey.shade50
+                                  : Colors.grey.shade900,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
                                 child: Text(
-                                  'Business Hours:',
-                                  style: GoogleFonts.lateef(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w100),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Flexible(
-                                child: Text(
-                                  '$startTime - $endTime',
-                                  style: GoogleFonts.lateef(
-                                    fontSize: 25,
+                                  about,
+                                  style: GoogleFonts.kalam(
+                                    fontSize: 18,
+                                    height: 1.5,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
+                          const SizedBox(height: 16),
+                          _buildSectionTitle('Highlights'),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: _firestore
+                                .collection('Highlights')
+                                .where('userId', isEqualTo: widget.userId)
+                                .where('hidden', isEqualTo: 'false')
+                                .snapshots(),
+                            builder: (context, snapshot2) {
+                              if (!snapshot2.hasData) {
+                                return const SizedBox(height: 145);
+                              }
+                              List<QueryDocumentSnapshot> highlights = snapshot2.data!.docs;
+                              return Container(
+                                height: highlights.isNotEmpty ? 145 : 10,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: highlights.length,
+                                  itemBuilder: (context, index) {
+                                    return FeaturedCard(
+                                      data: highlights[index].data() as Map<String, dynamic>,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSectionTitle('Packages'),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: _firestore
+                                .collection('Packages')
+                                .where('userId', isEqualTo: widget.userId)
+                                .snapshots(),
+                            builder: (context, snapshot2) {
+                              if (!snapshot2.hasData) {
+                                return const SizedBox(height: 145);
+                              }
+                              List<QueryDocumentSnapshot> packages = snapshot2.data!.docs;
+                              return Container(
+                                height: packages.isNotEmpty ? 145 : 10,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: packages.length,
+                                  itemBuilder: (context, index) {
+                                    return ProductCard(
+                                      data: packages[index].data() as Map<String, dynamic>,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: FilledButton(
+                              onPressed: () => _startChat(context, widget.userId, brandName),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(CupertinoIcons.chat_bubble_2, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Chat Now',
+                                    style: GoogleFonts.merienda(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Colors.grey.shade50
+                                  : Colors.grey.shade900,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildSocialIcon(FontAwesomeIcons.facebook),
+                                _buildSocialIcon(FontAwesomeIcons.xTwitter),
+                                _buildSocialIcon(FontAwesomeIcons.instagram),
+                                _buildSocialIcon(FontAwesomeIcons.tiktok),
+                                _buildSocialIcon(FontAwesomeIcons.linkedin),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'About',
-                    style: GoogleFonts.merienda(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(
-                    about,
-                    style: GoogleFonts.kalam(fontSize: 18),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: Divider(
-                    color: Colors.black12,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  child: Text(
-                    'Highlights',
-                    style: GoogleFonts.merienda(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: StreamBuilder<QuerySnapshot>(
-                    stream: _firestore
-                        .collection('Highlights')
-                        .where('userId', isEqualTo: widget.userId)
-                        .where('hidden',isEqualTo: 'false')
-                        .snapshots(),
-                    builder: (context, snapshot2) {
-                      if (snapshot2.hasError) {
-                        return const Text('Something went wrong');
-                      }
-
-                      if (snapshot2.connectionState ==
-                          ConnectionState.waiting) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        );
-                      }
-                      if (!snapshot2.hasData || snapshot2.data == null) {
-                        //print('No data available');
-                        return const Text('No data available');
-                      }
-                      // Access the documents
-                      List<QueryDocumentSnapshot> highlights =
-                          snapshot2.data!.docs;
-
-                      //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: highlights.isNotEmpty
-                              ? 145
-                              : 10, // Constrain height to screen
-                        ),
-                        child: ListView.builder(
-                            shrinkWrap: true,
-                            scrollDirection: Axis.horizontal,
-                            itemCount: highlights.length,
-                            itemBuilder: (context, index) {
-                              Map<String, dynamic> highlightData =
-                                  highlights[index].data()
-                                      as Map<String, dynamic>;
-                              return FeaturedCard(
-                                data: highlightData,
-                              );
-                            }),
-                      );
-                    }),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: Divider(
-                    color: Colors.black12,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  child: Text(
-                    'Packages',
-                    style: GoogleFonts.merienda(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: StreamBuilder<QuerySnapshot>(
-                    stream: _firestore
-                        .collection('Packages')
-                        .where('userId', isEqualTo: widget.userId)
-                        .snapshots(),
-                    builder: (context, snapshot2) {
-                      if (snapshot2.hasError) {
-                        return const Text('Something went wrong');
-                      }
-
-                      if (snapshot2.connectionState ==
-                          ConnectionState.waiting) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        );
-                      }
-                      if (!snapshot2.hasData || snapshot2.data == null) {
-                        //print('No data available');
-                        return const Text('No data available');
-                      }
-                      // Access the documents
-                      List<QueryDocumentSnapshot> highlights =
-                          snapshot2.data!.docs;
-
-                      //Provider.of<ChangeManager>(context, listen: false).loadProfileData(userProfile!);
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: highlights.isNotEmpty
-                              ? 145
-                              : 10, // Constrain height to screen
-                        ),
-                        child: ListView.builder(
-                            shrinkWrap: true,
-                            scrollDirection: Axis.horizontal,
-                            itemCount: highlights.length,
-                            itemBuilder: (context, index) {
-                              Map<String, dynamic> highlightData =
-                                  highlights[index].data()
-                                      as Map<String, dynamic>;
-                              return ProductCard(
-                                data: highlightData,
-                              );
-                            }),
-                      );
-                    }),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: Divider(
-                    color: Colors.black12,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    /*FilledButton(
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) =>BookingForm(package_id: ''),),);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Bookmark Vendor'),
-                      ),
-                    ),*/
-                    FilledButton(
-                      onPressed: () =>
-                          _startChat(context, widget.userId, brandName),
-                      style: const ButtonStyle(
-                        backgroundColor:
-                            WidgetStatePropertyAll(Colors.transparent),
-                      ),
-                      child:  Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Chat Now',style: TextStyle(color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white),),
-                            SizedBox(width: 10),
-                            Icon(CupertinoIcons.chat_bubble_2,color: Theme.of(context).brightness == Brightness.light?Colors.black:Colors.white,),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 30,
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    InkWell(
-                      onTap: () {},
-                      child: const Icon(
-                        color: primaryColor,
-                        Icons.facebook_outlined,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: const FaIcon(
-                        color: primaryColor,
-                        FontAwesomeIcons.xTwitter,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: const FaIcon(
-                        color: primaryColor,
-                        FontAwesomeIcons.instagram,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: const FaIcon(
-                        color: primaryColor,
-                        FontAwesomeIcons.tiktok,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: const FaIcon(
-                        color: primaryColor,
-                        FontAwesomeIcons.linkedin,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 30,
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         });
+  }
+
+  Widget _buildSocialIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: FaIcon(
+        icon,
+        color: primaryColor,
+        size: 20,
+      ),
+    );
   }
 }

@@ -77,6 +77,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, String>> packageList = [];
   final bool _disposed = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -91,8 +92,7 @@ class _PackageBrowserState extends State<PackageBrowser> {
           .where('serviceType', isEqualTo: widget.service)
           .where('hidden', isEqualTo: 'false')
           .get();
-          
-      // Check if the widget is still mounted before calling setState
+
       if (!_disposed && mounted) {
         setState(() {
           packageList = querySnapshot.docs.map((doc) {
@@ -108,133 +108,256 @@ class _PackageBrowserState extends State<PackageBrowser> {
         });
       }
     } catch (e) {
-      // Only show error if widget is still mounted
       if (!_disposed && mounted) {
-        print('Error fetching packages: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Failed to load packages. Please try again.'),
+            backgroundColor: Colors.red.shade800,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      shrinkWrap: true,
-      scrollDirection: Axis.vertical,
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
       slivers: [
         SliverAppBar(
-          iconTheme: const IconThemeData(color: accentColor),
+          iconTheme: const IconThemeData(color: accentColor, size: 28),
           floating: true,
           pinned: true,
           stretch: true,
-          expandedHeight: 350,
+          expandedHeight: 450,
+          backgroundColor: Colors.transparent,
           flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.light
-                    ? secondaryColor
-                    : darkTheme.secondaryHeaderColor,
-              ),
-              child: CachedNetworkImage(
-                imageUrl: widget.imagePath,
-                fit: BoxFit.cover,
-              ),
+            stretchModes: const [
+              StretchMode.zoomBackground,
+              StretchMode.blurBackground,
+            ],
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                Hero(
+                  tag: widget.imagePath,
+                  child: CachedNetworkImage(
+                    imageUrl: widget.imagePath,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Theme.of(context).brightness == Brightness.light
+                          ? secondaryColor
+                          : darkTheme.secondaryHeaderColor,
+                    ),
+                  ),
+                ),
+                // Gradient overlay
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.5),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
             title: Text(
               widget.service,
               style: GoogleFonts.merienda(
-                fontSize: 30,
-                fontWeight: FontWeight.w300,
+                fontSize: 32,
+                fontWeight: FontWeight.w500,
                 color: accentColor,
+                shadows: [
+                  Shadow(
+                    offset: const Offset(2, 2),
+                    blurRadius: 3.0,
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                ],
               ),
             ),
             centerTitle: true,
           ),
         ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PackageView(
-                          packageName: packageList[index]['name']!,
-                          imagePath: packageList[index]['imagePath']!,
-                          rate: packageList[index]['rate']!,
-                          userId: packageList[index]['userId']!,
-                          description: packageList[index]['description']!,
-                          package_id: packageList[index]['package_id']!,
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return AnimatedBuilder(
+                  animation: _scrollController,
+                  builder: (context, child) {
+                    return TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: Duration(milliseconds: 600 + (index * 100)),
+                      curve: Curves.easeOutQuart,
+                      builder: (context, double value, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 50 * (1 - value)),
+                          child: Opacity(
+                            opacity: value,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PackageView(
+                                    packageName: packageList[index]['name']!,
+                                    imagePath: packageList[index]['imagePath']!,
+                                    rate: packageList[index]['rate']!,
+                                    userId: packageList[index]['userId']!,
+                                    description: packageList[index]
+                                        ['description']!,
+                                    package_id: packageList[index]
+                                        ['package_id']!,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? stickerColor
+                                    : stickerColorDark,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Hero(
+                                      tag: packageList[index]['imagePath']!,
+                                      child: ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(16),
+                                          bottomLeft: Radius.circular(16),
+                                        ),
+                                        child: CachedNetworkImage(
+                                          imageUrl: packageList[index]
+                                              ['imagePath']!,
+                                          width: 120,
+                                          height: 160,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                            color: Colors.grey[300],
+                                            child: const Icon(Icons.error),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              packageList[index]['name']!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.lateef(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 24,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              packageList[index]
+                                                  ['description']!,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                                fontSize: 16,
+                                                color: Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.light
+                                                    ? Colors.black87
+                                                    : Colors.white70,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: accentColor
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                packageList[index]['rate']!,
+                                                style: GoogleFonts.lateef(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: accentColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     );
                   },
-                  child: Card(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? stickerColor
-                        : stickerColorDark,
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: ListTile(
-                        titleAlignment: ListTileTitleAlignment.bottom,
-                        minTileHeight: 200,
-                        minVerticalPadding: 15,
-                        contentPadding: const EdgeInsets.all(8),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: CachedNetworkImage(
-                            imageUrl: packageList[index]['imagePath']!,
-                            width: 50,
-                            height: 150,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          packageList[index]['name']!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lateef(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        trailing: Text(
-                          packageList[index]['rate']!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lateef(fontSize: 15),
-                        ),
-                        subtitle: Text(
-                          packageList[index]['description']!,
-                          maxLines: 2,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w300,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          textScaler: const TextScaler.linear(0.9),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-            childCount: packageList.length,
+                );
+              },
+              childCount: packageList.length,
+            ),
           ),
         ),
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: MyAdBanner(),
           ),
         ),
