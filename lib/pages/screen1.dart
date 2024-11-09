@@ -101,7 +101,7 @@ class _Screen1State extends State<Screen1> {
                 right: 10,
                 child: Stack(children: [
                   FloatingActionButton(
-                    backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.6),
+                    backgroundColor: Colors.grey.withOpacity(0.2),
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Cart(cartType: CartType.self)));
                     },
@@ -137,7 +137,7 @@ class _Screen1State extends State<Screen1> {
                 right: 10,
                 child: Stack(children: [
                   FloatingActionButton(
-                    backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.6),
+                    backgroundColor: Colors.grey.withOpacity(0.2),
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Pending()));
                     },
@@ -182,7 +182,7 @@ class _Screen1State extends State<Screen1> {
         bottomNavigationBar: BottomNavigationBar(
           elevation: 10,
           //backgroundColor: const Color(0xFFF1E1D5),
-          selectedItemColor: Theme.of(context).primaryColorDark.withOpacity(0.8),
+          selectedItemColor: Colors.grey.withOpacity(0.5),
           unselectedItemColor: primaryColor,
           selectedFontSize: 10,
           currentIndex: selectedIndex,

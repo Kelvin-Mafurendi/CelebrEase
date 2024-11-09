@@ -126,11 +126,13 @@ class _FlashAdViewState extends State<FlashAdView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                adData['title'] ?? 'No Title',
-                                style: GoogleFonts.lateef(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  adData['title'] ?? 'No Title',
+                                  style: GoogleFonts.lateef(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               if (adData['userId'] == userId)
