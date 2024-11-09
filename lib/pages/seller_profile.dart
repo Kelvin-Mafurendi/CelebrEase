@@ -35,6 +35,29 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     final String userId = _auth.currentUser!.uid;
+    Widget _buildSocialIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: FaIcon(
+        icon,
+        color: primaryColor,
+        size: 20,
+      ),
+    );
+  }
     // String userType = userType;
 
     return ListView(
@@ -737,48 +760,27 @@ class _ProfileState extends State<Profile> {
         const SizedBox(height: 40),
         if (widget.userType ==
             'Vendors') // Increased space before social media icons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              InkWell(
-                onTap: () {},
-                child: const Icon(
-                  color: primaryColor,
-                  Icons.facebook_outlined,
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                child: const FaIcon(
-                  color: primaryColor,
-                  FontAwesomeIcons.xTwitter,
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                child: const FaIcon(
-                  color: primaryColor,
-                  FontAwesomeIcons.instagram,
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                child: const FaIcon(
-                  color: primaryColor,
-                  FontAwesomeIcons.tiktok,
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                child: const FaIcon(
-                  color: primaryColor,
-                  FontAwesomeIcons.linkedin,
-                ),
-              ),
-            ],
-          ),
+          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Colors.grey.shade50
+                                  : Colors.grey.shade900,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildSocialIcon(FontAwesomeIcons.facebook),
+                                _buildSocialIcon(FontAwesomeIcons.xTwitter),
+                                _buildSocialIcon(FontAwesomeIcons.instagram),
+                                _buildSocialIcon(FontAwesomeIcons.tiktok),
+                                _buildSocialIcon(FontAwesomeIcons.linkedin),
+                              ],
+                            ),
+                          ),
       ],
     );
+
+    
   }
 }
