@@ -287,7 +287,7 @@ class _ThreeDotMenuState extends State<ThreeDotMenu> {
       icon: Icon(
         Icons.more_vert,
         color: Theme.of(context).brightness == Brightness.light
-            ? Colors.black54
+            ? Colors.grey[500]
             : Colors.white70,
       ),
       itemBuilder: (BuildContext context) => widget.items

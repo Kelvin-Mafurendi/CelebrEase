@@ -10,6 +10,7 @@ import 'package:maroro/modules/flash_ad.dart';
 import 'package:maroro/modules/reusable_widgets.dart';
 import 'package:maroro/pages/flash_ad_view.dart';
 import 'package:maroro/pages/package_browser.dart';
+import 'package:maroro/pages/walkthough.dart';
 
 class Mainscreen extends StatefulWidget {
   const Mainscreen({super.key});
@@ -29,12 +30,15 @@ class _MainscreenState extends State<Mainscreen> {
   }
 
   Future<void> getServices() async {
-    QuerySnapshot querySnapshot = await _firestore.collection('Services').get();
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('Services')
+        .where('hidden', isEqualTo: 'false')
+        .get();
     setState(() {
       services = querySnapshot.docs.map((doc) {
         return {
           'service': doc.id,
-          'imagePath': doc['imagePath'] as String,
+          'imagePath': doc['servicePic'] as String,
         };
       }).toList();
     });
@@ -54,7 +58,7 @@ class _MainscreenState extends State<Mainscreen> {
                 return LinearGradient(
                   colors: [
                     Theme.of(context).primaryColorDark.withOpacity(0.8),
-                      accentColor,
+                    accentColor,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -144,6 +148,7 @@ class _MainscreenState extends State<Mainscreen> {
             );
           },
         ),
+       
         Text(
           'FlashAds\u2122',
           textScaler: const TextScaler.linear(2),

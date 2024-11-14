@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class VendorCalendarManager extends StatefulWidget {
   const VendorCalendarManager({super.key});
@@ -20,14 +21,18 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
   DateTime? _selectedDay;
   Map<DateTime, List<TimeSlot>> _availabilityMap = {};
   List<TimeSlot> _selectedDaySlots = [];
+  
+  // Add animation controller
+  late AnimationController _controller;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadAvailability();
+    
   }
-
-  Future<void> _loadAvailability() async {
+   Future<void> _loadAvailability() async {
     try {
       final vendorId = _auth.currentUser!.uid;
       final snapshot = await _firestore
@@ -81,25 +86,6 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
       );
     }
   }
-
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
-    // Normalize the date to avoid time component issues
-    DateTime normalizedDate =
-        DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
-
-    // Check if time slots exist or generate them asynchronously
-    List<TimeSlot> defaultTimeSlots =
-        _availabilityMap[normalizedDate] ?? await _generateDefaultTimeSlots();
-
-    setState(() {
-      _selectedDay = selectedDay;
-      _focusedDay = focusedDay;
-      _selectedDaySlots = defaultTimeSlots;
-    });
-
-    _showTimeSlotsDialog();
-  }
-
   Future<List<TimeSlot>> _generateDefaultTimeSlots() async {
     List<TimeSlot> slots = [];
     TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
@@ -147,39 +133,100 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
     return slots;
   }
 
-  void _showTimeSlotsDialog() {
+  // Keep existing _loadAvailability, _saveAvailability, and _generateDefaultTimeSlots methods...
+
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
+    DateTime normalizedDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    List<TimeSlot> defaultTimeSlots = _availabilityMap[normalizedDate] ?? await _generateDefaultTimeSlots();
+
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+      _selectedDaySlots = defaultTimeSlots;
+      _isLoading = false;
+    });
+
+    _showEnhancedTimeSlotsDialog();
+  }
+
+  void _showEnhancedTimeSlotsDialog() {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(DateFormat('yyyy-MM-dd').format(_selectedDay!)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Column(
+            children: [
+              Text(
+                DateFormat('MMMM dd, yyyy').format(_selectedDay!),
+                style: GoogleFonts.lateef(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const Divider(thickness: 2),
+            ],
+          ).animate().fadeIn(duration: 400.ms),
           content: SizedBox(
             width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.6,
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: _selectedDaySlots.length,
               itemBuilder: (context, index) {
                 final slot = _selectedDaySlots[index];
-                return ListTile(
-                  title: Text(
-                      '${slot.start.format(context)} - ${slot.end.format(context)}'),
-                  trailing: DropdownButton<SlotStatus>(
-                    value: slot.status,
-                    items: SlotStatus.values.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(status.toString().split('.').last),
-                      );
-                    }).toList(),
-                    onChanged: (newStatus) {
-                      if (newStatus != null) {
-                        setDialogState(() {
-                          _selectedDaySlots[index] =
-                              slot.copyWith(status: newStatus);
-                        });
-                      }
-                    },
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  child: ListTile(
+                    leading: Icon(
+                      _getStatusIcon(slot.status),
+                      color: _getStatusColor(slot.status),
+                    ),
+                    title: Text(
+                      '${slot.start.format(context)} - ${slot.end.format(context)}',
+                      style: GoogleFonts.lateef(fontSize: 18),
+                    ),
+                    trailing: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        ),
+                      ),
+                      child: DropdownButton<SlotStatus>(
+                        value: slot.status,
+                        underline: const SizedBox(),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        items: SlotStatus.values.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              _getStatusText(status),
+                              style: GoogleFonts.lateef(fontSize: 16),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newStatus) {
+                          if (newStatus != null) {
+                            setDialogState(() {
+                              _selectedDaySlots[index] = slot.copyWith(status: newStatus);
+                            });
+                          }
+                        },
+                      ),
+                    ),
                   ),
+                ).animate().fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: index * 100),
                 );
               },
             ),
@@ -187,14 +234,26 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.lateef(fontSize: 18),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () async {
                 await _saveAvailability(_selectedDay!, _selectedDaySlots);
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                'Save Changes',
+                style: GoogleFonts.lateef(fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -202,70 +261,135 @@ class _VendorCalendarManagerState extends State<VendorCalendarManager> {
     );
   }
 
-  @override
+  IconData _getStatusIcon(SlotStatus status) {
+    switch (status) {
+      case SlotStatus.available:
+        return Icons.check_circle_outline;
+      case SlotStatus.unavailable:
+        return Icons.block;
+      case SlotStatus.booked:
+        return Icons.event_busy;
+    }
+  }
+
+  Color _getStatusColor(SlotStatus status) {
+    switch (status) {
+      case SlotStatus.available:
+        return Colors.green;
+      case SlotStatus.unavailable:
+        return Colors.grey;
+      case SlotStatus.booked:
+        return Colors.red;
+    }
+  }
+
+  String _getStatusText(SlotStatus status) {
+    switch (status) {
+      case SlotStatus.available:
+        return 'Available';
+      case SlotStatus.unavailable:
+        return 'Unavailable';
+      case SlotStatus.booked:
+        return 'Booked';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.transparent, // Make scaffold background transparent
+      backgroundColor: Colors.transparent,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(40),
+        preferredSize: const Size.fromHeight(60),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(
-            'Manage Calendar',
+            'Manage Your Schedule',
             style: GoogleFonts.lateef(
-              fontSize: 24,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
               color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
-        ),
+        ).animate().fadeIn(duration: 600.ms),
       ),
       body: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TableCalendar(
-              firstDay: DateTime.now(),
-              lastDay: DateTime.now().add(const Duration(days: 365)),
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: _onDaySelected,
-              calendarFormat: CalendarFormat.month,
-              availableCalendarFormats: const {
-                CalendarFormat.month: 'Month',
-              },
-              calendarStyle: const CalendarStyle(
-                todayDecoration: BoxDecoration(
-                  color: accentColor,
-                  shape: BoxShape.circle,
+            Card(
+              margin: const EdgeInsets.all(16),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TableCalendar(
+                  firstDay: DateTime.now(),
+                  lastDay: DateTime.now().add(const Duration(days: 365)),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  onDaySelected: _onDaySelected,
+                  calendarFormat: CalendarFormat.month,
+                  availableCalendarFormats: const {
+                    CalendarFormat.month: 'Month',
+                  },
+                  calendarStyle: CalendarStyle(
+                    todayDecoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    weekendTextStyle: const TextStyle(color: Colors.red),
+                    outsideDaysVisible: false,
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: GoogleFonts.lateef(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    leftChevronIcon: const Icon(Icons.chevron_left, size: 28),
+                    rightChevronIcon: const Icon(Icons.chevron_right, size: 28),
+                  ),
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: GoogleFonts.lateef(fontSize: 16, fontWeight: FontWeight.bold),
+                    weekendStyle: GoogleFonts.lateef(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+                  ),
                 ),
-                selectedDecoration: BoxDecoration(
-                  color: primaryColor,
-                  shape: BoxShape.circle,
+              ),
+            ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOut),
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 ),
               ),
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: GoogleFonts.lateef(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Column(
+                children: [
+                  const Icon(Icons.tips_and_updates, size: 24),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap any date to manage your availability',
+                    style: GoogleFonts.lateef(
+                      fontSize: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              daysOfWeekStyle: DaysOfWeekStyle(
-                weekdayStyle: GoogleFonts.lateef(fontSize: 14),
-                weekendStyle: GoogleFonts.lateef(fontSize: 14),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Tap on any date to manage time slots',
-                style: GoogleFonts.lateef(fontSize: 16),
-              ),
-            ),
+            ).animate().fadeIn(delay: 400.ms, duration: 600.ms),
           ],
         ),
       ),

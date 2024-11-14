@@ -40,7 +40,7 @@ class _Screen1State extends State<Screen1> {
         case 0:
           page = const Mainscreen();
           break;
-       /* case 1:
+        /* case 1:
           page = const Trending();
           break;*/
         case 1:
@@ -64,8 +64,6 @@ class _Screen1State extends State<Screen1> {
 
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  
 
   @override
   Widget build(BuildContext context) {
@@ -94,113 +92,141 @@ class _Screen1State extends State<Screen1> {
             ) ??
             false;
       },
-      child: Scaffold(
-        floatingActionButton: widget.userType == 'Customers'
-            ? Positioned(
-                top: 10,
-                right: 10,
-                child: Stack(children: [
-                  FloatingActionButton(
-                    backgroundColor: Colors.grey.withOpacity(0.2),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Cart(cartType: CartType.self)));
-                    },
-                    child: const Icon(Icons.shopping_cart_outlined),
-                  ),
-                  Positioned(
-                    right: 10,
-                    top: 3,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: _fireStore.collection('Cart').where('userId',isEqualTo: _auth.currentUser!.uid).snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          // Get the number of documents in the Cart collection
-                          int bookings = snapshot.data!.docs.length;
-
-                          return Text(
-                            '$bookings',
-                            style: GoogleFonts.lateef(color: Colors.white),
-                          );
-                        } else {
-                          return Text(
-                            '0', // Show 0 if no data is available
-                            style: GoogleFonts.lateef(color: Colors.white),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ]),
-              )
-            : Positioned(
-                top: 10,
-                right: 10,
-                child: Stack(children: [
-                  FloatingActionButton(
-                    backgroundColor: Colors.grey.withOpacity(0.2),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Pending()));
-                    },
-                    child: const Icon(FluentSystemIcons.ic_fluent_checkmark_circle_regular),
-                  ),
-                  Positioned(
-                    right: 10,
-                    top: 3,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: _fireStore.collection('Pending').where('vendorId',isEqualTo: _auth.currentUser!.uid).snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          // Get the number of documents in the Cart collection
-                          int bookings = snapshot.data!.docs.length;
-
-                          return Text(
-                            '$bookings',
-                            style: GoogleFonts.lateef(color: Colors.white),
-                          );
-                        } else {
-                          return Text(
-                            '0', // Show 0 if no data is available
-                            style: GoogleFonts.lateef(color: Colors.white),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ]),
-              ),
-        drawer: selectedIndex == 0
-            ? MyDrawer(
-                userType: widget.userType,
-              )
-            : null,
-        appBar: selectedIndex == 0
-            ? EventAppBar(
-                title: SearchWidget(currentUserId: user),
-                userType: widget.userType,
-              )
-            : null,
-        bottomNavigationBar: BottomNavigationBar(
-          elevation: 10,
-          //backgroundColor: const Color(0xFFF1E1D5),
-          selectedItemColor: Colors.grey.withOpacity(0.5),
-          unselectedItemColor: primaryColor,
-          selectedFontSize: 10,
-          currentIndex: selectedIndex,
-          onTap: changeIndex,
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.home), label: 'Home'),
-            /*BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.speaker_zzz), label: 'Trending'),*/
-            BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.gift), label: 'CeleBundles'),
-            BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.chat_bubble_text), label: 'Chats'),
-            BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person), label: 'Profile'),
-          ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+                 Color.fromARGB(255, 242, 255, 231),
+              Color.fromARGB(255, 32, 32, 32),
+           
+            ],
+          ),
         ),
-        body: page,
+        child: Scaffold(
+            backgroundColor:Theme.of(context).brightness == Brightness.light? Colors.transparent:Theme.of(context).colorScheme.surface,
+       
+          floatingActionButton: widget.userType == 'Customers'
+              ? Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Stack(children: [
+                    FloatingActionButton(
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    Cart(cartType: CartType.self)));
+                      },
+                      child: const Icon(Icons.shopping_cart_outlined),
+                    ),
+                    Positioned(
+                      right: 10,
+                      top: 3,
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: _fireStore
+                            .collection('Cart')
+                            .where('userId', isEqualTo: _auth.currentUser!.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            // Get the number of documents in the Cart collection
+                            int bookings = snapshot.data!.docs.length;
+
+                            return Text(
+                              '$bookings',
+                              style: GoogleFonts.lateef(color: Colors.white),
+                            );
+                          } else {
+                            return Text(
+                              '0', // Show 0 if no data is available
+                              style: GoogleFonts.lateef(color: Colors.white),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ]),
+                )
+              : Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Stack(children: [
+                    FloatingActionButton(
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => Pending()));
+                      },
+                      child: const Icon(
+                          FluentSystemIcons.ic_fluent_checkmark_circle_regular),
+                    ),
+                    Positioned(
+                      right: 10,
+                      top: 3,
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: _fireStore
+                            .collection('Pending')
+                            .where('vendorId',
+                                isEqualTo: _auth.currentUser!.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            // Get the number of documents in the Cart collection
+                            int bookings = snapshot.data!.docs.length;
+
+                            return Text(
+                              '$bookings',
+                              style: GoogleFonts.lateef(color: Colors.white),
+                            );
+                          } else {
+                            return Text(
+                              '0', // Show 0 if no data is available
+                              style: GoogleFonts.lateef(color: Colors.white),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ]),
+                ),
+          drawer: selectedIndex == 0
+              ? MyDrawer(
+                  userType: widget.userType,
+                )
+              : null,
+          appBar: selectedIndex == 0
+              ? EventAppBar(
+                  title: SearchWidget(currentUserId: user),
+                  userType: widget.userType,
+                )
+              : null,
+          bottomNavigationBar: BottomNavigationBar(
+            elevation: 10,
+            //backgroundColor: const Color(0xFFF1E1D5),
+            selectedItemColor: Colors.grey.withOpacity(0.5),
+            unselectedItemColor: primaryColor,
+            selectedFontSize: 10,
+            currentIndex: selectedIndex,
+            onTap: changeIndex,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.home), label: 'Home'),
+              /*BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.speaker_zzz), label: 'Trending'),*/
+              BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.gift), label: 'CeleBundles'),
+              BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.chat_bubble_text), label: 'Chats'),
+              BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.person), label: 'Profile'),
+            ],
+          ),
+          body: page,
+        ),
       ),
     );
   }

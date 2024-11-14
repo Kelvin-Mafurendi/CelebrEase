@@ -192,7 +192,7 @@ class _SearchWidgetState extends State<SearchWidget> {
               rate: highlightData['rate'],
               description: highlightData['description'],
               userId: highlightData['userId'],
-              imagePath: highlightData['highlightPic'],
+              imagePath: highlightData['highlightPic'], package_id: highlightData['highlightId'],
             ),
           ),
         );
@@ -287,31 +287,44 @@ class _SearchWidgetState extends State<SearchWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Search...',
-          suffixIcon: IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () => _searchContent(_searchController.text),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.fromARGB(255, 242, 255, 231),
+            Color.fromARGB(255, 32, 32, 32),
+          ],
         ),
-        onChanged: _searchContent,
       ),
-      content: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _searchResults.isEmpty
-              ? Center(child: Text('Nothing Found'))
-              : SizedBox(
-                  width: double.maxFinite,
-                  height: 300,
-                  child: ListView.builder(
-                    itemCount: _searchResults.length,
-                    itemBuilder: (context, index) =>
-                        _buildResultTile(_searchResults[index]),
+      child: AlertDialog(
+        backgroundColor: Colors.transparent,
+        title: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search...',
+            suffixIcon: IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () => _searchContent(_searchController.text),
+            ),
+          ),
+          onChanged: _searchContent,
+        ),
+        content: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : _searchResults.isEmpty
+                ? Center(child: Text('Nothing Found'))
+                : SizedBox(
+                    width: double.maxFinite,
+                    height: 300,
+                    child: ListView.builder(
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) =>
+                          _buildResultTile(_searchResults[index]),
+                    ),
                   ),
-                ),
+      ),
     );
   }
 }

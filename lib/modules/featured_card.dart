@@ -30,6 +30,7 @@ class FeaturedCard extends StatelessWidget {
                     description: data['description'],
                     userId: data['userId'],
                     imagePath: data['highlightPic'],
+                    package_id: data['highlightId'],
                   ),
                 ),
               );
@@ -110,7 +111,10 @@ class FeaturedCard extends StatelessWidget {
                               style: GoogleFonts.merienda(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -120,7 +124,11 @@ class FeaturedCard extends StatelessWidget {
                               data['description'] ?? 'No Description Available',
                               style: GoogleFonts.kalam(
                                 fontSize: 13,
-                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color
+                                    ?.withOpacity(0.7),
                                 height: 1.2,
                               ),
                               maxLines: 2,
@@ -128,9 +136,11 @@ class FeaturedCard extends StatelessWidget {
                             ),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.light
+                                color: Theme.of(context).brightness ==
+                                        Brightness.light
                                     ? Colors.green.shade50
                                     : Colors.green.shade900.withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(8),
@@ -165,7 +175,11 @@ class FeaturedCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: ThreeDotMenu(
-                  items: const ['Edit Highlight', 'Hide Highlight', 'Delete Highlight'],
+                  items: const [
+                    'Edit Highlight',
+                    'Hide Highlight',
+                    'Delete Highlight'
+                  ],
                   type: 'Highlights',
                   id: data['highlightId'],
                 ),

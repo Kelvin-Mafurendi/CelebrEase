@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,6 +33,7 @@ class _ProfileState extends State<Profile> {
     final String userId = _auth.currentUser!.uid;
 
     return Scaffold(
+      
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection(widget.userType)
@@ -508,14 +508,18 @@ class _ProfileState extends State<Profile> {
   Widget _buildHighlightCard(Map<String, dynamic> highlight) {
     return GestureDetector(
       onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => HighlightView(
-                  packageName: highlight['packageName'],
-                  rate: highlight['rate'],
-                  description: highlight['description'],
-                  userId: highlight['userId'],
-                  imagePath: highlight['highlightPic']))),
+        context,
+        MaterialPageRoute(
+          builder: (context) => HighlightView(
+            packageName: highlight['packageName'],
+            rate: highlight['rate'],
+            description: highlight['description'],
+            userId: highlight['userId'],
+            imagePath: highlight['highlightPic'],
+            package_id: highlight['highlightId'],
+          ),
+        ),
+      ),
       child: Card(
         margin: const EdgeInsets.only(right: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),

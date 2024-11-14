@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,7 +39,7 @@ class _BookingFormState extends State<BookingForm> {
   String? _vendorId;
   String? _serviceType;
   DateTime? selectedDate;
-  final  uuid = Uuid();
+  final uuid = Uuid();
 
   // Constants for booking duration limits
   static const int MIN_BOOKING_HOURS = 1;
@@ -56,10 +57,12 @@ class _BookingFormState extends State<BookingForm> {
   // Add new variables for dynamic options
   Map<String, List<DynamicOption>> dynamicOptions = {};
   bool isLoadingOptions = false;
-
+  bool visibility = true;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   @override
   void initState() {
     super.initState();
+    checkVendorVisibility();
     addressController.text = 'Vendor Location';
     _initializeVendorId();
 
@@ -67,6 +70,25 @@ class _BookingFormState extends State<BookingForm> {
     if (widget.isEditing && widget.existingBookingData != null) {
       _initializeExistingData();
     }
+  }
+
+  void checkVendorVisibility() async {
+    final query =
+        await _firestore.collection('Packages').doc(widget.package_id).get();
+    String vendorId = query['userId'];
+    QuerySnapshot vendorSnapshot = await FirebaseFirestore.instance
+        .collection('Vendors')
+        .where('hidden', isEqualTo: 'false')
+        .where('userId', isEqualTo: vendorId)
+        .limit(1)
+        .get();
+    setState(() {
+      if (vendorSnapshot.docs.isNotEmpty) {
+        visibility = true;
+      } else {
+        visibility = false;
+      }
+    });
   }
 
   Future<void> _loadDynamicOptions(DocumentSnapshot packageDoc) async {
@@ -191,7 +213,6 @@ class _BookingFormState extends State<BookingForm> {
     });
   }
 
-
   Future<void> _loadAvailableTimeSlots(DateTime date) async {
     if (_vendorId == null) return;
 
@@ -226,14 +247,16 @@ class _BookingFormState extends State<BookingForm> {
     TimeOfDay endTime = const TimeOfDay(hour: 20, minute: 0);
 
     try {
-      DocumentSnapshot vendorSnapshot = await FirebaseFirestore.instance
+      QuerySnapshot vendorSnapshot = await FirebaseFirestore.instance
           .collection('Vendors')
-          .doc(_vendorId)
+          .where('hidden', isEqualTo: 'false')
+          .where('userId', isEqualTo: _vendorId)
+          .limit(1)
           .get();
 
-      if (vendorSnapshot.exists) {
-        String? startTimeString = vendorSnapshot['startTime'];
-        String? endTimeString = vendorSnapshot['endTime'];
+      if (vendorSnapshot.docs.isNotEmpty) {
+        String? startTimeString = vendorSnapshot.docs.first['startTime'];
+        String? endTimeString = vendorSnapshot.docs.first['endTime'];
 
         List<String> startParts = startTimeString!.split(':');
         List<String> endParts = endTimeString!.split(':');
@@ -247,7 +270,7 @@ class _BookingFormState extends State<BookingForm> {
           hour: int.parse(endParts[0]),
           minute: int.parse(endParts[1]),
         );
-            }
+      }
     } catch (e) {
       print('Error fetching vendor times: $e');
     }
@@ -469,21 +492,29 @@ class _BookingFormState extends State<BookingForm> {
           ? Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    buildDatePicker(),
-                    if (selectedDate != null) buildTimeSlotPicker(),
-                    if (_selectedService != null) ..._buildCustomFields(),
-                    const SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      child: Text('Submit Booking'),
+              child: visibility == true
+                  ? Form(
+                      key: _formKey,
+                      child: ListView(
+                        children: [
+                          buildDatePicker(),
+                          if (selectedDate != null) buildTimeSlotPicker(),
+                          if (_selectedService != null) ..._buildCustomFields(),
+                          const SizedBox(height: 16.0),
+                          ElevatedButton(
+                            onPressed: _submitForm,
+                            child: Text('Submit Booking'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        'Vendor On Vacation!',
+                        style: GoogleFonts.lateef(),
+                        textScaler: TextScaler.linear(3),
+                      ),
                     ),
-                  ],
-                ),
-              ),
             ),
     );
   }
@@ -759,7 +790,7 @@ class _BookingFormState extends State<BookingForm> {
           'address': addressController.text,
           'event': eventTypeController.text,
           'guests': numberOfGuestsController.text,
-          'vendorId':_vendorId,
+          'vendorId': _vendorId,
         };
 
         if (notesController.text.isNotEmpty) {
@@ -772,7 +803,9 @@ class _BookingFormState extends State<BookingForm> {
         // If editing, preserve the original orderId and update instead of creating new
         if (widget.isEditing && widget.existingBookingData != null) {
           data['orderId'] = widget.existingBookingData!['orderId'];
-        }else{data['orderId'] =uuid.v4() ;}
+        } else {
+          data['orderId'] = uuid.v4();
+        }
 
         // Update form data using state management
         bool success = await Provider.of<ChangeManager>(context, listen: false)

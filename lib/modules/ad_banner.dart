@@ -33,9 +33,9 @@ class _MyAdBannerState extends State<MyAdBanner> {
   Future<void> getBannerImages() async {
     EasyLoading.show();
     try {
-      QuerySnapshot querySnapshot = await _firestore.collection('banners').get();
+      QuerySnapshot querySnapshot = await _firestore.collection('banners').where('hidden',isEqualTo: 'false').get();
       setState(() {
-        bannerImages.addAll(querySnapshot.docs.map((doc) => doc['image'] as String));
+        bannerImages.addAll(querySnapshot.docs.map((doc) => doc['bannerPic'] as String));
       });
     } catch (e) {
       print('Error fetching banner images: $e');

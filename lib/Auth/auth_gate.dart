@@ -7,6 +7,7 @@ import 'package:maroro/main.dart';
 import 'package:maroro/pages/landing_page.dart';
 import 'package:maroro/pages/offline.dart';
 import 'package:maroro/pages/screen1.dart';
+import 'package:maroro/pages/walkthough.dart';
 
 class AuthGate extends StatefulWidget {
   final String userType;
@@ -116,7 +117,7 @@ class _AuthGateState extends State<AuthGate> {
             },
           );
         } else {
-          return const Home();
+          return  AppWalkthrough();
         }
       },
     );

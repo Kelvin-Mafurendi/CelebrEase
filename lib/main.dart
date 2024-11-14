@@ -45,24 +45,102 @@ const stickerColorDark = Color(0xFF4A4743);
 const profileCardColorDark = Color(0xFF5D4B4B);
 
 // Enhanced light mode ColorScheme
-const colorScheme = ColorScheme(
+ThemeData lightTheme = ThemeData(
+  useMaterial3: true,
   brightness: Brightness.light,
-  background: backgroundColor,
-  onBackground: textColor,
-  primary: primaryColor,
-  onPrimary: primaryFgColor,
-  secondary: secondaryColor,
-  onSecondary: secondaryFgColor,
-  tertiary: accentColor,
-  onTertiary: accentFgColor,
-  surface: backgroundColor,
-  onSurface: textColor,
-  error: Color(0xffB3261E),
-  onError: Color(0xffFFFFFF),
-  // Adding surface variations for depth
-  surfaceVariant: Color(0xFFE7F0D8),
-  onSurfaceVariant: Color(0xFF121212),
-  outline: Color(0xFF85876F),
+  scaffoldBackgroundColor: backgroundColor,
+  colorScheme: const ColorScheme(
+    brightness: Brightness.light,
+    background: backgroundColor,
+    onBackground: textColor,
+    primary: primaryColor,
+    onPrimary: primaryFgColor,
+    secondary: secondaryColor,
+    onSecondary: secondaryFgColor,
+    tertiary: accentColor,
+    onTertiary: accentFgColor,
+    surface: backgroundColor,
+    onSurface: textColor,
+    error: Color(0xffB3261E),
+    onError: Color(0xffFFFFFF),
+    surfaceVariant: Color(0xFFE7F0D8),
+    onSurfaceVariant: Color(0xFF121212),
+    outline: Color(0xFF85876F),
+  ),
+  // Enhanced card theme for light mode
+  cardTheme: CardTheme(
+    elevation: 4,
+    shadowColor: const Color(0xFF85876F).withOpacity(0.2),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    clipBehavior: Clip.antiAliasWithSaveLayer,
+  ),
+  // Enhanced button theme for light mode
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      elevation: 2,
+      shadowColor: primaryColor.withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  ),
+  // Enhanced input decoration theme for light mode
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: backgroundColor,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF85876F)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF85876F)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: primaryColor, width: 2),
+    ),
+  ),
+  // Enhanced text theme
+  textTheme: GoogleFonts.lateefTextTheme(ThemeData.light().textTheme).copyWith(
+    displayLarge: const TextStyle(
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+      color: textColor,
+    ),
+    displayMedium: const TextStyle(
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      letterSpacing: -0.5,
+      color: textColor,
+    ),
+    bodyLarge: const TextStyle(
+      fontSize: 16,
+      letterSpacing: 0.15,
+      color: textColor,
+    ),
+  ),
+  // Enhanced dialog theme for light mode
+  dialogTheme: DialogTheme(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    elevation: 8,
+    backgroundColor: backgroundColor,
+  ),
+  // Enhanced bottom sheet theme for light mode
+  bottomSheetTheme: const BottomSheetThemeData(
+    backgroundColor: backgroundColor,
+    modalBackgroundColor: backgroundColor,
+    elevation: 8,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+  ),
 );
 
 // Enhanced dark theme
@@ -203,11 +281,7 @@ class MyApp extends StatelessWidget {
       builder: (context, themeNotifier, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            scaffoldBackgroundColor: backgroundColor,
-            colorScheme: colorScheme,
-          ),
+          theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeNotifier.themeMode,
           home: AuthGate(userType: ''),

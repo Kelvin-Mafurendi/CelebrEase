@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:maroro/main.dart';
+import 'package:maroro/modules/3_dot_menu.dart';
 import 'package:maroro/pages/booking_form.dart';
 import 'package:maroro/pages/seller_profile_view.dart';
 
@@ -33,6 +35,8 @@ class _PackageViewState extends State<PackageView> {
   bool isSelected = false;
   Map<String, dynamic>? packageDetails;
   bool isLoading = true;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
 
   @override
   void initState() {
@@ -281,6 +285,7 @@ class _PackageViewState extends State<PackageView> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+    String userId = _auth.currentUser!.uid;
 
     return Scaffold(
       body: CustomScrollView(
@@ -291,6 +296,13 @@ class _PackageViewState extends State<PackageView> {
             floating: true,
             pinned: true,
             stretch: true,
+            actions:[
+              userId == widget.userId? 
+              ThreeDotMenu(
+                  items: ['Edit Package', 'Hide Package', 'Delete Package'],
+                  type: 'Packages',
+                  id: widget.package_id):SizedBox()
+            ],
             flexibleSpace: FlexibleSpaceBar(
               stretchModes: const [
                 StretchMode.zoomBackground,

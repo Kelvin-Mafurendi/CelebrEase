@@ -29,6 +29,7 @@ class EventAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      backgroundColor: Colors.transparent,
      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       actions: [
           IconButton(

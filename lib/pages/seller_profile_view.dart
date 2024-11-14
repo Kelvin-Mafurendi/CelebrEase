@@ -68,7 +68,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Icon(icon, color: iconColor ?? Theme.of(context).primaryColor, size: 24),
+            Icon(icon,
+                color: iconColor ?? Theme.of(context).primaryColor, size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -79,7 +80,11 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                     style: GoogleFonts.lateef(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.color
+                          ?.withOpacity(0.7),
                     ),
                   ),
                   Text(
@@ -127,6 +132,7 @@ class _SellerProfileViewState extends State<SellerProfileView> {
         stream: _firestore
             .collection('Vendors')
             .where('userId', isEqualTo: widget.userId)
+            .where('hidden', isEqualTo: 'false')
             .limit(1)
             .snapshots(),
         builder: (context, snapshot1) {
@@ -141,18 +147,26 @@ class _SellerProfileViewState extends State<SellerProfileView> {
               ),
             );
           }
-          if (!snapshot1.hasData || snapshot1.data == null) {
-            return const Text('No data available');
+          if (!snapshot1.hasData || snapshot1.data!.docs.isEmpty) {
+            return Center(
+                child: Text(
+              'Vendor On Vacation!',
+              textScaler: TextScaler.linear(3),
+              style: GoogleFonts.lateef(),
+            ));
           }
 
           var userProfile = snapshot1.data!.docs.first;
           String? imagePath = userProfile['profilePic'];
-          String brandName = userProfile['business name'] as String? ?? 'Brand Name';
+          String brandName =
+              userProfile['business name'] as String? ?? 'Brand Name';
           String location = userProfile['location'] as String? ?? 'Location';
           String category = userProfile['category'] as String? ?? 'Category';
-          String startTime = userProfile['startTime'] as String? ?? 'Start Time';
+          String startTime =
+              userProfile['startTime'] as String? ?? 'Start Time';
           String endTime = userProfile['endTime'] as String? ?? 'End Time';
-          String about = userProfile['business description'] as String? ?? 'About';
+          String about =
+              userProfile['business description'] as String? ?? 'About';
 
           return Scaffold(
             body: CustomScrollView(
@@ -201,7 +215,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(30)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,7 +227,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                             child: Column(
                               children: [
                                 _buildInfoCard(
-                                  icon: FluentSystemIcons.ic_fluent_location_regular,
+                                  icon: FluentSystemIcons
+                                      .ic_fluent_location_regular,
                                   title: 'Location',
                                   value: location,
                                 ),
@@ -231,7 +247,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Card(
                               elevation: 0,
-                              color: Theme.of(context).brightness == Brightness.light
+                              color: Theme.of(context).brightness ==
+                                      Brightness.light
                                   ? Colors.grey.shade50
                                   : Colors.grey.shade900,
                               child: Padding(
@@ -258,16 +275,19 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                               if (!snapshot2.hasData) {
                                 return const SizedBox(height: 145);
                               }
-                              List<QueryDocumentSnapshot> highlights = snapshot2.data!.docs;
-                              return Container(
+                              List<QueryDocumentSnapshot> highlights =
+                                  snapshot2.data!.docs;
+                              return SizedBox(
                                 height: highlights.isNotEmpty ? 145 : 10,
                                 child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
                                   scrollDirection: Axis.horizontal,
                                   itemCount: highlights.length,
                                   itemBuilder: (context, index) {
                                     return FeaturedCard(
-                                      data: highlights[index].data() as Map<String, dynamic>,
+                                      data: highlights[index].data()
+                                          as Map<String, dynamic>,
                                     );
                                   },
                                 ),
@@ -285,16 +305,19 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                               if (!snapshot2.hasData) {
                                 return const SizedBox(height: 145);
                               }
-                              List<QueryDocumentSnapshot> packages = snapshot2.data!.docs;
-                              return Container(
+                              List<QueryDocumentSnapshot> packages =
+                                  snapshot2.data!.docs;
+                              return SizedBox(
                                 height: packages.isNotEmpty ? 145 : 10,
                                 child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
                                   scrollDirection: Axis.horizontal,
                                   itemCount: packages.length,
                                   itemBuilder: (context, index) {
                                     return ProductCard(
-                                      data: packages[index].data() as Map<String, dynamic>,
+                                      data: packages[index].data()
+                                          as Map<String, dynamic>,
                                     );
                                   },
                                 ),
@@ -305,10 +328,12 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: FilledButton(
-                              onPressed: () => _startChat(context, widget.userId, brandName),
+                              onPressed: () =>
+                                  _startChat(context, widget.userId, brandName),
                               style: FilledButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -316,7 +341,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(CupertinoIcons.chat_bubble_2, color: Colors.white),
+                                  const Icon(CupertinoIcons.chat_bubble_2,
+                                      color: Colors.white),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Chat Now',
@@ -334,7 +360,8 @@ class _SellerProfileViewState extends State<SellerProfileView> {
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.light
+                              color: Theme.of(context).brightness ==
+                                      Brightness.light
                                   ? Colors.grey.shade50
                                   : Colors.grey.shade900,
                             ),
